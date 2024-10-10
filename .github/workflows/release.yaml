@@ -168,7 +168,6 @@ jobs:
 
       - name: Build snap
         env:
-          SNAPCRAFT_REMOTE_BUILD_STRATEGY: force-fallback
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           echo "::group::remote-build output"
