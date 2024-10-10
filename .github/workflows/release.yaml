@@ -1,0 +1,164 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  binaries:
+    name: Build and Release concierge
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version
+        id: version
+        run: |
+          version="$(yq -r ".version" snap/snapcraft.yaml)"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+          if [[ "v${version}" != "${GITHUB_REF#refs/*/}" ]]; then
+            echo "Snapcraft version and tag do not match; refusing to continue."
+            exit 1
+          fi
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+
+      - name: Run tests
+        run: |
+          go test -v ./...
+
+      - name: Setup goreleaser
+        run: |
+          sudo snap install --classic goreleaser
+
+      - name: Release concierge
+        id: build
+        run: |
+          goreleaser release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: concierge-dist
+          if-no-files-found: error
+          path: dist
+
+  define-matrix:
+    name: Define spread matrix
+    runs-on: ubuntu-24.04
+    outputs:
+      suites: ${{ steps.suites.outputs.suites }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+
+      - name: Install
+        run: |
+          go install github.com/snapcore/spread/cmd/spread@latest
+
+      - name: Generate matrix list
+        id: suites
+        run: |
+          list="$(spread -list github-ci | sed "s|github-ci:ubuntu-24.04:tests/||g" | jq -r -ncR '[inputs | select(length>0)]')"
+          echo "suites=$list"
+          echo "suites=$list" >> $GITHUB_OUTPUT
+
+  spread-test:
+    name: Spread (${{ matrix.suite }})
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        suite: ${{ fromJSON(needs.define-matrix.outputs.suites) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+
+      - name: Install
+        run: |
+          go install github.com/snapcore/spread/cmd/spread@latest
+
+      - name: Run integration tests
+        run: |
+          spread -v "github-ci:ubuntu-24.04:tests/${{ matrix.suite }}"
+
+  # TODO: Uncomment once classic confinement is granted
+  # snap:
+  #   name: Build and Release snap
+  #   runs-on: ubuntu-latest
+  #   needs:
+  #     - spread
+  #   steps:
+  #     - name: Check out the code
+  #       uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
+
+  #     - name: Setup LXD
+  #       uses: canonical/setup-lxd@main
+
+  #     - name: Get version
+  #       id: version
+  #       run: |
+  #         version="$(yq -r ".version" snap/snapcraft.yaml)"
+  #         echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  #         if [[ "v${version}" != "${GITHUB_REF#refs/*/}" ]]; then
+  #           echo "Snapcraft version and tag do not match; refusing to continue."
+  #           exit 1
+  #         fi
+
+  #     - name: Setup Snapcraft
+  #       env:
+  #         LP_BUILD_SECRET: ${{ secrets.LP_BUILD_SECRET }}
+  #       run: |
+  #         sudo snap install snapcraft --classic
+
+  #         mkdir -p ~/.local/share/snapcraft/provider/launchpad ~/.local/share/snapcraft
+  #         echo "${LP_BUILD_SECRET}" > ~/.local/share/snapcraft/provider/launchpad/credentials
+  #         echo "${LP_BUILD_SECRET}" > ~/.local/share/snapcraft/launchpad-credentials
+
+  #         git config --global user.email "github-actions@github.com"
+  #         git config --global user.name "Github Actions"
+
+  #     - name: Build snap
+  #       env:
+  #         SNAPCRAFT_REMOTE_BUILD_STRATEGY: force-fallback
+  #         VERSION: ${{ steps.version.outputs.version }}
+  #       run: |
+  #         echo "::group::remote-build output"
+  #         snapcraft remote-build --launchpad-accept-public-upload
+  #         echo "::endgroup::"
+
+  #         echo "::group::amd64 build log"
+  #         cat "concierge_amd64.txt"
+  #         echo "::endgroup::"
+
+  #         echo "::group::arm64 build log"
+  #         cat "concierge_arm64.txt"
+  #         echo "::endgroup::"
+
+  #     - name: Release snap to candidate
+  #       env:
+  #         SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.STORE_SECRET }}
+  #         VERSION: ${{ steps.version.outputs.version }}
+  #       run: |
+  #         snapcraft upload "concierge_${VERSION}_amd64.snap" --release latest/candidate
+  #         snapcraft upload "concierge_${VERSION}_arm64.snap" --release latest/candidate

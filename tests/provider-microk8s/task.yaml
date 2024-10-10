@@ -1,0 +1,29 @@
+summary: Run concierge with just a MicroK8s provider
+systems:
+  - ubuntu-24.04
+
+execute: |
+  pushd "${PROJECT_PATH}/tests/provider-microk8s"
+
+  "$PROJECT_PATH"/concierge -v --extra-snaps="yq"
+
+  list="$(snap list microk8s)"
+  echo $list | MATCH microk8s
+  echo $list | MATCH 1.31-strict/stable
+
+  list="$(snap list)"
+  echo $list | MATCH juju
+  echo $list | MATCH kubectl
+
+  sudo microk8s status --format yaml | yq '.addons[] | select(.name=="hostpath-storage") | .status'
+  sudo microk8s status --format yaml | yq '.addons[] | select(.name=="dns") | .status'
+  sudo microk8s status --format yaml | yq '.addons[] | select(.name=="metallb") | .status'
+
+  kubectl config current-context | MATCH "microk8s"
+
+  juju controllers | tail -n1 | MATCH concierge-microk8s
+  juju models | tail -n1 | MATCH testing
+
+restore: |
+  sudo snap remove juju --purge
+  sudo snap remove lxd --purge

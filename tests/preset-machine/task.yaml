@@ -1,0 +1,32 @@
+summary: Run concierge with the machine preset
+systems:
+  - ubuntu-24.04
+
+execute: |
+  pushd "${PROJECT_PATH}/tests/preset-machine"
+
+  "$PROJECT_PATH"/concierge -v -p machine
+
+  # Check that relevant snaps are installed
+  for s in juju lxd jq yq charmcraft snapcraft; do
+    snap list "$s" | MATCH $s
+  done
+
+  # Check the relevant debs are installed
+  command -v pip | MATCH /usr/bin/pip
+  python3 -m venv -h | head -n1 | grep -q -e "usage: venv"
+
+  # Ensure the juju controller is bootstrapped and has models
+  juju switch concierge-lxd:admin/testing
+  juju model-defaults | grep test-mode | tr -s " " | MATCH "test-mode false true"
+  juju model-defaults | grep automatically-retry-hooks | tr -s " " | MATCH "automatically-retry-hooks true false"
+
+restore: |
+  sudo snap remove juju --purge
+  sudo snap remove lxd --purge
+  sudo snap remove charmcraft --purge
+  sudo snap remove snapcraft --purge
+  sudo snap remove yq --purge
+  sudo snap remove jq --purge
+
+  sudo apt-get remove -y python3-pip python3-venv

@@ -1,0 +1,52 @@
+name: concierge
+version: "0.1.0"
+
+summary: A utility for configuring dev/test machines for charm development
+description: |
+  concierge is an opinionated utility for provisioning charm development and testing machines.
+
+  It's role is to ensure that a given machine has the relevant "craft" tools and providers installed,
+  then bootstrap a Juju controller onto each of the providers. Additionally, it can install selected
+  tools from the [snap store](https://snapcraft.io) or the Ubuntu archive.
+
+  Configuration is by flags/environment variables, or by configuration file. The configuration file
+  must be in the current working directory and named 'concierge.yaml', or the path specified using
+  the '-c' flag.
+
+  There are 3 presets available by default: 'machine', 'k8s' and 'dev'.
+
+  Some aspects of presets and config files can be overridden using flags such as '--juju-channel'.
+  Each of the override flags has an environment variable equivalent, such as 'CONCIERGE_JUJU_CHANNEL'.
+
+  More information at https://github.com/jnsgruk/concierge.
+
+license: Apache-2.0
+contact: https://github.com/jnsgruk/concierge/issues
+issues: https://github.com/jnsgruk/concierge/issues
+source-code: https://github.com/jnsgruk/concierge
+
+base: core24
+confinement: classic
+grade: stable
+compression: lzo
+
+platforms:
+  amd64:
+  arm64:
+
+parts:
+  concierge:
+    plugin: nil
+    source: https://github.com/jnsgruk/concierge
+    source-type: git
+    source-tag: "v$SNAPCRAFT_PROJECT_VERSION"
+    build-snaps:
+      - go
+    override-build: |
+      mkdir -p $SNAPCRAFT_PART_INSTALL/bin
+      go build \
+        -o $CRAFT_PART_INSTALL/concierge \
+        -ldflags="-X main.version=$SNAPCRAFT_PROJECT_VERSION -X main.commit=$(git rev-parse HEAD)"
+apps:
+  concierge:
+    command: concierge

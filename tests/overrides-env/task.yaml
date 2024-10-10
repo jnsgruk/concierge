@@ -1,0 +1,51 @@
+summary: Run concierge with the dev preset, and environment overrides
+systems:
+  - ubuntu-24.04
+
+execute: |
+  pushd "${PROJECT_PATH}/tests/overrides-env"
+
+  export CONCIERGE_JUJU_CHANNEL=3.6/beta
+  export CONCIERGE_CHARMCRAFT_CHANNEL=latest/edge
+  export CONCIERGE_ROCKCRAFT_CHANNEL=latest/edge
+  export CONCIERGE_SNAPCRAFT_CHANNEL=latest/edge
+  export CONCIERGE_LXD_CHANNEL=latest/candidate
+  export CONCIERGE_MICROK8S_CHANNEL=1.30-strict/candidate
+
+  export CONCIERGE_EXTRA_SNAPS="node/22/stable"
+  export CONCIERGE_EXTRA_DEBS="make"
+
+  "$PROJECT_PATH"/concierge -v -p dev
+
+  for i in charmcraft rockcraft snapcraft; do
+    list="$(snap list $i)"
+    echo $list | MATCH $i
+    echo $list | MATCH latest/edge
+  done
+
+  list="$(snap list juju)"
+  echo $list | MATCH 3.6/beta
+
+  list="$(snap list lxd)"
+  echo $list | MATCH latest/candidate
+
+  list="$(snap list microk8s)"
+  echo $list | MATCH 1.30-strict/candidate
+
+  list="$(snap list node)"
+  echo $list | MATCH 22/stable
+
+  which make
+
+restore: |
+  sudo snap remove juju --purge
+  sudo snap remove lxd --purge
+  sudo snap remove microk8s --purge
+  sudo snap remove charmcraft --purge
+  sudo snap remove rockcraft --purge
+  sudo snap remove snapcraft --purge
+  sudo snap remove node --purge
+  sudo snap remove yq --purge
+  sudo snap remove jq --purge
+
+  sudo apt-get remove -y python3-pip python3-venv make

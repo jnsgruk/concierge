@@ -1,0 +1,4 @@
+providers:
+  lxd:
+    enable: true
+    channel: latest/stable

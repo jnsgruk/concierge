@@ -1,0 +1,9 @@
+*.env
+*.json
+*.snap
+*.txt
+/concierge.yaml
+/concierge
+dist/
+.spread-reuse*.yaml
+

@@ -1,0 +1,37 @@
+summary: Run concierge with no providers, but add extra snaps
+systems:
+  - ubuntu-24.04
+
+execute: |
+  pushd "${PROJECT_PATH}/tests/extra-snaps"
+
+  # Test that extra snaps come in from the env var
+  export CONCIERGE_EXTRA_SNAPS="yq/latest/edge,node/22/stable"
+
+  # Create an empty config file
+  touch concierge.yaml
+
+  # Also add some extra snaps at the CLI
+  "$PROJECT_PATH"/concierge -v --extra-snaps "jq/latest/edge,astral-uv"
+
+  # Check that each of the snaps is installed as we expect
+  list="$(snap list jq)"
+  echo $list | MATCH jq
+  echo $list | MATCH latest/edge
+
+  list="$(snap list astral-uv)"
+  echo $list | MATCH astral-uv
+
+  list="$(snap list yq)"
+  echo $list | MATCH yq
+  echo $list | MATCH latest/edge
+
+  list="$(snap list node)"
+  echo $list | MATCH node
+  echo $list | MATCH 22/stable
+
+restore: |
+  sudo snap remove jq --purge
+  sudo snap remove astral-uv --purge
+  sudo snap remove yq --purge
+  sudo snap remove node --purge
