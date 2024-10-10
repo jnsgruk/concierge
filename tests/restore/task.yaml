@@ -1,0 +1,30 @@
+summary: Run concierge with the dev preset, then restore it
+systems:
+  - ubuntu-24.04
+
+execute: |
+  pushd "${PROJECT_PATH}/tests/restore"
+
+  # First, prepare the machine
+  "$PROJECT_PATH"/concierge -v prepare -p dev
+
+  # Ensure that the runtime configuration was dumped into the user's cache dir
+  ls ~/.cache/concierge/concierge.yaml
+
+  # Restore the machine
+  "$PROJECT_PATH"/concierge -v restore
+
+  # Check that relevant snaps are removed
+  list="$(snap list)"
+  for s in juju microk8s lxd kubectl jq yq charmcraft rockcraft snapcraft; do
+    echo "$list" | NOMATCH "$s"
+  done
+
+  # Check the relevant debs are removed
+  release="$(cat /etc/lsb-release | grep -Po "DISTRIB_CODENAME=\K.+")"
+  apt list --installed | NOMATCH "python3-pip/$release"
+  apt list --installed | NOMATCH "python3-venv/$release"
+
+  ls -la $HOME && NOMATCH .kube
+  ls -la $HOME/.local/share && NOMATCH juju
+  ls -la $HOME/.cache && NOMATCH concierge
