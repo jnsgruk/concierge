@@ -51,7 +51,7 @@ parts:
       mkdir -p $SNAPCRAFT_PART_INSTALL/bin
       go build \
         -o $CRAFT_PART_INSTALL/concierge \
-        -ldflags="-X main.version=$SNAPCRAFT_PROJECT_VERSION -X main.commit=$(git rev-parse HEAD)"
+        -ldflags="-X github.com/jnsgruk/concierge/cmd.version=$SNAPCRAFT_PROJECT_VERSION -X github.com/jnsgruk/concierge/cmd.commit=$(git rev-parse HEAD)"
 apps:
   concierge:
     command: concierge

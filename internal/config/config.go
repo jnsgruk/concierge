@@ -32,6 +32,7 @@ func NewConfig(cmd *cobra.Command, flags *pflag.FlagSet) (*Config, error) {
 	// Grab the relevant command line flags
 	configFile, _ := flags.GetString("config")
 	preset, _ := flags.GetString("preset")
+	verbose, _ := flags.GetBool("verbose")
 
 	if len(preset) > 0 {
 		conf, err = Preset(preset)
@@ -48,6 +49,7 @@ func NewConfig(cmd *cobra.Command, flags *pflag.FlagSet) (*Config, error) {
 	}
 
 	conf.Overrides = getOverrides(flags)
+	conf.Verbose = verbose
 
 	return conf, nil
 }

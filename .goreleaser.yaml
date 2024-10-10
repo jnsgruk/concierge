@@ -14,7 +14,7 @@ builds:
     goarch:
       - amd64
     ldflags:
-      - -X main.version={{ .Version }} -X main.commit={{ .Commit }} -X main.date={{ .CommitDate }}
+      - -X github.com/jnsgruk/concierge/cmd.version={{ .Version }} -X github.com/jnsgruk/concierge/cmd.commit={{ .Commit }}
 archives:
   # e.g. concierge_0.1.0_linux_aarch64.tar.gz, concierge_0.1.0_linux_x86_64.tar.gz
   - name_template: >-
