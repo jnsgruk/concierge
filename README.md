@@ -14,6 +14,9 @@ It's role is to ensure that a given machine has the relevant "craft" tools and p
 then bootstrap a Juju controller onto each of the providers. Additionally, it can install selected
 tools from the [snap store](https://snapcraft.io) or the Ubuntu archive.
 
+`concierge` also provides the facility to "restore" a machine to its pre-provisioned state if the
+tool has previously been run on the machine.
+
 ## Installation
 
 <!--
@@ -37,7 +40,7 @@ Or you can clone, build and run like so:
 git clone https://github.com/jnsgruk/concierge
 cd concierge
 go build -o concierge main.go
-./concierge
+./concierge -h
 ```
 
 ## Usage
@@ -65,21 +68,20 @@ More information at https://github.com/jnsgruk/concierge.
 
 Usage:
   concierge [flags]
+  concierge [command]
+
+Available Commands:
+  completion  Generate the autocompletion script for the specified shell
+  help        Help about any command
+  prepare     Provision the machine according to the configuration.
+  restore     Restore the machine to it's pre-provisioned state.
 
 Flags:
-      --charmcraft-channel string   override snap channel for charmcraft
-  -c, --config string               path to a specific config file to use
-      --extra-debs strings          comma-separated list of extra debs to install. E.g. 'make,python3-tox'
-      --extra-snaps strings         comma-separated list of extra snaps to install. Each item can simply be the name of a snap, but also include the channel. E.g. 'astral-uv/latest/edge,jhack'
-  -h, --help                        help for concierge
-      --juju-channel string         override the snap channel for juju
-      --lxd-channel string          override snap channel for lxd
-      --microk8s-channel string     override snap channel for microk8s
-  -p, --preset string               config preset to use (k8s | machine | dev)
-      --rockcraft-channel string    override snap channel for rockcraft
-      --snapcraft-channel string    override snap channel for snapcraft
-  -v, --verbose                     enable verbose logging
-      --version                     version for concierge
+  -h, --help      help for concierge
+  -v, --verbose   enable verbose logging
+      --version   version for concierge
+
+Use "concierge [command] --help" for more information about a command.
 ```
 
 Some flags can be set by environment variable, and if specified by flag and environment variable,
@@ -98,17 +100,20 @@ the environment variable version will always take precedent. The equivalents are
 
 ### Command Examples
 
+The best source of examples for how to invoke `concierge` can be found in the
+[tests](./tests/) directory, but otherwise:
+
 1. Run `concierge` using the `dev` preset, adding one additional snap, using CLI flags:
 
 ```bash
-concierge -p dev --extra-snaps node/22/stable
+concierge prepare -p dev --extra-snaps node/22/stable
 ```
 
-1. Run `concierge` using the `dev` preset, overriding the Juju channel:
+2. Run `concierge` using the `dev` preset, overriding the Juju channel:
 
 ```bash
 export CONCIERGE_JUJU_CHANNEL=3.6/beta
-concierge -p dev
+concierge prepare -p dev
 ```
 
 ## Configuration
@@ -117,11 +122,11 @@ concierge -p dev
 
 `concierge` comes with a number of presets that are likely to serve most charm development needs:
 
-| Preset Name | Purpose                          | Included                                                         |
-| :---------: | :------------------------------- | :--------------------------------------------------------------- |
-|    `dev`    | Dev testing of all charms        | `juju`, `microk8s`, `lxd` `snapcraft`, `charmcraft`, `rockcraft` |
-|    `k8s`    | Dev/testing of Kubernetes charms | `juju`, `microk8s`, `rockcraft`, `charmcraft`                    |
-|  `machine`  | Dev/testing of machine charms    | `juju`, `lxd`, `snapcraft`, `charmcraft`                         |
+| Preset Name | Included                                                         |
+| :---------: | :--------------------------------------------------------------- |
+|    `dev`    | `juju`, `microk8s`, `lxd` `snapcraft`, `charmcraft`, `rockcraft` |
+|    `k8s`    | `juju`, `microk8s`, `rockcraft`, `charmcraft`                    |
+|  `machine`  | `juju`, `lxd`, `snapcraft`, `charmcraft`                         |
 
 ### Config File
 
@@ -240,15 +245,7 @@ $ spread -list lxd:
 lxd:ubuntu-24.04:tests/extra-debs
 lxd:ubuntu-24.04:tests/extra-packages-config-file
 lxd:ubuntu-24.04:tests/extra-snaps
-lxd:ubuntu-24.04:tests/juju-model-defaults
-lxd:ubuntu-24.04:tests/overrides-env
-lxd:ubuntu-24.04:tests/overrides-priority
-lxd:ubuntu-24.04:tests/preset-dev
-lxd:ubuntu-24.04:tests/preset-k8s
-lxd:ubuntu-24.04:tests/preset-machine
-lxd:ubuntu-24.04:tests/provider-lxd
-lxd:ubuntu-24.04:tests/provider-microk8s
-lxd:ubuntu-24.04:tests/provider-none
+# ...
 ```
 
 From there, you can either run all of the tests, or a selection:
