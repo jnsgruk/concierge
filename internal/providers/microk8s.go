@@ -92,6 +92,33 @@ func (m *MicroK8s) GroupName() string {
 	}
 }
 
+// Remove uninstalls MicroK8s and kubectl.
+func (m *MicroK8s) Remove() error {
+	err := snap.NewSnapFromString("microk8s").Remove(true)
+	if err != nil {
+		return err
+	}
+
+	err = snap.NewSnapFromString("kubectl").Remove(true)
+	if err != nil {
+		return err
+	}
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("failed to determine user's home directory: %w", err)
+	}
+
+	err = os.RemoveAll(path.Join(home, ".kube"))
+	if err != nil {
+		return fmt.Errorf("failed to remove '.kube' subdirectory from user's home directory: %w", err)
+	}
+
+	slog.Info("Removed provider", "provider", m.Name())
+
+	return nil
+}
+
 // install ensures that MicroK8s is installed, minimally configured, and ready.
 func (m *MicroK8s) install() error {
 	err := snap.NewSnap("microk8s", m.Channel).Install()

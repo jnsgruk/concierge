@@ -66,6 +66,18 @@ func (l *LXD) GroupName() string {
 	return "lxd"
 }
 
+// Remove uninstalls LXD.
+func (l *LXD) Remove() error {
+	err := snap.NewSnapFromString("lxd").Remove(true)
+	if err != nil {
+		return err
+	}
+
+	slog.Info("Removed provider", "provider", l.Name())
+
+	return nil
+}
+
 // install ensures that LXD is installed, minimally configured, and ready.
 func (l *LXD) install() error {
 	err := snap.NewSnap("lxd", l.Channel).Install()

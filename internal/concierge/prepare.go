@@ -11,11 +11,17 @@ import (
 	"github.com/jnsgruk/concierge/internal/providers"
 	"github.com/jnsgruk/concierge/internal/snap"
 	"golang.org/x/sync/errgroup"
+	"gopkg.in/yaml.v3"
 )
 
 // Prepare runs the steps required for provisioning the machine according to
 // the config.
 func (m *Manager) Prepare() error {
+	err := m.recordRuntimeConfig()
+	if err != nil {
+		return fmt.Errorf("failed to record config file: %w", err)
+	}
+
 	var eg errgroup.Group
 
 	// Install snaps in one goroutine
@@ -151,4 +157,33 @@ func (m *Manager) getSnapChannelOverride(snap string) string {
 	default:
 		return ""
 	}
+}
+
+// recordRuntimeConfig dumps the current manager config into a file in the user's home
+// directory, such that it can be read later and used to restore the machine.
+func (m *Manager) recordRuntimeConfig() error {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("failed to determine user's home directory: %w", err)
+	}
+
+	err = os.MkdirAll(path.Join(home, ".cache", "concierge"), os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("failed to create '.cache/concierge' subdirectory in user's home directory: %w", err)
+	}
+
+	configYaml, err := yaml.Marshal(m.config)
+	if err != nil {
+		return fmt.Errorf("failed to marshal config file as yaml: %w", err)
+	}
+
+	recordPath := path.Join(home, ".cache", "concierge", "concierge.yaml")
+
+	if err := os.WriteFile(recordPath, configYaml, 0644); err != nil {
+		return fmt.Errorf("failed to write config record file: %w", err)
+	}
+
+	slog.Debug("merged runtime configuration saved", "path", recordPath)
+
+	return nil
 }

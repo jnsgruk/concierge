@@ -62,6 +62,28 @@ func (j Juju) Init() error {
 	return nil
 }
 
+// Remove uninstalls Juju from the system.
+func (j Juju) Remove() error {
+	err := snap.NewSnap("juju", j.Channel).Remove(true)
+	if err != nil {
+		return err
+	}
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("failed to determine user's home directory: %w", err)
+	}
+
+	err = os.RemoveAll(path.Join(home, ".local", "share", "juju"))
+	if err != nil {
+		return fmt.Errorf("failed to remove '.local/share/juju' subdirectory from user's home directory: %w", err)
+	}
+
+	slog.Info("Removed Juju")
+
+	return nil
+}
+
 // install ensures the Juju snap is installed and tracking the specified channel.
 func (j Juju) install() error {
 	err := snap.NewSnap("juju", j.Channel).Install()

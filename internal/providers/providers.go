@@ -5,6 +5,8 @@ package providers
 type Provider interface {
 	// Init is used for installing/configuring the provider.
 	Init() error
+	// Remove is used for uninstalling the provider.
+	Remove() error
 	// Name reports the name of the provider used internally by concierge.
 	Name() string
 	// CloudName reports name of the provider as Juju sees it.
