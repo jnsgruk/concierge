@@ -12,7 +12,7 @@ execute: |
   touch concierge.yaml
 
   # Also add some extra snaps at the CLI
-  "$PROJECT_PATH"/concierge -v --extra-snaps "jq/latest/edge,astral-uv"
+  "$PROJECT_PATH"/concierge -v prepare --extra-snaps "jq/latest/edge,astral-uv"
 
   # Check that each of the snaps is installed as we expect
   list="$(snap list jq)"
@@ -32,8 +32,5 @@ execute: |
 
 restore: |
   if [[ -z "${CI:-}" ]]; then
-    sudo snap remove jq --purge
-    sudo snap remove astral-uv --purge
-    sudo snap remove yq --purge
-    sudo snap remove node --purge
+    "$PROJECT_PATH"/concierge -v restore
   fi

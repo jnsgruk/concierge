@@ -15,7 +15,7 @@ execute: |
   export CONCIERGE_EXTRA_SNAPS="node/22/stable"
   export CONCIERGE_EXTRA_DEBS="make"
 
-  "$PROJECT_PATH"/concierge -v -p dev
+  "$PROJECT_PATH"/concierge -v prepare -p dev
 
   for i in charmcraft rockcraft snapcraft; do
     list="$(snap list $i)"
@@ -39,18 +39,5 @@ execute: |
 
 restore: |
   if [[ -z "${CI:-}" ]]; then
-    sudo snap remove juju --purge
-    sudo snap remove lxd --purge
-    sudo snap remove microk8s --purge
-    sudo snap remove kubectl --purge
-    sudo snap remove charmcraft --purge
-    sudo snap remove rockcraft --purge
-    sudo snap remove snapcraft --purge
-    sudo snap remove node --purge
-    sudo snap remove yq --purge
-    sudo snap remove jq --purge
-
-    sudo apt-get remove -y python3-pip python3-venv make
-
-    rm -rf $HOME/.kube
+    "$PROJECT_PATH"/concierge -v restore
   fi

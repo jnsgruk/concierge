@@ -5,7 +5,7 @@ systems:
 execute: |
   pushd "${PROJECT_PATH}/tests/juju-model-defaults"
 
-  "$PROJECT_PATH"/concierge -v
+  "$PROJECT_PATH"/concierge -v prepare
 
   juju controllers | tail -n1 | MATCH concierge-microk8s
   juju models | tail -n1 | MATCH testing
@@ -15,8 +15,5 @@ execute: |
 
 restore: |
   if [[ -z "${CI:-}" ]]; then
-    sudo snap remove juju --purge
-    sudo snap remove microk8s --purge
-    sudo snap remove kubectl --purge
-    rm -rf $HOME/.kube
+    "$PROJECT_PATH"/concierge -v restore
   fi

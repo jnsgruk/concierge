@@ -5,7 +5,7 @@ systems:
 execute: |
   pushd "${PROJECT_PATH}/tests/provider-lxd"
 
-  "$PROJECT_PATH"/concierge -v
+  "$PROJECT_PATH"/concierge -v prepare
 
   list="$(snap list lxd)"
   echo $list | MATCH lxd
@@ -19,6 +19,5 @@ execute: |
 
 restore: |
   if [[ -z "${CI:-}" ]]; then
-    sudo snap remove juju --purge
-    sudo snap remove lxd --purge
+    "$PROJECT_PATH"/concierge -v restore
   fi

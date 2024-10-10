@@ -5,7 +5,7 @@ systems:
 execute: |
   pushd "${PROJECT_PATH}/tests/extra-packages-config-file"
 
-  "$PROJECT_PATH"/concierge -v
+  "$PROJECT_PATH"/concierge -v prepare
 
   command -v pip | MATCH /usr/bin/pip
   python3 -m venv -h | head -n1 | grep -q -e "usage: venv"
@@ -16,7 +16,5 @@ execute: |
 
 restore: |
   if [[ -z "${CI:-}" ]]; then
-    sudo apt-get remove -y python3-venv python3-pip
-    sudo snap remove --purge charmcraft
-    sudo snap remove --purge jq
+    "$PROJECT_PATH"/concierge -v restore
   fi

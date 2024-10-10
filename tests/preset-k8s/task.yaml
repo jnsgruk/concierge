@@ -5,7 +5,7 @@ systems:
 execute: |
   pushd "${PROJECT_PATH}/tests/preset-k8s"
 
-  "$PROJECT_PATH"/concierge -v -p k8s
+  "$PROJECT_PATH"/concierge -v prepare -p k8s
 
   # Check that relevant snaps are installed
   for s in juju microk8s kubectl jq yq charmcraft rockcraft; do
@@ -31,15 +31,5 @@ execute: |
 
 restore: |
   if [[ -z "${CI:-}" ]]; then
-    sudo snap remove juju --purge
-    sudo snap remove microk8s --purge
-    sudo snap remove kubectl --purge
-    sudo snap remove charmcraft --purge
-    sudo snap remove rockcraft --purge
-    sudo snap remove yq --purge
-    sudo snap remove jq --purge
-
-    sudo apt-get remove -y python3-pip python3-venv
-
-    rm -rf $HOME/.kube
+    "$PROJECT_PATH"/concierge -v restore
   fi

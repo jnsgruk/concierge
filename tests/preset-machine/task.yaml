@@ -5,7 +5,7 @@ systems:
 execute: |
   pushd "${PROJECT_PATH}/tests/preset-machine"
 
-  "$PROJECT_PATH"/concierge -v -p machine
+  "$PROJECT_PATH"/concierge -v prepare -p machine
 
   # Check that relevant snaps are installed
   for s in juju lxd jq yq charmcraft snapcraft; do
@@ -23,12 +23,5 @@ execute: |
 
 restore: |
   if [[ -z "${CI:-}" ]]; then
-    sudo snap remove juju --purge
-    sudo snap remove lxd --purge
-    sudo snap remove charmcraft --purge
-    sudo snap remove snapcraft --purge
-    sudo snap remove yq --purge
-    sudo snap remove jq --purge
-
-    sudo apt-get remove -y python3-pip python3-venv
+    "$PROJECT_PATH"/concierge -v restore
   fi
