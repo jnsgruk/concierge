@@ -1,0 +1,104 @@
+project: concierge
+kill-timeout: 90m
+workers: 1
+
+environment:
+  LANG: "C.UTF-8"
+  LANGUAGE: "en"
+
+  CI: "$(HOST: echo $CI)"
+  PROJECT_PATH: /root/proj
+  CRAFT_TEST_PATH: /root/proj/tests/
+
+backends:
+  lxd:
+    type: adhoc
+    allocate: |
+      BASE="${BASE:-noble}"
+      VM_NAME="${VM_NAME:-ubuntu-${BASE}-${RANDOM}}"
+      DISK="${DISK:-20}"
+      CPU="${CPU:-4}"
+      MEM="${MEM:-8}"
+
+      lxc launch --vm \
+        "ubuntu:${BASE}" \
+        "${VM_NAME}" \
+        -c user.user-data="$(cat tests/cloud-config.yaml)" \
+        -c limits.cpu="${CPU}" \
+        -c limits.memory="${MEM}GiB" \
+        -d root,size="${DISK}GiB"
+
+      # Wait for the spread user
+      while ! lxc exec "${VM_NAME}" -- id -u spread &>/dev/null; do sleep 0.5; done
+
+      # Set the instance address for spread
+      ADDRESS "$(lxc ls -f csv | grep "${VM_NAME}" | cut -d"," -f3 | cut -d" " -f1)"
+    discard: |
+      instance_name="$(lxc ls -f csv | grep $SPREAD_SYSTEM_ADDRESS | cut -f1 -d",")"
+      lxc delete -f $instance_name
+
+    systems:
+      - ubuntu-24.04:
+          username: spread
+          password: spread
+          workers: 1
+
+  github-ci:
+    type: adhoc
+    manual: true
+    allocate: |
+      sudo sed -i "s|#PasswordAuthentication yes|PasswordAuthentication yes|g" /etc/ssh/sshd_config
+      sudo sed -i "s|KbdInteractiveAuthentication no|KbdInteractiveAuthentication yes|g" /etc/ssh/sshd_config
+      sudo rm -f /etc/ssh/sshd_config.d/60-cloudimg-settings.conf
+      sudo systemctl daemon-reload
+      sudo systemctl restart ssh
+
+      sudo useradd spread -s /bin/bash -m || true
+      echo "spread:spread" | sudo chpasswd || true
+      echo 'spread ALL=(ALL) NOPASSWD:ALL ' | sudo tee /etc/sudoers.d/99-spread-user || true
+
+      ADDRESS "127.0.0.1"
+    discard: |
+      sudo userdel -f -r spread || true
+      sudo rm -f /etc/sudoers.d/99-spread-user
+
+    systems:
+      - ubuntu-24.04:
+          username: spread
+          password: spread
+          workers: 1
+
+suites:
+  tests/:
+    summary: Spread tests
+
+exclude:
+  - dist/
+  - .git
+  - .github
+
+# this needs to be under /root because spread executes the test scripts
+# as root, which means that juju can only see files in root's
+# home directory due to snap confinement.
+path: /root/proj
+
+prepare: |
+  snap refresh --hold
+  if systemctl is-enabled unattended-upgrades.service; then
+    systemctl stop unattended-upgrades.service
+    systemctl mask unattended-upgrades.service
+  fi
+
+  pushd "$PROJECT_PATH"
+
+  if [[ -f "$PWD/concierge" ]]; then
+    chown $(id -u):$(id -g) "$PWD/concierge"
+    chmod a+x "$PWD/concierge"
+  fi
+
+  if [[ ! -f "$PWD/concierge" ]]; then
+    sudo snap install go --classic
+    export CGO_ENABLED=0
+    go build -o concierge main.go
+    chmod 755 concierge
+  fi

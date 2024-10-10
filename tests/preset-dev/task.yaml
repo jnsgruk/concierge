@@ -1,0 +1,49 @@
+summary: Run concierge with the dev preset
+systems:
+  - ubuntu-24.04
+
+execute: |
+  pushd "${PROJECT_PATH}/tests/preset-dev"
+
+  "$PROJECT_PATH"/concierge -v -p dev
+
+  # Check that relevant snaps are installed
+  for s in juju microk8s lxd kubectl jq yq charmcraft rockcraft snapcraft; do
+    snap list "$s" | MATCH $s
+  done
+
+  # Check the relevant debs are installed
+  command -v pip | MATCH /usr/bin/pip
+  python3 -m venv -h | head -n1 | grep -q -e "usage: venv"
+
+  # Ensure MicroK8s is configured as expected
+  sudo microk8s status --format yaml | yq '.addons[] | select(.name=="hostpath-storage") | .status'
+  sudo microk8s status --format yaml | yq '.addons[] | select(.name=="dns") | .status'
+  sudo microk8s status --format yaml | yq '.addons[] | select(.name=="metallb") | .status'
+
+  # Ensure that kubectl was configured correctly
+  kubectl config current-context | MATCH "microk8s"
+
+  # Ensure the juju controllers are bootstrapped and have models
+  for i in concierge-microk8s:admin/testing concierge-lxd:admin/testing; do
+    juju switch $i
+    juju model-defaults | grep test-mode | tr -s " " | MATCH "test-mode false true"
+    juju model-defaults | grep automatically-retry-hooks | tr -s " " | MATCH "automatically-retry-hooks true false"
+  done
+
+restore: |
+  if [[ -z "${CI:-}" ]]; then
+    sudo snap remove juju --purge
+    sudo snap remove lxd --purge
+    sudo snap remove microk8s --purge
+    sudo snap remove kubectl --purge
+    sudo snap remove charmcraft --purge
+    sudo snap remove rockcraft --purge
+    sudo snap remove snapcraft --purge
+    sudo snap remove yq --purge
+    sudo snap remove jq --purge
+
+    sudo apt-get remove -y python3-pip python3-venv
+
+    rm -rf $HOME/.kube
+  fi

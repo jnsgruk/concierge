@@ -1,0 +1,16 @@
+summary: Run concierge with no providers, packages, or snaps
+systems:
+  - ubuntu-24.04
+
+execute: |
+  pushd "${PROJECT_PATH}/tests/provider-none"
+
+  "$PROJECT_PATH"/concierge -v
+
+  snap list juju | MATCH juju
+  snap list juju | MATCH 3.5/stable
+
+restore: |
+  if [[ -z "${CI:-}" ]]; then
+    sudo snap remove juju --purge
+  fi

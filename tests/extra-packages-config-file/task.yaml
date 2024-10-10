@@ -1,0 +1,22 @@
+summary: Run concierge with no providers, but add extra snaps/debs from config
+systems:
+  - ubuntu-24.04
+
+execute: |
+  pushd "${PROJECT_PATH}/tests/extra-packages-config-file"
+
+  "$PROJECT_PATH"/concierge -v
+
+  command -v pip | MATCH /usr/bin/pip
+  python3 -m venv -h | head -n1 | grep -q -e "usage: venv"
+
+  list="$(snap list)"
+  echo $list | MATCH charmcraft
+  echo $list | MATCH jq
+
+restore: |
+  if [[ -z "${CI:-}" ]]; then
+    sudo apt-get remove -y python3-venv python3-pip
+    sudo snap remove --purge charmcraft
+    sudo snap remove --purge jq
+  fi

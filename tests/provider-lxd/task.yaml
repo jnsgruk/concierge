@@ -1,0 +1,24 @@
+summary: Run concierge with just a LXD provider
+systems:
+  - ubuntu-24.04
+
+execute: |
+  pushd "${PROJECT_PATH}/tests/provider-lxd"
+
+  "$PROJECT_PATH"/concierge -v
+
+  list="$(snap list lxd)"
+  echo $list | MATCH lxd
+  echo $list | MATCH latest/stable
+
+  list="$(snap list juju)"
+  echo $list | MATCH juju
+
+  juju controllers | tail -n1 | MATCH concierge-lxd
+  juju models | tail -n1 | MATCH testing
+
+restore: |
+  if [[ -z "${CI:-}" ]]; then
+    sudo snap remove juju --purge
+    sudo snap remove lxd --purge
+  fi

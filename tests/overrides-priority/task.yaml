@@ -1,0 +1,21 @@
+summary: Run concierge with the dev preset, and environment overrides
+systems:
+  - ubuntu-24.04
+
+execute: |
+  pushd "${PROJECT_PATH}/tests/overrides-priority"
+
+  export CONCIERGE_EXTRA_SNAPS="node/22/stable"
+
+  "$PROJECT_PATH"/concierge -v --extra-snaps="node/21/stable"
+
+  list="$(snap list node)"
+  echo $list | MATCH 22/stable
+
+  which make
+
+restore: |
+  if [[ -z "${CI:-}" ]]; then
+    sudo snap remove juju --purge
+    sudo snap remove node --purge
+  fi

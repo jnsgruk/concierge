@@ -1,0 +1,48 @@
+version: 2
+project_name: concierge
+before:
+  hooks:
+    - go mod tidy
+builds:
+  - main: .
+    binary: concierge
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+    ldflags:
+      - -X main.version={{ .Version }} -X main.commit={{ .Commit }} -X main.date={{ .CommitDate }}
+archives:
+  # e.g. concierge_0.1.0_linux_aarch64.tar.gz, concierge_0.1.0_linux_x86_64.tar.gz
+  - name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      {{- .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "arm64" }}aarch64
+      {{- else }}{{ .Arch }}{{ end }}
+    files:
+      - "LICENSE*"
+      - "README*"
+
+checksum:
+  name_template: "checksums.txt"
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+release:
+  prerelease: auto
+  # Defaults to empty.
+  footer: |
+    ## Thanks!
+
+    That's all the changes for {{ .Tag }}!
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - "^test:"
+      - "^ci:"
