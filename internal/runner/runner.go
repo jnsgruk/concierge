@@ -45,14 +45,11 @@ func (r *Runner) Run(c *Command) (*CommandResult, error) {
 	logger.Debug("running command", "command", fmt.Sprintf("%s %s", path, strings.Join(c.Args, " ")))
 	err = cmd.Run()
 
-	return &CommandResult{Stdout: stdout, Stderr: stderr}, err
-}
+	if r.trace {
+		fmt.Print(generateTraceMessage(c.commandString(), stdout.String(), stderr.String()))
 	}
 
-	cmdArgs = append(cmdArgs, c.Executable)
-	cmdArgs = append(cmdArgs, c.Args...)
-
-	return strings.Join(cmdArgs, " ")
+	return &CommandResult{Stdout: stdout, Stderr: stderr}, err
 }
 
 // RunCommands takes a variadic number of Command's, and runs them in a loop, returning
@@ -65,4 +62,20 @@ func (r *Runner) RunCommands(commands ...*Command) error {
 		}
 	}
 	return nil
+}
+
+// generateTraceMessage creates a formatted string that is written to stdout, representing
+// a command and it's output when concierge is run with `--trace`.
+func generateTraceMessage(cmd, stdout, stderr string) string {
+	green := color.New(color.FgGreen, color.Bold, color.Underline)
+	bold := color.New(color.Bold)
+
+	result := fmt.Sprintf("%s %s\n", green.Sprintf("Command:"), bold.Sprintf(cmd))
+	if len(stdout) > 0 {
+		result = fmt.Sprintf("%s%s\n%s", result, green.Sprintf("Stdout:"), stdout)
+	}
+	if len(stderr) > 0 {
+		result = fmt.Sprintf("%s%s\n%s", result, green.Sprintf("Stderr:"), stderr)
+	}
+	return result
 }

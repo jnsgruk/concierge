@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 var (
@@ -36,6 +37,7 @@ More information at https://github.com/jnsgruk/concierge.
 func init() {
 	flags := rootCmd.PersistentFlags()
 	flags.BoolP("verbose", "v", false, "enable verbose logging")
+	flags.Bool("trace", false, "enable trace logging")
 }
 
 var rootCmd = &cobra.Command{
@@ -46,9 +48,7 @@ var rootCmd = &cobra.Command{
 	SilenceErrors: true,
 	SilenceUsage:  true,
 	PreRun: func(cmd *cobra.Command, args []string) {
-		flags := cmd.Flags()
-		verbose, _ := flags.GetBool("verbose")
-		setupLogging(verbose)
+		parseLoggingFlags(cmd.Flags())
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.Help()
@@ -63,12 +63,15 @@ func Execute() {
 	}
 }
 
-func setupLogging(verbose bool) {
+func parseLoggingFlags(flags *pflag.FlagSet) {
+	verbose, _ := flags.GetBool("verbose")
+	trace, _ := flags.GetBool("trace")
+
 	logLevel := new(slog.LevelVar)
 
-	// Set the default log level to "INFO", and "DEBUG" if verbose is specified.
+	// Set the default log level to "DEBUG" if verbose is specified.
 	level := slog.LevelInfo
-	if verbose {
+	if !verbose && trace {
 		level = slog.LevelDebug
 	}
 

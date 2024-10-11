@@ -20,9 +20,7 @@ var restoreCmd = &cobra.Command{
 	SilenceErrors: true,
 	SilenceUsage:  true,
 	PreRun: func(cmd *cobra.Command, args []string) {
-		flags := cmd.Flags()
-		verbose, _ := flags.GetBool("verbose")
-		setupLogging(verbose)
+		parseLoggingFlags(cmd.Flags())
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		flags := cmd.Flags()

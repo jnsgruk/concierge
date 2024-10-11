@@ -9,6 +9,7 @@ type Config struct {
 	// The following are added at runtime according to CLI flags
 	Overrides ConfigOverrides `mapstructure:"overrides"`
 	Verbose   bool            `mapstructure:"verbose"`
+	Trace     bool            `mapstructure:"trace"`
 }
 
 // jujuConfig represents the configuration for juju, including the desired version,

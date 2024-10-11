@@ -78,6 +78,7 @@ Available Commands:
 
 Flags:
   -h, --help      help for concierge
+      --trace     enable trace logging
   -v, --verbose   enable verbose logging
       --version   version for concierge
 
