@@ -76,6 +76,7 @@ jobs:
       - binaries
       - define-matrix
     strategy:
+      fail-fast: false
       matrix:
         suite: ${{ fromJSON(needs.define-matrix.outputs.suites) }}
     steps:
