@@ -23,7 +23,7 @@ func init() {
 	flags.StringSlice(
 		"extra-snaps",
 		[]string{},
-		"comma-separated list of extra snaps to install. Each item can simply be the name of a snap, but also include the channel. E.g. 'astral-uv/latest/edge,jhack'",
+		"comma-separated list of extra snaps to install. E.g. 'astral-uv/latest/edge,jhack'",
 	)
 
 	flags.StringSlice(
