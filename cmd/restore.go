@@ -1,7 +1,10 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/jnsgruk/concierge/internal/concierge"
+	"github.com/jnsgruk/concierge/internal/config"
 	"github.com/spf13/cobra"
 )
 
@@ -17,12 +20,17 @@ var restoreCmd = &cobra.Command{
 	SilenceErrors: true,
 	SilenceUsage:  true,
 	PreRun: func(cmd *cobra.Command, args []string) {
-		flags := cmd.Flags()
-		verbose, _ := flags.GetBool("verbose")
-		setupLogging(verbose)
+		parseLoggingFlags(cmd.Flags())
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		mgr := &concierge.Manager{}
+		flags := cmd.Flags()
+
+		conf, err := config.NewConfig(cmd, flags)
+		if err != nil {
+			return fmt.Errorf("failed to configure concierge: %w", err)
+		}
+
+		mgr := concierge.NewManager(conf)
 		return mgr.Restore()
 	},
 }

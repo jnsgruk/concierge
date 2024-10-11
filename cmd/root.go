@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 var (
@@ -13,48 +14,35 @@ var (
 	commit  string = "dev"
 )
 
-var shortDesc string = "A utility for configuring dev/test machines for charm development."
-var longDesc string = `concierge is an opinionated utility for provisioning charm development and testing machines.
+var rootLongDesc string = `concierge is an opinionated utility for provisioning charm development and testing machines.
 
 It's role is to ensure that a given machine has the relevant "craft" tools and providers installed,
 then bootstrap a Juju controller onto each of the providers. Additionally, it can install selected
 tools from the [snap store](https://snapcraft.io) or the Ubuntu archive.
-
-Configuration is by flags/environment variables, or by configuration file. The configuration file
-must be in the current working directory and named 'concierge.yaml', or the path specified using
-the '-c' flag.
-
-There are 3 presets available by default: 'machine', 'k8s' and 'dev'.
-
-Some aspects of presets and config files can be overridden using flags such as '--juju-channel'.
-Each of the override flags has an environment variable equivalent, 
-such as 'CONCIERGE_JUJU_CHANNEL'.
-
-More information at https://github.com/jnsgruk/concierge.
 `
 
 func init() {
 	flags := rootCmd.PersistentFlags()
 	flags.BoolP("verbose", "v", false, "enable verbose logging")
+	flags.Bool("trace", false, "enable trace logging")
 }
 
 var rootCmd = &cobra.Command{
 	Use:           "concierge",
 	Version:       fmt.Sprintf("%s (%s)", version, commit),
-	Short:         shortDesc,
-	Long:          longDesc,
+	Short:         "A utility for configuring dev/test machines for charm development.",
+	Long:          rootLongDesc,
 	SilenceErrors: true,
 	SilenceUsage:  true,
 	PreRun: func(cmd *cobra.Command, args []string) {
-		flags := cmd.Flags()
-		verbose, _ := flags.GetBool("verbose")
-		setupLogging(verbose)
+		parseLoggingFlags(cmd.Flags())
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.Help()
 	},
 }
 
+// Execute runs the root command and exits the program if it fails.
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
@@ -63,12 +51,15 @@ func Execute() {
 	}
 }
 
-func setupLogging(verbose bool) {
+func parseLoggingFlags(flags *pflag.FlagSet) {
+	verbose, _ := flags.GetBool("verbose")
+	trace, _ := flags.GetBool("trace")
+
 	logLevel := new(slog.LevelVar)
 
-	// Set the default log level to "INFO", and "DEBUG" if verbose is specified.
+	// Set the default log level to "DEBUG" if verbose is specified.
 	level := slog.LevelInfo
-	if verbose {
+	if !verbose && trace {
 		level = slog.LevelDebug
 	}
 

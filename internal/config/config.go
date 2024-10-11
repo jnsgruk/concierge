@@ -33,6 +33,7 @@ func NewConfig(cmd *cobra.Command, flags *pflag.FlagSet) (*Config, error) {
 	configFile, _ := flags.GetString("config")
 	preset, _ := flags.GetString("preset")
 	verbose, _ := flags.GetBool("verbose")
+	trace, _ := flags.GetBool("trace")
 
 	if len(preset) > 0 {
 		conf, err = Preset(preset)
@@ -50,6 +51,7 @@ func NewConfig(cmd *cobra.Command, flags *pflag.FlagSet) (*Config, error) {
 
 	conf.Overrides = getOverrides(flags)
 	conf.Verbose = verbose
+	conf.Trace = trace
 
 	return conf, nil
 }

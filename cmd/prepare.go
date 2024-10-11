@@ -35,17 +35,30 @@ func init() {
 	rootCmd.AddCommand(prepareCmd)
 }
 
+var prepareLongDesc = `Provision the machine according to the configuration.
+
+Configuration is by flags/environment variables, or by configuration file. The configuration file
+must be in the current working directory and named 'concierge.yaml', or the path specified using
+the '-c' flag.
+
+There are 3 presets available by default: 'machine', 'k8s' and 'dev'.
+
+Some aspects of presets and config files can be overridden using flags such as '--juju-channel'.
+Each of the override flags has an environment variable equivalent, 
+such as 'CONCIERGE_JUJU_CHANNEL'.
+
+More information at https://github.com/jnsgruk/concierge.
+`
+
 // prepareCmd represents the restore subcommand
 var prepareCmd = &cobra.Command{
 	Use:           "prepare",
 	Short:         "Provision the machine according to the configuration.",
-	Long:          "Provision the machine according to the configuration.",
+	Long:          prepareLongDesc,
 	SilenceErrors: true,
 	SilenceUsage:  true,
 	PreRun: func(cmd *cobra.Command, args []string) {
-		flags := cmd.Flags()
-		verbose, _ := flags.GetBool("verbose")
-		setupLogging(verbose)
+		parseLoggingFlags(cmd.Flags())
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		flags := cmd.Flags()
@@ -63,7 +76,7 @@ var prepareCmd = &cobra.Command{
 			return fmt.Errorf("failed to configure concierge: %w", err)
 		}
 
-		mgr, err := concierge.NewManager(conf), nil
+		mgr := concierge.NewManager(conf)
 
 		return mgr.Prepare()
 	},

@@ -18,8 +18,6 @@ func TestGetSnapChannelOverride(t *testing.T) {
 	config.Overrides.RockcraftChannel = "latest/edge"
 	config.Overrides.SnapcraftChannel = "latest/edge"
 
-	m := &Manager{config: config}
-
 	tests := []test{
 		{snap: "snapcraft", expected: "latest/edge"},
 		{snap: "rockcraft", expected: "latest/edge"},
@@ -28,7 +26,7 @@ func TestGetSnapChannelOverride(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		override := m.getSnapChannelOverride(tc.snap)
+		override := getSnapChannelOverride(config, tc.snap)
 		if !reflect.DeepEqual(tc.expected, override) {
 			t.Fatalf("expected: %v, got: %v", tc.expected, override)
 		}

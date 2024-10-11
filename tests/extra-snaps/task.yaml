@@ -12,7 +12,7 @@ execute: |
   touch concierge.yaml
 
   # Also add some extra snaps at the CLI
-  "$PROJECT_PATH"/concierge -v prepare --extra-snaps "jq/latest/edge,astral-uv"
+  "$PROJECT_PATH"/concierge --trace prepare --extra-snaps "jq/latest/edge,astral-uv"
 
   # Check that each of the snaps is installed as we expect
   list="$(snap list jq)"
@@ -32,5 +32,5 @@ execute: |
 
 restore: |
   if [[ -z "${CI:-}" ]]; then
-    "$PROJECT_PATH"/concierge -v restore
+    "$PROJECT_PATH"/concierge --trace restore
   fi

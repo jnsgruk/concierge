@@ -5,12 +5,12 @@ systems:
 execute: |
   pushd "${PROJECT_PATH}/tests/provider-none"
 
-  "$PROJECT_PATH"/concierge -v prepare
+  "$PROJECT_PATH"/concierge --trace prepare
 
   snap list juju | MATCH juju
   snap list juju | MATCH 3.5/stable
 
 restore: |
   if [[ -z "${CI:-}" ]]; then
-    "$PROJECT_PATH"/concierge -v restore
+    "$PROJECT_PATH"/concierge --trace restore
   fi

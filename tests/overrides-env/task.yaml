@@ -15,7 +15,7 @@ execute: |
   export CONCIERGE_EXTRA_SNAPS="node/22/stable"
   export CONCIERGE_EXTRA_DEBS="make"
 
-  "$PROJECT_PATH"/concierge -v prepare -p dev
+  "$PROJECT_PATH"/concierge --trace prepare -p dev
 
   for i in charmcraft rockcraft snapcraft; do
     list="$(snap list $i)"
@@ -39,5 +39,5 @@ execute: |
 
 restore: |
   if [[ -z "${CI:-}" ]]; then
-    "$PROJECT_PATH"/concierge -v restore
+    "$PROJECT_PATH"/concierge --trace restore
   fi
