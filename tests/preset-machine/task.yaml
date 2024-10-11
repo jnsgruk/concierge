@@ -5,7 +5,7 @@ systems:
 execute: |
   pushd "${PROJECT_PATH}/tests/preset-machine"
 
-  "$PROJECT_PATH"/concierge -v prepare -p machine
+  "$PROJECT_PATH"/concierge --trace prepare -p machine
 
   # Check that relevant snaps are installed
   for s in juju lxd jq yq charmcraft snapcraft; do
@@ -23,5 +23,5 @@ execute: |
 
 restore: |
   if [[ -z "${CI:-}" ]]; then
-    "$PROJECT_PATH"/concierge -v restore
+    "$PROJECT_PATH"/concierge --trace restore
   fi

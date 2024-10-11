@@ -12,7 +12,7 @@ execute: |
   export CONCIERGE_EXTRA_DEBS="make,fortune"
 
   # Also add some extra debs at the CLI
-  "$PROJECT_PATH"/concierge -v prepare --extra-debs "cowsay"
+  "$PROJECT_PATH"/concierge --trace prepare --extra-debs "cowsay"
 
   export PATH="/usr/games:$PATH"
 
@@ -23,5 +23,5 @@ execute: |
 
 restore: |
   if [[ -z "${CI:-}" ]]; then
-    "$PROJECT_PATH"/concierge -v restore
+    "$PROJECT_PATH"/concierge --trace restore
   fi

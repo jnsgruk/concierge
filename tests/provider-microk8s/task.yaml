@@ -5,7 +5,7 @@ systems:
 execute: |
   pushd "${PROJECT_PATH}/tests/provider-microk8s"
 
-  "$PROJECT_PATH"/concierge -v prepare --extra-snaps="yq"
+  "$PROJECT_PATH"/concierge --trace prepare --extra-snaps="yq"
 
   list="$(snap list microk8s)"
   echo $list | MATCH microk8s
@@ -26,5 +26,5 @@ execute: |
 
 restore: |
   if [[ -z "${CI:-}" ]]; then
-    "$PROJECT_PATH"/concierge -v restore
+    "$PROJECT_PATH"/concierge --trace restore
   fi

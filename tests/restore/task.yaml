@@ -6,13 +6,13 @@ execute: |
   pushd "${PROJECT_PATH}/tests/restore"
 
   # First, prepare the machine
-  "$PROJECT_PATH"/concierge -v prepare -p dev
+  "$PROJECT_PATH"/concierge --trace prepare -p dev
 
   # Ensure that the runtime configuration was dumped into the user's cache dir
   ls ~/.cache/concierge/concierge.yaml
 
   # Restore the machine
-  "$PROJECT_PATH"/concierge -v restore
+  "$PROJECT_PATH"/concierge --trace restore
 
   # Check that relevant snaps are removed
   list="$(snap list)"
