@@ -32,7 +32,7 @@ type Snap struct {
 
 // Installed is a helper that reports if the snap is currently Installed.
 func (s *Snap) Installed() bool {
-	slog.Debug("querying snap install status", "snap", s.Name)
+	slog.Debug("Querying snap install status", "snap", s.Name)
 
 	snap, _, err := snapdClient.New(nil).Snap(s.Name)
 	if err != nil {
@@ -45,7 +45,7 @@ func (s *Snap) Installed() bool {
 // Classic reports whether or not the snap at the tip of the specified channel uses
 // Classic confinement or not.
 func (s *Snap) Classic() (bool, error) {
-	slog.Debug("querying snap confinement", "snap", s.Name)
+	slog.Debug("Querying snap confinement", "snap", s.Name)
 
 	snap, _, err := snapdClient.New(nil).FindOne(s.Name)
 	if err != nil {
@@ -57,7 +57,7 @@ func (s *Snap) Classic() (bool, error) {
 
 // tracking reports which channel an installed snap is tracking.
 func (s *Snap) Tracking() (string, error) {
-	slog.Debug("querying snap channel tracking", "snap", s.Name)
+	slog.Debug("Querying snap channel tracking", "snap", s.Name)
 
 	snap, _, err := snapdClient.New(nil).Snap(s.Name)
 	if err != nil {

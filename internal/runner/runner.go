@@ -42,7 +42,7 @@ func (r *Runner) Run(c *Command) (*CommandResult, error) {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
-	logger.Debug("running command", "command", fmt.Sprintf("%s %s", path, strings.Join(c.Args, " ")))
+	logger.Debug("Running command", "command", fmt.Sprintf("%s %s", path, strings.Join(c.Args, " ")))
 	err = cmd.Run()
 
 	if r.trace {

@@ -84,7 +84,7 @@ func (m *Manager) recordRuntimeConfig() error {
 		return fmt.Errorf("failed to write config record file: %w", err)
 	}
 
-	slog.Debug("merged runtime configuration saved", "path", recordPath)
+	slog.Debug("Merged runtime configuration saved", "path", recordPath)
 
 	return nil
 }
@@ -115,7 +115,7 @@ func (m *Manager) loadRuntimeConfig() error {
 
 	m.config = &config
 
-	slog.Debug("loaded previous runtime configuration", "path", recordPath)
+	slog.Debug("Loaded previous runtime configuration", "path", recordPath)
 
 	return nil
 }
