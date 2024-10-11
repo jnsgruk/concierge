@@ -54,18 +54,6 @@ It's role is to ensure that a given machine has the relevant "craft" tools and p
 then bootstrap a Juju controller onto each of the providers. Additionally, it can install selected
 tools from the [snap store](https://snapcraft.io) or the Ubuntu archive.
 
-Configuration is by flags/environment variables, or by configuration file. The configuration file
-must be in the current working directory and named 'concierge.yaml', or the path specified using
-the '-c' flag.
-
-There are 3 presets available by default: 'machine', 'k8s' and 'dev'.
-
-Some aspects of presets and config files can be overridden using flags such as '--juju-channel'.
-Each of the override flags has an environment variable equivalent,
-such as 'CONCIERGE_JUJU_CHANNEL'.
-
-More information at https://github.com/jnsgruk/concierge.
-
 Usage:
   concierge [flags]
   concierge [command]
