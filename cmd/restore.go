@@ -8,29 +8,27 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	rootCmd.AddCommand(restoreCmd)
-}
+// restoreCmd constructs the `restore` subcommand
+func restoreCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:           "restore",
+		Short:         "Restore the machine to it's pre-provisioned state.",
+		Long:          "Restore the machine to it's pre-provisioned state.",
+		SilenceErrors: true,
+		SilenceUsage:  true,
+		PreRun: func(cmd *cobra.Command, args []string) {
+			parseLoggingFlags(cmd.Flags())
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			flags := cmd.Flags()
 
-// restoreCmd represents the restore subcommand
-var restoreCmd = &cobra.Command{
-	Use:           "restore",
-	Short:         "Restore the machine to it's pre-provisioned state.",
-	Long:          "Restore the machine to it's pre-provisioned state.",
-	SilenceErrors: true,
-	SilenceUsage:  true,
-	PreRun: func(cmd *cobra.Command, args []string) {
-		parseLoggingFlags(cmd.Flags())
-	},
-	RunE: func(cmd *cobra.Command, args []string) error {
-		flags := cmd.Flags()
+			conf, err := config.NewConfig(cmd, flags)
+			if err != nil {
+				return fmt.Errorf("failed to configure concierge: %w", err)
+			}
 
-		conf, err := config.NewConfig(cmd, flags)
-		if err != nil {
-			return fmt.Errorf("failed to configure concierge: %w", err)
-		}
-
-		mgr := concierge.NewManager(conf)
-		return mgr.Restore()
-	},
+			mgr := concierge.NewManager(conf)
+			return mgr.Restore()
+		},
+	}
 }

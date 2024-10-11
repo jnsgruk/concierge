@@ -2,82 +2,37 @@ package cmd
 
 import (
 	"fmt"
-	"log/slog"
-	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 )
 
-var (
-	version string = "dev"
-	commit  string = "dev"
-)
-
-var shortDesc string = "A utility for configuring dev/test machines for charm development."
-var longDesc string = `concierge is an opinionated utility for provisioning charm development and testing machines.
-
+func rootCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "concierge",
+		Version: fmt.Sprintf("%s (%s)", version, commit),
+		Short:   "A utility for configuring dev/test machines for charm development.",
+		Long: `concierge is an opinionated utility for provisioning charm development and testing machines.
+	
 It's role is to ensure that a given machine has the relevant "craft" tools and providers installed,
 then bootstrap a Juju controller onto each of the providers. Additionally, it can install selected
 tools from the [snap store](https://snapcraft.io) or the Ubuntu archive.
+	`,
+		SilenceErrors: true,
+		SilenceUsage:  true,
+		PreRun: func(cmd *cobra.Command, args []string) {
+			parseLoggingFlags(cmd.Flags())
+		},
+		Run: func(cmd *cobra.Command, args []string) {
+			cmd.Help()
+		},
+	}
 
-Configuration is by flags/environment variables, or by configuration file. The configuration file
-must be in the current working directory and named 'concierge.yaml', or the path specified using
-the '-c' flag.
-
-There are 3 presets available by default: 'machine', 'k8s' and 'dev'.
-
-Some aspects of presets and config files can be overridden using flags such as '--juju-channel'.
-Each of the override flags has an environment variable equivalent, 
-such as 'CONCIERGE_JUJU_CHANNEL'.
-
-More information at https://github.com/jnsgruk/concierge.
-`
-
-func init() {
-	flags := rootCmd.PersistentFlags()
+	flags := cmd.PersistentFlags()
 	flags.BoolP("verbose", "v", false, "enable verbose logging")
 	flags.Bool("trace", false, "enable trace logging")
-}
 
-var rootCmd = &cobra.Command{
-	Use:           "concierge",
-	Version:       fmt.Sprintf("%s (%s)", version, commit),
-	Short:         shortDesc,
-	Long:          longDesc,
-	SilenceErrors: true,
-	SilenceUsage:  true,
-	PreRun: func(cmd *cobra.Command, args []string) {
-		parseLoggingFlags(cmd.Flags())
-	},
-	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Help()
-	},
-}
+	cmd.AddCommand(restoreCmd())
+	cmd.AddCommand(prepareCmd())
 
-func Execute() {
-	err := rootCmd.Execute()
-	if err != nil {
-		slog.Error("Failed to configure machine", "error", err.Error())
-		os.Exit(1)
-	}
-}
-
-func parseLoggingFlags(flags *pflag.FlagSet) {
-	verbose, _ := flags.GetBool("verbose")
-	trace, _ := flags.GetBool("trace")
-
-	logLevel := new(slog.LevelVar)
-
-	// Set the default log level to "DEBUG" if verbose is specified.
-	level := slog.LevelInfo
-	if !verbose && trace {
-		level = slog.LevelDebug
-	}
-
-	// Setup the TextHandler and ensure our configured logger is the default.
-	h := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: level})
-	logger := slog.New(h)
-	slog.SetDefault(logger)
-	logLevel.Set(level)
+	return cmd
 }
