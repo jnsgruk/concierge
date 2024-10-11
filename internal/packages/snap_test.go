@@ -1,4 +1,4 @@
-package snap
+package packages
 
 import (
 	"reflect"
@@ -8,13 +8,13 @@ import (
 func TestNewSnapFromString(t *testing.T) {
 	type test struct {
 		input    string
-		expected Snap
+		expected *Snap
 	}
 
 	tests := []test{
-		{input: "juju", expected: Snap{Name: "juju"}},
-		{input: "juju/latest/edge", expected: Snap{Name: "juju", Channel: "latest/edge"}},
-		{input: "juju/stable", expected: Snap{Name: "juju", Channel: "stable"}},
+		{input: "juju", expected: &Snap{Name: "juju"}},
+		{input: "juju/latest/edge", expected: &Snap{Name: "juju", Channel: "latest/edge"}},
+		{input: "juju/stable", expected: &Snap{Name: "juju", Channel: "stable"}},
 	}
 
 	for _, tc := range tests {

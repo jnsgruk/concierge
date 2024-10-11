@@ -11,8 +11,8 @@ import (
 	"strings"
 
 	"github.com/jnsgruk/concierge/internal/config"
+	"github.com/jnsgruk/concierge/internal/packages"
 	"github.com/jnsgruk/concierge/internal/runner"
-	"github.com/jnsgruk/concierge/internal/snap"
 	snapdClient "github.com/snapcore/snapd/client"
 )
 
@@ -21,7 +21,7 @@ import (
 const defaultChannel = "1.31-strict/stable"
 
 // NewMicroK8s constructs a new MicroK8s provider instance.
-func NewMicroK8s(config *config.Config) *MicroK8s {
+func NewMicroK8s(runner *runner.Runner, config *config.Config) *MicroK8s {
 	var channel string
 
 	if config.Overrides.MicroK8sChannel != "" {
@@ -35,6 +35,7 @@ func NewMicroK8s(config *config.Config) *MicroK8s {
 	return &MicroK8s{
 		Channel: channel,
 		Addons:  config.Providers.MicroK8s.Addons,
+		runner:  runner,
 	}
 }
 
@@ -42,13 +43,15 @@ func NewMicroK8s(config *config.Config) *MicroK8s {
 type MicroK8s struct {
 	Channel string
 	Addons  []string
+
+	runner *runner.Runner
 }
 
-// Init installs and configures MicroK8s such that it can work in testing environments.
+// Prepare installs and configures MicroK8s such that it can work in testing environments.
 // This includes installing the snap, enabling the user who ran concierge to interact
 // with MicroK8s without sudo, and sets up the user's kubeconfig file.
-func (m *MicroK8s) Init() error {
-	err := m.install()
+func (m *MicroK8s) Prepare() error {
+	err := m.init()
 	if err != nil {
 		return fmt.Errorf("failed to install MicroK8s: %w", err)
 	}
@@ -68,20 +71,16 @@ func (m *MicroK8s) Init() error {
 		return fmt.Errorf("failed to setup kubectl for MicroK8s: %w", err)
 	}
 
-	slog.Info("Initialised provider", "provider", m.Name())
+	slog.Info("Prepared provider", "provider", m.Name())
 
 	return nil
 }
 
 // Name reports the name of the provider for Concierge's purposes.
-func (m *MicroK8s) Name() string {
-	return "microk8s"
-}
+func (m *MicroK8s) Name() string { return "microk8s" }
 
 // CloudName reports the name of the provider as Juju sees it.
-func (m *MicroK8s) CloudName() string {
-	return "microk8s"
-}
+func (m *MicroK8s) CloudName() string { return "microk8s" }
 
 // GroupName reports the name of the POSIX group with permission to use MicroK8s.
 func (m *MicroK8s) GroupName() string {
@@ -92,18 +91,16 @@ func (m *MicroK8s) GroupName() string {
 	}
 }
 
+// Snaps reports the snaps required by the MicroK8s provider.
+func (m *MicroK8s) Snaps() []*packages.Snap {
+	return []*packages.Snap{
+		packages.NewSnap("microk8s", m.Channel),
+		packages.NewSnap("kubectl", "stable"),
+	}
+}
+
 // Remove uninstalls MicroK8s and kubectl.
-func (m *MicroK8s) Remove() error {
-	err := snap.NewSnapFromString("microk8s").Remove(true)
-	if err != nil {
-		return err
-	}
-
-	err = snap.NewSnapFromString("kubectl").Remove(true)
-	if err != nil {
-		return err
-	}
-
+func (m *MicroK8s) Restore() error {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return fmt.Errorf("failed to determine user's home directory: %w", err)
@@ -119,21 +116,12 @@ func (m *MicroK8s) Remove() error {
 	return nil
 }
 
-// install ensures that MicroK8s is installed, minimally configured, and ready.
-func (m *MicroK8s) install() error {
-	err := snap.NewSnap("microk8s", m.Channel).Install()
-	if err != nil {
-		return err
-	}
-
-	if err := runner.RunCommands(
+// init ensures that MicroK8s is installed, minimally configured, and ready.
+func (m *MicroK8s) init() error {
+	return m.runner.RunCommands(
 		runner.NewCommandSudo("snap", []string{"start", "microk8s"}),
 		runner.NewCommandSudo("microk8s", []string{"status", "--wait-ready"}),
-	); err != nil {
-		return err
-	}
-
-	return nil
+	)
 }
 
 // enableAddons iterates over the specified addons, enabling and configuring them.
@@ -146,7 +134,8 @@ func (m *MicroK8s) enableAddons() error {
 			enableArg = "metallb:10.64.140.43-10.64.140.49"
 		}
 
-		_, err := runner.NewCommandSudo("microk8s", []string{"enable", enableArg}).Run()
+		cmd := runner.NewCommandSudo("microk8s", []string{"enable", enableArg})
+		_, err := m.runner.Run(cmd)
 		if err != nil {
 			return fmt.Errorf("failed to enable MicroK8s addon '%s': %w", addon, err)
 		}
@@ -165,7 +154,7 @@ func (m *MicroK8s) enableNonRootUserControl() error {
 
 	cmd := runner.NewCommandSudo("usermod", []string{"-a", "-G", m.GroupName(), user.Username})
 
-	_, err = cmd.Run()
+	_, err = m.runner.Run(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to add user '%s' to group 'microk8s': %w", user.Username, err)
 	}
@@ -176,11 +165,6 @@ func (m *MicroK8s) enableNonRootUserControl() error {
 // setupKubectl both installs the kubectl snap, and writes the relevant kubeconfig
 // file to the user's home directory such that kubectl works with MicroK8s.
 func (m *MicroK8s) setupKubectl() error {
-	err := snap.NewSnapFromString("kubectl").Install()
-	if err != nil {
-		return err
-	}
-
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return fmt.Errorf("failed to determine user's home directory: %w", err)
@@ -191,13 +175,13 @@ func (m *MicroK8s) setupKubectl() error {
 		return fmt.Errorf("failed to create '.kube' subdirectory in user's home directory: %w", err)
 	}
 
-	result, err := runner.NewCommandSudo("microk8s", []string{"config"}).Run()
+	cmd := runner.NewCommandSudo("microk8s", []string{"config"})
+	result, err := m.runner.Run(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to fetch MicroK8s configuration: %w", err)
 	}
 
 	kubeconfig := path.Join(home, ".kube", "config")
-
 	if err := os.WriteFile(kubeconfig, result.Stdout.Bytes(), 0600); err != nil {
 		return fmt.Errorf("failed to write kubeconfig file: %w", err)
 	}

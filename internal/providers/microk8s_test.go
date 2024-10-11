@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/jnsgruk/concierge/internal/config"
+	"github.com/jnsgruk/concierge/internal/runner"
 )
 
 var defaultAddons []string = []string{
@@ -29,23 +30,25 @@ func TestNewMicroK8s(t *testing.T) {
 	overrides.Overrides.MicroK8sChannel = "1.30/edge"
 	overrides.Providers.MicroK8s.Addons = defaultAddons
 
+	runner := runner.NewRunner(false)
+
 	tests := []test{
 		{
 			config:   noOverrides,
-			expected: &MicroK8s{Channel: "1.31-strict/stable"},
+			expected: &MicroK8s{Channel: "1.31-strict/stable", runner: runner},
 		},
 		{
 			config:   channelInConfig,
-			expected: &MicroK8s{Channel: "1.29-strict/stable"},
+			expected: &MicroK8s{Channel: "1.29-strict/stable", runner: runner},
 		},
 		{
 			config:   overrides,
-			expected: &MicroK8s{Channel: "1.30/edge", Addons: defaultAddons},
+			expected: &MicroK8s{Channel: "1.30/edge", Addons: defaultAddons, runner: runner},
 		},
 	}
 
 	for _, tc := range tests {
-		uk8s := NewMicroK8s(tc.config)
+		uk8s := NewMicroK8s(runner, tc.config)
 		if !reflect.DeepEqual(tc.expected, uk8s) {
 			t.Fatalf("expected: %v, got: %v", tc.expected, uk8s)
 		}
@@ -66,26 +69,10 @@ func TestMicroK8sGroupName(t *testing.T) {
 	for _, tc := range tests {
 		config := &config.Config{}
 		config.Providers.MicroK8s.Channel = tc.channel
-		uk8s := NewMicroK8s(config)
+		uk8s := NewMicroK8s(runner.NewRunner(false), config)
 
 		if !reflect.DeepEqual(tc.expected, uk8s.GroupName()) {
 			t.Fatalf("expected: %v, got: %v", tc.expected, uk8s.GroupName())
 		}
 	}
 }
-
-// func TestRunCommands(t *testing.T) {
-// 	if err := RunCommands(
-// 		NewCommand("go", []string{"env", "GOBIN"}),
-// 		NewCommand("go", []string{"env", "GOPATH"}),
-// 	); err != nil {
-// 		t.Fatalf("expected commands to succeed; got error: %s", err.Error())
-// 	}
-
-// 	if err := RunCommands(
-// 		NewCommand("go", []string{"env", "GOBIN"}),
-// 		NewCommand("gopp", []string{"env", "GOPATH"}),
-// 	); err == nil {
-// 		t.Fatalf("expected commands to fail; but they succeeded")
-// 	}
-// }
