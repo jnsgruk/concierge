@@ -1,5 +1,5 @@
 name: concierge
-version: "0.2.0"
+version: "0.3.0"
 
 summary: A utility for configuring dev/test machines for charm development
 description: |
