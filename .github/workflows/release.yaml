@@ -176,11 +176,11 @@ jobs:
           echo "::endgroup::"
 
           echo "::group::amd64 build log"
-          cat "concierge_amd64.txt"
+          cat "snapcraft-concierge-*_amd64_*.txt"
           echo "::endgroup::"
 
           echo "::group::arm64 build log"
-          cat "concierge_arm64.txt"
+          cat "snapcraft-concierge-*_arm64_*.txt"
           echo "::endgroup::"
 
       # TODO: Uncomment once the snap classic confinement is granted
