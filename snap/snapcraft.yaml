@@ -1,5 +1,5 @@
 name: concierge
-version: "0.3.0"
+adopt-info: concierge
 
 summary: A utility for configuring dev/test machines for charm development
 description: |
@@ -47,11 +47,18 @@ parts:
       - git
     build-snaps:
       - go
+      - goreleaser
     override-build: |
-      mkdir -p $SNAPCRAFT_PART_INSTALL/bin
-      go build \
-        -o $CRAFT_PART_INSTALL/concierge \
-        -ldflags="-X github.com/jnsgruk/concierge/cmd.version=$SNAPCRAFT_PROJECT_VERSION -X github.com/jnsgruk/concierge/cmd.commit=$(git rev-parse HEAD)"
+      mkdir -p $CRAFT_PART_INSTALL/bin
+
+      ARGS=(--verbose --clean --single-target --output $CRAFT_PART_INSTALL/bin/concierge)
+      if ! git diff --exit-code --quiet; then
+        ARGS+=(--snapshot)
+      fi
+
+      goreleaser build ${ARGS[@]}
+
+      craftctl set version="$($CRAFT_PART_INSTALL/bin/concierge --version | cut -d" " -f3)"
 apps:
   concierge:
-    command: concierge
+    command: bin/concierge
