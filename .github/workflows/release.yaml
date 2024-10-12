@@ -143,17 +143,6 @@ jobs:
       - name: Setup LXD
         uses: canonical/setup-lxd@main
 
-      - name: Get version
-        id: version
-        run: |
-          version="$(yq -r ".version" snap/snapcraft.yaml)"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-
-          if [[ "v${version}" != "${GITHUB_REF#refs/*/}" ]]; then
-            echo "Snapcraft version and tag do not match; refusing to continue."
-            exit 1
-          fi
-
       - name: Setup Snapcraft
         env:
           LP_BUILD_SECRET: ${{ secrets.LP_BUILD_SECRET }}
@@ -187,7 +176,6 @@ jobs:
       # - name: Release snap to candidate
       #   env:
       #     SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.STORE_SECRET }}
-      #     VERSION: ${{ steps.version.outputs.version }}
       #   run: |
-      #     snapcraft upload "concierge_${VERSION}_amd64.snap" --release latest/candidate
-      #     snapcraft upload "concierge_${VERSION}_arm64.snap" --release latest/candidate
+      #     snapcraft upload "concierge_*_amd64.snap" --release latest/candidate
+      #     snapcraft upload "concierge_*_arm64.snap" --release latest/candidate
