@@ -2,6 +2,8 @@ package runner
 
 import (
 	"bytes"
+	"log/slog"
+	"os/exec"
 	"os/user"
 	"strings"
 )
@@ -65,6 +67,12 @@ func NewCommandWithGroup(executable string, args []string, group string) *Comman
 // commandString puts together a command to be executed in a shell, including the `sudo`
 // command and its arguments where appropriate.
 func (c *Command) commandString() string {
+	path, err := exec.LookPath(c.Executable)
+	if err != nil {
+		slog.Warn("Failed to lookup command in path", "command", c.Executable)
+		path = c.Executable
+	}
+
 	cmdArgs := []string{}
 
 	if len(c.User) > 0 || len(c.Group) > 0 {
@@ -79,7 +87,7 @@ func (c *Command) commandString() string {
 		cmdArgs = append(cmdArgs, "-g", c.Group)
 	}
 
-	cmdArgs = append(cmdArgs, c.Executable)
+	cmdArgs = append(cmdArgs, path)
 	cmdArgs = append(cmdArgs, c.Args...)
 
 	return strings.Join(cmdArgs, " ")

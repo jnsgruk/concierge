@@ -53,18 +53,19 @@ func TestCommandString(t *testing.T) {
 		expected string
 	}
 
+	// Use CONCIERGE_TEST_COMMAND to avoid $PATH lookups making tests flaky
 	tests := []test{
 		{
-			command:  NewCommand("juju", []string{"add-model", "testing"}),
-			expected: "juju add-model testing",
+			command:  NewCommand("CONCIERGE_TEST_COMMAND", []string{"add-model", "testing"}),
+			expected: "CONCIERGE_TEST_COMMAND add-model testing",
 		},
 		{
-			command:  NewCommandSudo("apt-get", []string{"install", "-y", "cowsay"}),
-			expected: "sudo -u root apt-get install -y cowsay",
+			command:  NewCommandSudo("CONCIERGE_TEST_COMMAND", []string{"install", "-y", "cowsay"}),
+			expected: "sudo -u root CONCIERGE_TEST_COMMAND install -y cowsay",
 		},
 		{
-			command:  NewCommandWithGroup("apt-get", []string{"install", "-y", "cowsay"}, "apters"),
-			expected: "sudo -g apters apt-get install -y cowsay",
+			command:  NewCommandWithGroup("CONCIERGE_TEST_COMMAND", []string{"install", "-y", "cowsay"}, "apters"),
+			expected: "sudo -g apters CONCIERGE_TEST_COMMAND install -y cowsay",
 		},
 	}
 

@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
-	"strings"
 
 	"github.com/fatih/color"
 )
@@ -23,11 +22,6 @@ type Runner struct {
 
 // Run executes the command, returning the stdout/stderr where appropriate.
 func (r *Runner) Run(c *Command) (*CommandResult, error) {
-	path, err := exec.LookPath(c.Executable)
-	if err != nil {
-		return nil, fmt.Errorf("could not find '%s' command in path: %w", c.Executable, err)
-	}
-
 	logger := slog.Default()
 	if len(c.User) > 0 {
 		logger = slog.With("user", c.User)
@@ -42,8 +36,8 @@ func (r *Runner) Run(c *Command) (*CommandResult, error) {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
-	logger.Debug("Running command", "command", fmt.Sprintf("%s %s", path, strings.Join(c.Args, " ")))
-	err = cmd.Run()
+	logger.Debug("Running command", "command", c.commandString())
+	err := cmd.Run()
 
 	if r.trace {
 		fmt.Print(generateTraceMessage(c.commandString(), stdout.String(), stderr.String()))
