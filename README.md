@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="250px" src="snap/concierge.png" alt="concierge logo">
+  <img width="250px" src=".github/concierge.png" alt="concierge logo">
 </p>
 
 <h1 align="center">concierge</h1>

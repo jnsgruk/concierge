@@ -40,8 +40,7 @@ jobs:
       - name: Build concierge
         id: build
         run: |
-          goreleaser build --snapshot --clean
-          cp dist/concierge_linux_amd64_v1/concierge .
+          goreleaser build --clean --snapshot --single-target --output .
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -105,23 +104,3 @@ jobs:
       - name: Run integration tests
         run: |
           spread -v "github-ci:ubuntu-24.04:tests/${{ matrix.suite }}"
-
-  snap:
-    name: Build snap
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out the code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup LXD
-        uses: canonical/setup-lxd@main
-
-      - name: Setup Snapcraft
-        run: |
-          sudo snap install snapcraft --classic
-
-      - name: Build snap
-        run: |
-          snapcraft --verbose

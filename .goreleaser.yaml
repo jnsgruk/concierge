@@ -13,20 +13,47 @@ builds:
       - linux
     goarch:
       - amd64
+      - arm64
     ldflags:
       - -X github.com/jnsgruk/concierge/cmd.version={{ .Version }} -X github.com/jnsgruk/concierge/cmd.commit={{ .Commit }}
 archives:
-  # e.g. concierge_0.1.0_linux_aarch64.tar.gz, concierge_0.1.0_linux_x86_64.tar.gz
-  - name_template: >-
-      {{ .ProjectName }}_
-      {{- .Version }}_
-      {{- .Os }}_
-      {{- if eq .Arch "amd64" }}x86_64
-      {{- else if eq .Arch "arm64" }}aarch64
-      {{- else }}{{ .Arch }}{{ end }}
+  - builds:
+      - default
     files:
       - "LICENSE*"
       - "README*"
+
+snapcrafts:
+  - name: concierge
+    publish: false
+    license: Apache-2.0
+    base: core24
+    icon: concierge.png
+    confinement: classic
+    grade: stable
+    summary: A utility for configuring dev/test machines for charm development
+    description: |
+      concierge is an opinionated utility for provisioning charm development and testing machines.
+
+      It's role is to ensure that a given machine has the relevant "craft" tools and providers
+      installed, then bootstrap a Juju controller onto each of the providers. Additionally, it can
+      install selected tools from the [snap store](https://snapcraft.io) or the Ubuntu archive.
+
+      Configuration is by flags/environment variables, or by configuration file. The configuration file
+      must be in the current working directory and named 'concierge.yaml', or the path specified using
+      the '-c' flag.
+
+      There are 3 presets available by default: 'machine', 'k8s' and 'dev'.
+
+      Some aspects of presets and config files can be overridden using flags such as '--juju-channel'.
+      Each of the override flags has an environment variable equivalent, such as
+      'CONCIERGE_JUJU_CHANNEL'.
+
+      More information at https://github.com/jnsgruk/concierge.
+    extra_files:
+      - source: .github/concierge.png
+        destination: concierge.png
+        mode: 0644
 
 checksum:
   name_template: "checksums.txt"

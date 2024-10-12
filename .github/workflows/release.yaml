@@ -121,61 +121,16 @@ jobs:
         run: |
           sudo snap install --classic goreleaser
 
+      - name: Setup Snapcraft
+        run: |
+          sudo snap install snapcraft --channel=8.x/stable --classic
+          mkdir -p $HOME/.cache/snapcraft/download
+          mkdir -p $HOME/.cache/snapcraft/stage-packages
+
       - name: Release concierge
         id: build
         run: |
-          goreleaser release --clean
+          goreleaser release --clean --verbose
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  snap:
-    name: Build and Release snap
-    runs-on: ubuntu-latest
-    environment: main
-    needs:
-      - spread-test
-    steps:
-      - name: Check out the code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup LXD
-        uses: canonical/setup-lxd@main
-
-      - name: Setup Snapcraft
-        env:
-          LP_BUILD_SECRET: ${{ secrets.LP_BUILD_SECRET }}
-        run: |
-          sudo snap install snapcraft --classic
-
-          mkdir -p ~/.local/share/snapcraft/provider/launchpad ~/.local/share/snapcraft
-          echo "${LP_BUILD_SECRET}" > ~/.local/share/snapcraft/provider/launchpad/credentials
-          echo "${LP_BUILD_SECRET}" > ~/.local/share/snapcraft/launchpad-credentials
-
-          git config --global user.email "github-actions@github.com"
-          git config --global user.name "Github Actions"
-
-      - name: Build snap
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          echo "::group::remote-build output"
-          snapcraft remote-build --launchpad-accept-public-upload
-          echo "::endgroup::"
-
-          echo "::group::amd64 build log"
-          cat "snapcraft-concierge-*_amd64_*.txt"
-          echo "::endgroup::"
-
-          echo "::group::arm64 build log"
-          cat "snapcraft-concierge-*_arm64_*.txt"
-          echo "::endgroup::"
-
-      # TODO: Uncomment once the snap classic confinement is granted
-      # - name: Release snap to candidate
-      #   env:
-      #     SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.STORE_SECRET }}
-      #   run: |
-      #     snapcraft upload "concierge_*_amd64.snap" --release latest/candidate
-      #     snapcraft upload "concierge_*_arm64.snap" --release latest/candidate
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.STORE_SECRET }}
