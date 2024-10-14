@@ -114,8 +114,11 @@ concierge prepare -p dev
 | Preset Name | Included                                                         |
 | :---------: | :--------------------------------------------------------------- |
 |    `dev`    | `juju`, `microk8s`, `lxd` `snapcraft`, `charmcraft`, `rockcraft` |
-|    `k8s`    | `juju`, `microk8s`, `rockcraft`, `charmcraft`                    |
+|    `k8s`    | `juju`, `microk8s`, `lxd`, `rockcraft`, `charmcraft`             |
 |  `machine`  | `juju`, `lxd`, `snapcraft`, `charmcraft`                         |
+
+Note that in the `k8s` preset, while `lxd` is installed, it is not bootstrapped. It is installed
+and initialised with enough config such that `charmcraft` can use it as a build backend.
 
 ### Config File
 
@@ -140,6 +143,8 @@ providers:
   microk8s:
     # (Optional) Enable or disable MicroK8s.
     enable: true | false
+    # (Optional) Whether or not to bootstrap a controller onto MicroK8s.
+    bootstrap: true | false
     # (Optional): Channel from which to install MicroK8s.
     channel: <channel>
     # (Optional): MicroK8s addons to enable.
@@ -150,6 +155,8 @@ providers:
   lxd:
     # (Optional) Enable or disable LXD.
     enable: true | false
+    # (Optional) Whether or not to bootstrap a controller onto LXD.
+    bootstrap: true | false
     # (Optional): Channel from which to install LXD.
     channel: <channel>
 
