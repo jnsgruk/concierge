@@ -1,0 +1,21 @@
+summary: Run concierge LXD enabled but not bootstrapped, try to pack a charm
+systems:
+  - ubuntu-24.04
+
+execute: |
+  pushd "${PROJECT_PATH}/tests/provider-lxd-init-no-bootstrap"
+
+  "$PROJECT_PATH"/concierge --trace prepare
+
+  mkdir test-charm
+  pushd test-charm
+  charmcraft init --author concierge
+  charmcraft pack --verbose
+
+  # Check that even though we installed/initialised LXD, we didn't bootstrap it
+  juju controllers | NOMATCH lxd-concierge
+
+restore: |
+  if [[ -z "${CI:-}" ]]; then
+    "$PROJECT_PATH"/concierge --trace restore
+  fi
