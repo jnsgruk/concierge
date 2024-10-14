@@ -132,7 +132,7 @@ func (j *JujuHandler) checkBootstrapped(controllerName string) (bool, error) {
 	cmd := runner.NewCommand("juju", []string{"show-controller", controllerName})
 
 	result, err := j.runner.Run(cmd)
-	if err != nil && strings.Contains(result.Stderr.String(), "not found") {
+	if err != nil && strings.Contains(string(result), "not found") {
 		return false, nil
 	} else if err != nil {
 		return false, err

@@ -1,7 +1,6 @@
 package runner
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -22,7 +21,7 @@ type Runner struct {
 }
 
 // Run executes the command, returning the stdout/stderr where appropriate.
-func (r *Runner) Run(c *Command) (*CommandResult, error) {
+func (r *Runner) Run(c *Command) ([]byte, error) {
 	logger := slog.Default()
 	if len(c.User) > 0 {
 		logger = slog.With("user", c.User)
@@ -38,18 +37,15 @@ func (r *Runner) Run(c *Command) (*CommandResult, error) {
 
 	cmd := exec.Command(shell, "-c", c.commandString())
 
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
 	logger.Debug("Running command", "command", c.commandString())
-	err = cmd.Run()
+
+	output, err := cmd.CombinedOutput()
 
 	if r.trace {
-		fmt.Print(generateTraceMessage(c.commandString(), stdout.String(), stderr.String()))
+		fmt.Print(generateTraceMessage(c.commandString(), output))
 	}
 
-	return &CommandResult{Stdout: stdout, Stderr: stderr}, err
+	return output, err
 }
 
 // RunCommands takes a variadic number of Command's, and runs them in a loop, returning
@@ -66,16 +62,13 @@ func (r *Runner) RunCommands(commands ...*Command) error {
 
 // generateTraceMessage creates a formatted string that is written to stdout, representing
 // a command and it's output when concierge is run with `--trace`.
-func generateTraceMessage(cmd, stdout, stderr string) string {
+func generateTraceMessage(cmd string, output []byte) string {
 	green := color.New(color.FgGreen, color.Bold, color.Underline)
 	bold := color.New(color.Bold)
 
 	result := fmt.Sprintf("%s %s\n", green.Sprintf("Command:"), bold.Sprintf(cmd))
-	if len(stdout) > 0 {
-		result = fmt.Sprintf("%s%s\n%s", result, green.Sprintf("Stdout:"), stdout)
-	}
-	if len(stderr) > 0 {
-		result = fmt.Sprintf("%s%s\n%s", result, green.Sprintf("Stderr:"), stderr)
+	if len(output) > 0 {
+		result = fmt.Sprintf("%s%s\n%s", result, green.Sprintf("Output:"), string(output))
 	}
 	return result
 }

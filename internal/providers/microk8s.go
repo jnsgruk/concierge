@@ -187,7 +187,7 @@ func (m *MicroK8s) setupKubectl() error {
 	}
 
 	kubeconfig := path.Join(home, ".kube", "config")
-	if err := os.WriteFile(kubeconfig, result.Stdout.Bytes(), 0600); err != nil {
+	if err := os.WriteFile(kubeconfig, result, 0600); err != nil {
 		return fmt.Errorf("failed to write kubeconfig file: %w", err)
 	}
 
