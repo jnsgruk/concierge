@@ -39,12 +39,14 @@ var defaultSnaps []string = []string{
 
 // defaultLXDConfig is the standard LXD config used throughout presets.
 var defaultLXDConfig lxdConfig = lxdConfig{
-	Enable: true,
+	Enable:    true,
+	Bootstrap: true,
 }
 
 // defaultK8sConfig is the standard MicroK8s config used throughout presets.
 var defaultK8sConfig microk8sConfig = microk8sConfig{
-	Enable: true,
+	Enable:    true,
+	Bootstrap: true,
 	Addons: []string{
 		"hostpath-storage",
 		"dns",
@@ -71,6 +73,8 @@ var machinePreset *Config = &Config{
 var k8sPreset *Config = &Config{
 	Juju: defaultJujuConfig,
 	Providers: providerConfig{
+		// Enable LXD so charms can be built, but don't bootstrap onto it.
+		LXD:      lxdConfig{Enable: true},
 		MicroK8s: defaultK8sConfig,
 	},
 	Host: hostConfig{
