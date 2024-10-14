@@ -51,8 +51,8 @@ func (r *Runner) Run(c *Command) ([]byte, error) {
 	return output, err
 }
 
-// RunWithRetries executes the command, retrying up to the number of times specified, utilising
-// an exponential backoff pattern.
+// RunWithRetries executes the command, retrying utilising an exponential backoff pattern,
+// which starts at 1 second. Retries will be attempted up to the specified maximum duration.
 func (r *Runner) RunWithRetries(c *Command, maxDuration time.Duration) ([]byte, error) {
 	backoff := retry.NewExponential(1 * time.Second)
 	backoff = retry.WithMaxDuration(maxDuration, backoff)
