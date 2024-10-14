@@ -29,6 +29,9 @@ execute: |
   juju model-defaults | grep test-mode | tr -s " " | MATCH "test-mode false true"
   juju model-defaults | grep automatically-retry-hooks | tr -s " " | MATCH "automatically-retry-hooks true false"
 
+  # Check that even though we installed/initialised LXD, we didn't bootstrap it
+  juju controllers | NOMATCH lxd-concierge
+
 restore: |
   if [[ -z "${CI:-}" ]]; then
     "$PROJECT_PATH"/concierge --trace restore
