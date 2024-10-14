@@ -9,6 +9,7 @@ import (
 	"path"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/jnsgruk/concierge/internal/config"
 	"github.com/jnsgruk/concierge/internal/packages"
@@ -140,7 +141,7 @@ func (m *MicroK8s) enableAddons() error {
 		}
 
 		cmd := runner.NewCommandSudo("microk8s", []string{"enable", enableArg})
-		_, err := m.runner.Run(cmd)
+		_, err := m.runner.RunWithRetries(cmd, (5 * time.Minute))
 		if err != nil {
 			return fmt.Errorf("failed to enable MicroK8s addon '%s': %w", addon, err)
 		}

@@ -30,6 +30,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
+	github.com/sethvargo/go-retry v0.3.0 // indirect
 	github.com/snapcore/go-gettext v0.0.0-20191107141714-82bbea49e785 // indirect
 	github.com/snapcore/secboot v0.0.0-20240411101434-f3ad7c92552a // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
