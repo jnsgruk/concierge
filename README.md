@@ -182,6 +182,7 @@ juju:
 providers:
   microk8s:
     enable: true
+    bootstrap: true
     channel: 1.31-strict/stable
     addons:
       - hostpath-storage
@@ -191,6 +192,7 @@ providers:
 
   lxd:
     enable: true
+    bootstrap: false
     channel: latest/stable
 
 host:
