@@ -52,6 +52,11 @@ func (s *Snap) Classic() (bool, error) {
 		return false, fmt.Errorf("failed to find snap: %w", err)
 	}
 
+	channel, ok := snap.Channels[s.Channel]
+	if ok {
+		return channel.Confinement == "classic", nil
+	}
+
 	return snap.Confinement == "classic", nil
 }
 
