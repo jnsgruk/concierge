@@ -3,6 +3,7 @@ module github.com/jnsgruk/concierge
 go 1.22.7
 
 require (
+	github.com/canonical/x-go v0.0.0-20230522092633-7947a7587f5b
 	github.com/fatih/color v1.17.0
 	github.com/snapcore/snapd v0.0.0-20240925090801-8bae53ad3248
 	github.com/spf13/cobra v1.8.1

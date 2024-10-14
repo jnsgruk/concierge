@@ -5,7 +5,8 @@ import (
 	"log/slog"
 	"os/exec"
 	"os/user"
-	"strings"
+
+	"github.com/canonical/x-go/strutil/shlex"
 )
 
 // Command represents a given command to be executed by Concierge, along with the
@@ -90,5 +91,5 @@ func (c *Command) commandString() string {
 	cmdArgs = append(cmdArgs, path)
 	cmdArgs = append(cmdArgs, c.Args...)
 
-	return strings.Join(cmdArgs, " ")
+	return shlex.Join(cmdArgs)
 }
