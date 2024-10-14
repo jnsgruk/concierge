@@ -90,6 +90,10 @@ func (j *JujuHandler) bootstrap() error {
 
 // bootstrapProvider bootstraps one specific provider.
 func (j *JujuHandler) bootstrapProvider(provider providers.Provider) error {
+	if !provider.Bootstrap() {
+		return nil
+	}
+
 	controllerName := fmt.Sprintf("concierge-%s", provider.Name())
 
 	bootstrapped, err := j.checkBootstrapped(controllerName)

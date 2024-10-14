@@ -28,15 +28,17 @@ type providerConfig struct {
 
 // lxdConfig represents how LXD should be configured on the host.
 type lxdConfig struct {
-	Enable  bool   `mapstructure:"enable"`
-	Channel string `mapstructure:"channel"`
+	Enable    bool   `mapstructure:"enable"`
+	Bootstrap bool   `mapstructure:"bootstrap"`
+	Channel   string `mapstructure:"channel"`
 }
 
 // microk8sConfig represents how MicroK8s should be configured on the host.
 type microk8sConfig struct {
-	Enable  bool     `mapstructure:"enable"`
-	Channel string   `mapstructure:"channel"`
-	Addons  []string `mapstructure:"addons"`
+	Enable    bool     `mapstructure:"enable"`
+	Bootstrap bool     `mapstructure:"bootstrap"`
+	Channel   string   `mapstructure:"channel"`
+	Addons    []string `mapstructure:"addons"`
 }
 
 // hostConfig is a top-level field containing addition configuration for the host being

@@ -13,6 +13,8 @@ type Provider interface {
 	Restore() error
 	// Name reports the name of the provider used internally by concierge.
 	Name() string
+	// Bootstrap reports whether or not a Juju controller should be bootstrapped on the provider.
+	Bootstrap() bool
 	// CloudName reports name of the provider as Juju sees it.
 	CloudName() string
 	// GroupName reports the name of a POSIX user group that can be used

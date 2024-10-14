@@ -19,14 +19,19 @@ func NewLXD(runner *runner.Runner, config *config.Config) *LXD {
 		channel = config.Providers.LXD.Channel
 	}
 
-	return &LXD{Channel: channel, runner: runner}
+	return &LXD{
+		Channel:   channel,
+		runner:    runner,
+		bootstrap: config.Providers.LXD.Bootstrap,
+	}
 }
 
 // LXD represents a LXD install on a given machine.
 type LXD struct {
 	Channel string
 
-	runner *runner.Runner
+	bootstrap bool
+	runner    *runner.Runner
 }
 
 // Prepare installs and configures LXD such that it can work in testing environments.
@@ -60,6 +65,9 @@ func (l *LXD) Prepare() error {
 
 // Name reports the name of the provider for Concierge's purposes.
 func (l *LXD) Name() string { return "lxd" }
+
+// Bootstrap reports whether a Juju controller should be bootstrapped on LXD.
+func (l *LXD) Bootstrap() bool { return l.bootstrap }
 
 // CloudName reports the name of the provider as Juju sees it.
 func (l *LXD) CloudName() string { return "localhost" }

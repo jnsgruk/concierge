@@ -33,9 +33,10 @@ func NewMicroK8s(runner *runner.Runner, config *config.Config) *MicroK8s {
 	}
 
 	return &MicroK8s{
-		Channel: channel,
-		Addons:  config.Providers.MicroK8s.Addons,
-		runner:  runner,
+		Channel:   channel,
+		Addons:    config.Providers.MicroK8s.Addons,
+		bootstrap: config.Providers.MicroK8s.Bootstrap,
+		runner:    runner,
 	}
 }
 
@@ -44,7 +45,8 @@ type MicroK8s struct {
 	Channel string
 	Addons  []string
 
-	runner *runner.Runner
+	bootstrap bool
+	runner    *runner.Runner
 }
 
 // Prepare installs and configures MicroK8s such that it can work in testing environments.
@@ -78,6 +80,9 @@ func (m *MicroK8s) Prepare() error {
 
 // Name reports the name of the provider for Concierge's purposes.
 func (m *MicroK8s) Name() string { return "microk8s" }
+
+// Bootstrap reports whether a Juju controller should be bootstrapped onto the provider.
+func (m *MicroK8s) Bootstrap() bool { return m.bootstrap }
 
 // CloudName reports the name of the provider as Juju sees it.
 func (m *MicroK8s) CloudName() string { return "microk8s" }
