@@ -31,7 +31,7 @@ func parseLoggingFlags(flags *pflag.FlagSet) {
 
 	// Set the default log level to "DEBUG" if verbose is specified.
 	level := slog.LevelInfo
-	if !verbose && trace {
+	if verbose || trace {
 		level = slog.LevelDebug
 	}
 
