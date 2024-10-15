@@ -10,7 +10,7 @@ import (
 )
 
 // NewLXD constructs a new LXD provider instance.
-func NewLXD(runner *runner.Runner, config *config.Config) *LXD {
+func NewLXD(runner runner.CommandRunner, config *config.Config) *LXD {
 	var channel string
 	if config.Overrides.LXDChannel != "" {
 		channel = config.Overrides.LXDChannel
@@ -30,7 +30,7 @@ type LXD struct {
 	Channel string
 
 	bootstrap bool
-	runner    *runner.Runner
+	runner    runner.CommandRunner
 }
 
 // Prepare installs and configures LXD such that it can work in testing environments.

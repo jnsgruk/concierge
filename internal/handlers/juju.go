@@ -15,7 +15,7 @@ import (
 )
 
 // NewJujuHandler constructs a new JujuHandler instance.
-func NewJujuHandler(config *config.Config, runner *runner.Runner, providers []providers.Provider) *JujuHandler {
+func NewJujuHandler(config *config.Config, runner runner.CommandRunner, providers []providers.Provider) *JujuHandler {
 	return &JujuHandler{
 		modelDefaults: config.Juju.ModelDefaults,
 		providers:     providers,
@@ -27,7 +27,7 @@ func NewJujuHandler(config *config.Config, runner *runner.Runner, providers []pr
 type JujuHandler struct {
 	modelDefaults map[string]string
 	providers     []providers.Provider
-	runner        *runner.Runner
+	runner        runner.CommandRunner
 }
 
 // Prepare bootstraps Juju on the configured providers.

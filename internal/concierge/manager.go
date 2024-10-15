@@ -23,7 +23,7 @@ func NewManager(config *config.Config) *Manager {
 // Manager is a construct for controlling the main execution of concierge.
 type Manager struct {
 	Plan   *Plan
-	runner *runner.Runner
+	runner runner.CommandRunner
 	config *config.Config
 }
 

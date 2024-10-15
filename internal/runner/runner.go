@@ -13,6 +13,18 @@ import (
 	retry "github.com/sethvargo/go-retry"
 )
 
+// CommandRunner is an interface for a struct that can run commands on the underlying system.
+type CommandRunner interface {
+	// Run takes a single command and runs it, returning the combined output and an error value.
+	Run(c *Command) ([]byte, error)
+	// RunCommands takes multiple commands and runs them in sequence, returning an error on the
+	// first error encountered.
+	RunCommands(commands ...*Command) error
+	// RunWithRetries executes the command, retrying utilising an exponential backoff pattern,
+	// which starts at 1 second. Retries will be attempted up to the specified maximum duration.
+	RunWithRetries(c *Command, maxDuration time.Duration) ([]byte, error)
+}
+
 // NewRunner constructs a new command runner.
 func NewRunner(trace bool) *Runner {
 	return &Runner{trace: trace}

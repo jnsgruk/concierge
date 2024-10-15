@@ -10,7 +10,7 @@ import (
 )
 
 // NewDebHandler constructs a new instance of a DebHandler.
-func NewDebHandler(config *config.Config, runner *runner.Runner, debs []*packages.Deb) *DebHandler {
+func NewDebHandler(config *config.Config, runner runner.CommandRunner, debs []*packages.Deb) *DebHandler {
 	return &DebHandler{
 		Debs:   debs,
 		config: config,
@@ -22,7 +22,7 @@ func NewDebHandler(config *config.Config, runner *runner.Runner, debs []*package
 type DebHandler struct {
 	Debs   []*packages.Deb
 	config *config.Config
-	runner *runner.Runner
+	runner runner.CommandRunner
 }
 
 // Prepare updates the apt cache and installs a set of debs from the archive.

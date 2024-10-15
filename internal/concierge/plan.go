@@ -18,11 +18,11 @@ type Plan struct {
 	Debs      []*packages.Deb
 
 	config *config.Config
-	runner *runner.Runner
+	runner runner.CommandRunner
 }
 
 // NewPlan constructs a new plan consisting of snaps/debs/providers & juju.
-func NewPlan(config *config.Config, runner *runner.Runner) *Plan {
+func NewPlan(config *config.Config, runner runner.CommandRunner) *Plan {
 	plan := &Plan{config: config, runner: runner}
 
 	for _, s := range append(config.Host.Snaps, config.Overrides.ExtraSnaps...) {

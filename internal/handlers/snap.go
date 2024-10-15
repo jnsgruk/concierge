@@ -10,7 +10,7 @@ import (
 )
 
 // NewSnapHandler constructs a new instance of a SnapHandler.
-func NewSnapHandler(config *config.Config, runner *runner.Runner, snaps []*packages.Snap) *SnapHandler {
+func NewSnapHandler(config *config.Config, runner runner.CommandRunner, snaps []*packages.Snap) *SnapHandler {
 	return &SnapHandler{
 		Snaps:  snaps,
 		config: config,
@@ -22,7 +22,7 @@ func NewSnapHandler(config *config.Config, runner *runner.Runner, snaps []*packa
 type SnapHandler struct {
 	Snaps  []*packages.Snap
 	config *config.Config
-	runner *runner.Runner
+	runner runner.CommandRunner
 }
 
 // Prepare installs a set of snaps on the machine.

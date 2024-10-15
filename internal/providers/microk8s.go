@@ -21,7 +21,7 @@ import (
 const defaultChannel = "1.31-strict/stable"
 
 // NewMicroK8s constructs a new MicroK8s provider instance.
-func NewMicroK8s(runner *runner.Runner, config *config.Config) *MicroK8s {
+func NewMicroK8s(runner runner.CommandRunner, config *config.Config) *MicroK8s {
 	var channel string
 
 	if config.Overrides.MicroK8sChannel != "" {
@@ -46,7 +46,7 @@ type MicroK8s struct {
 	Addons  []string
 
 	bootstrap bool
-	runner    *runner.Runner
+	runner    runner.CommandRunner
 }
 
 // Prepare installs and configures MicroK8s such that it can work in testing environments.
