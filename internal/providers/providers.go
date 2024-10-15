@@ -21,5 +21,5 @@ type Provider interface {
 	// to allow non-root users to interact with the provider (where applicable).
 	GroupName() string
 	// Snaps reports the list of snaps required by the provider.
-	Snaps() []*packages.Snap
+	Snaps() []packages.SnapPackage
 }

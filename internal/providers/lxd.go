@@ -39,7 +39,7 @@ type LXD struct {
 func (l *LXD) Prepare() error {
 	for _, snap := range l.Snaps() {
 		if !snap.Installed() {
-			return fmt.Errorf("snap '%s' not installed and is required by LXD", snap.Name)
+			return fmt.Errorf("snap '%s' not installed and is required by LXD", snap.Name())
 		}
 	}
 
@@ -75,8 +75,8 @@ func (l *LXD) CloudName() string { return "localhost" }
 func (l *LXD) GroupName() string { return "lxd" }
 
 // Snaps reports the snaps required by the LXD provider.
-func (l *LXD) Snaps() []*packages.Snap {
-	return []*packages.Snap{packages.NewSnap("lxd", l.Channel)}
+func (l *LXD) Snaps() []packages.SnapPackage {
+	return []packages.SnapPackage{packages.NewSnap("lxd", l.Channel)}
 }
 
 // Remove uninstalls LXD.

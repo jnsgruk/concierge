@@ -97,8 +97,8 @@ func (m *MicroK8s) GroupName() string {
 }
 
 // Snaps reports the snaps required by the MicroK8s provider.
-func (m *MicroK8s) Snaps() []*packages.Snap {
-	return []*packages.Snap{
+func (m *MicroK8s) Snaps() []packages.SnapPackage {
+	return []packages.SnapPackage{
 		packages.NewSnap("microk8s", m.Channel),
 		packages.NewSnap("kubectl", "stable"),
 	}

@@ -10,7 +10,7 @@ import (
 )
 
 // NewSnapHandler constructs a new instance of a SnapHandler.
-func NewSnapHandler(config *config.Config, runner runner.CommandRunner, snaps []*packages.Snap) *SnapHandler {
+func NewSnapHandler(config *config.Config, runner runner.CommandRunner, snaps []packages.SnapPackage) *SnapHandler {
 	return &SnapHandler{
 		Snaps:  snaps,
 		config: config,
@@ -20,7 +20,7 @@ func NewSnapHandler(config *config.Config, runner runner.CommandRunner, snaps []
 
 // SnapHandler can install or remove a set of snaps.
 type SnapHandler struct {
-	Snaps  []*packages.Snap
+	Snaps  []packages.SnapPackage
 	config *config.Config
 	runner runner.CommandRunner
 }
@@ -49,7 +49,7 @@ func (h *SnapHandler) Restore() error {
 
 // installSnap ensures that the specified snap is installed at the specified channel.
 // If already installed, but on the wrong channel, the snap is refreshed.
-func (h *SnapHandler) installSnap(s *packages.Snap) error {
+func (h *SnapHandler) installSnap(s packages.SnapPackage) error {
 	var action string
 	if s.Installed() {
 		action = "refresh"
@@ -57,15 +57,15 @@ func (h *SnapHandler) installSnap(s *packages.Snap) error {
 		action = "install"
 	}
 
-	args := []string{action, s.Name}
+	args := []string{action, s.Name()}
 
-	if s.Channel != "" {
-		args = append(args, "--channel", s.Channel)
+	if s.Channel() != "" {
+		args = append(args, "--channel", s.Channel())
 	}
 
 	classic, err := s.Classic()
 	if err != nil {
-		return fmt.Errorf("failed to determine if snap '%s' is classic: %w", s.Name, err)
+		return fmt.Errorf("failed to determine if snap '%s' is classic: %w", s.Name(), err)
 	}
 
 	if classic {
@@ -80,23 +80,23 @@ func (h *SnapHandler) installSnap(s *packages.Snap) error {
 
 	trackingChannel, err := s.Tracking()
 	if err != nil {
-		return fmt.Errorf("failed to resolve which channel the '%s' snap is tracking: %w", s.Name, err)
+		return fmt.Errorf("failed to resolve which channel the '%s' snap is tracking: %w", s.Name(), err)
 	}
 
-	slog.Info("Installed snap", "snap", s.Name, "channel", trackingChannel)
+	slog.Info("Installed snap", "snap", s.Name(), "channel", trackingChannel)
 	return nil
 }
 
 // Remove uninstalls the specified snap from the system, optionally purging its data.
-func (h *SnapHandler) removeSnap(s *packages.Snap) error {
-	args := []string{"remove", s.Name, "--purge"}
+func (h *SnapHandler) removeSnap(s packages.SnapPackage) error {
+	args := []string{"remove", s.Name(), "--purge"}
 
 	cmd := runner.NewCommand("snap", args)
 	_, err := h.runner.Run(cmd)
 	if err != nil {
-		return fmt.Errorf("failed to remove snap '%s': %w", s.Name, err)
+		return fmt.Errorf("failed to remove snap '%s': %w", s.Name(), err)
 	}
 
-	slog.Info("Removed snap", "snap", s.Name)
+	slog.Info("Removed snap", "snap", s.Name())
 	return nil
 }
