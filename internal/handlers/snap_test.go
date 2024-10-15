@@ -35,7 +35,9 @@ func TestSnapHandlerCommands(t *testing.T) {
 
 	// Prevent the path of the test machine interfering with the test results.
 	path := os.Getenv("PATH")
+	defer os.Setenv("PATH", path)
 	os.Setenv("PATH", "")
+	// Reset the PATH variable
 
 	tests := []test{
 		{
@@ -71,6 +73,4 @@ func TestSnapHandlerCommands(t *testing.T) {
 		}
 	}
 
-	// Reset the PATH variable
-	os.Setenv("PATH", path)
 }

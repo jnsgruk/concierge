@@ -17,6 +17,7 @@ func TestDebHandlerCommands(t *testing.T) {
 
 	// Prevent the path of the test machine interfering with the test results.
 	path := os.Getenv("PATH")
+	defer os.Setenv("PATH", path)
 	os.Setenv("PATH", "")
 
 	tests := []test{
@@ -51,7 +52,4 @@ func TestDebHandlerCommands(t *testing.T) {
 			t.Fatalf("expected: %v, got: %v", tc.expected, runner.ExecutedCommands)
 		}
 	}
-
-	// Reset the PATH variable
-	os.Setenv("PATH", path)
 }
