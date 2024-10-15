@@ -50,6 +50,7 @@ func TestLXDPrepareCommands(t *testing.T) {
 	expected := []string{
 		"lxd waitready",
 		"lxd init --minimal",
+		"lxc network set lxdbr0 ipv6.address none",
 		"chmod a+wr /var/snap/lxd/common/lxd/unix.socket",
 		"usermod -a -G lxd test-user",
 		"iptables -F FORWARD",

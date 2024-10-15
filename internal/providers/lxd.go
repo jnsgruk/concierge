@@ -84,6 +84,7 @@ func (l *LXD) init() error {
 	return l.runner.RunMany(
 		runner.NewCommand("lxd", []string{"waitready"}),
 		runner.NewCommand("lxd", []string{"init", "--minimal"}),
+		runner.NewCommand("lxc", []string{"network", "set", "lxdbr0", "ipv6.address", "none"}),
 	)
 }
 
