@@ -33,6 +33,20 @@ func TestNewCommandAs(t *testing.T) {
 	}
 }
 
+func TestNewCommandAsRoot(t *testing.T) {
+	expected := &Command{
+		Executable: "apt-get",
+		Args:       []string{"install", "-y", "cowsay"},
+		User:       "",
+		Group:      "",
+	}
+
+	command := NewCommandAs("root", "foo", "apt-get", []string{"install", "-y", "cowsay"})
+	if !reflect.DeepEqual(expected, command) {
+		t.Fatalf("expected: %+v, got: %+v", expected, command)
+	}
+}
+
 func TestCommandString(t *testing.T) {
 	type test struct {
 		command  *Command

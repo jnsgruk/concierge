@@ -35,6 +35,10 @@ func NewCommand(executable string, args []string) *Command {
 
 // NewCommandAs constructs a command to be run as the specified user/group.
 func NewCommandAs(user string, group string, executable string, args []string) *Command {
+	if user == "root" {
+		return NewCommand(executable, args)
+	}
+
 	return &Command{
 		Executable: executable,
 		Args:       args,
