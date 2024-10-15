@@ -1,12 +1,9 @@
 package runner
 
 import (
-	"context"
 	"os"
 	"os/user"
 	"time"
-
-	retry "github.com/sethvargo/go-retry"
 )
 
 // NewTestRunner constructs a new command runner.
@@ -56,17 +53,7 @@ func (r *TestRunner) Run(c *Command) ([]byte, error) {
 // RunWithRetries executes the command, retrying utilising an exponential backoff pattern,
 // which starts at 1 second. Retries will be attempted up to the specified maximum duration.
 func (r *TestRunner) RunWithRetries(c *Command, maxDuration time.Duration) ([]byte, error) {
-	backoff := retry.NewExponential(1 * time.Second)
-	backoff = retry.WithMaxDuration(maxDuration, backoff)
-	ctx := context.Background()
-
-	return retry.DoValue(ctx, backoff, func(ctx context.Context) ([]byte, error) {
-		output, err := r.Run(c)
-		if err != nil {
-			return nil, retry.RetryableError(err)
-		}
-		return output, nil
-	})
+	return r.Run(c)
 }
 
 // RunMany takes a variadic number of Command's, and runs them in a loop, returning
