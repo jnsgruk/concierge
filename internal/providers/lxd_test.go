@@ -1,6 +1,7 @@
 package providers
 
 import (
+	"os"
 	"reflect"
 	"testing"
 
@@ -36,4 +37,53 @@ func TestNewLXD(t *testing.T) {
 			t.Fatalf("expected: %v, got: %v", tc.expected, lxd)
 		}
 	}
+}
+
+func TestLXDPrepareCommands(t *testing.T) {
+	type test struct {
+		testFunc func(l *LXD)
+		expected []string
+	}
+
+	// Prevent the path of the test machine interfering with the test results.
+	path := os.Getenv("PATH")
+	os.Setenv("PATH", "")
+
+	tests := []test{
+		{
+			func(l *LXD) { l.init() },
+			[]string{
+				"lxd waitready",
+				"lxd init --minimal",
+			},
+		},
+		{
+			func(l *LXD) { l.enableNonRootUserControl() },
+			[]string{
+				"chmod a+wr /var/snap/lxd/common/lxd/unix.socket",
+				"usermod -a -G lxd root",
+			},
+		},
+		{
+			func(l *LXD) { l.deconflictFirewall() },
+			[]string{
+				"iptables -F FORWARD",
+				"iptables -P FORWARD ACCEPT",
+			},
+		},
+	}
+
+	config := &config.Config{}
+
+	for _, tc := range tests {
+		runner := runner.NewTestRunner()
+		tc.testFunc(NewLXD(runner, config))
+
+		if !reflect.DeepEqual(tc.expected, runner.ExecutedCommands) {
+			t.Fatalf("expected: %v, got: %v", tc.expected, runner.ExecutedCommands)
+		}
+	}
+
+	// Reset the PATH variable
+	os.Setenv("PATH", path)
 }
