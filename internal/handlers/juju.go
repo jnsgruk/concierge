@@ -6,6 +6,7 @@ import (
 	"path"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/jnsgruk/concierge/internal/config"
 	"github.com/jnsgruk/concierge/internal/providers"
@@ -113,10 +114,15 @@ func (j *JujuHandler) bootstrapProvider(provider providers.Provider) error {
 
 	user := j.runner.User().Username
 
-	if err := j.runner.RunMany(
-		runner.NewCommandAs(user, provider.GroupName(), "juju", bootstrapArgs),
-		runner.NewCommandAs(user, "", "juju", []string{"add-model", "-c", controllerName, "testing"}),
-	); err != nil {
+	cmd := runner.NewCommandAs(user, provider.GroupName(), "juju", bootstrapArgs)
+	_, err = j.runner.RunWithRetries(cmd, (5 * time.Minute))
+	if err != nil {
+		return err
+	}
+
+	cmd = runner.NewCommandAs(user, "", "juju", []string{"add-model", "-c", controllerName, "testing"})
+	_, err = j.runner.Run(cmd)
+	if err != nil {
 		return err
 	}
 
