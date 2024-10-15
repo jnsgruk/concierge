@@ -86,6 +86,7 @@ func (h *DebHandler) removeDeb(d *packages.Deb) error {
 		return fmt.Errorf("failed to remove apt package '%s': %w", d.Name, err)
 	}
 
+	slog.Info("Removed apt package", "package", d.Name)
 	return nil
 }
 

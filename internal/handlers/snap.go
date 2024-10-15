@@ -97,5 +97,6 @@ func (h *SnapHandler) removeSnap(s *packages.Snap) error {
 		return fmt.Errorf("failed to remove snap '%s': %w", s.Name, err)
 	}
 
+	slog.Info("Removed snap", "snap", s.Name)
 	return nil
 }
