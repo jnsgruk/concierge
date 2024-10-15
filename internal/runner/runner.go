@@ -83,9 +83,9 @@ func (r *Runner) RunWithRetries(c *Command, maxDuration time.Duration) ([]byte, 
 	})
 }
 
-// RunCommands takes a variadic number of Command's, and runs them in a loop, returning
+// RunMany takes a variadic number of Command's, and runs them in a loop, returning
 // and error if any command fails.
-func (r *Runner) RunCommands(commands ...*Command) error {
+func (r *Runner) RunMany(commands ...*Command) error {
 	for _, cmd := range commands {
 		_, err := r.Run(cmd)
 		if err != nil {

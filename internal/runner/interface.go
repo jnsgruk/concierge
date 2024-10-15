@@ -12,9 +12,9 @@ type CommandRunner interface {
 	User() *user.User
 	// Run takes a single command and runs it, returning the combined output and an error value.
 	Run(c *Command) ([]byte, error)
-	// RunCommands takes multiple commands and runs them in sequence, returning an error on the
+	// RunMany takes multiple commands and runs them in sequence, returning an error on the
 	// first error encountered.
-	RunCommands(commands ...*Command) error
+	RunMany(commands ...*Command) error
 	// RunWithRetries executes the command, retrying utilising an exponential backoff pattern,
 	// which starts at 1 second. Retries will be attempted up to the specified maximum duration.
 	RunWithRetries(c *Command, maxDuration time.Duration) ([]byte, error)

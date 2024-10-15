@@ -81,7 +81,7 @@ func (l *LXD) Restore() error {
 
 // init ensures that LXD is installed, minimally configured, and ready.
 func (l *LXD) init() error {
-	return l.runner.RunCommands(
+	return l.runner.RunMany(
 		runner.NewCommand("lxd", []string{"waitready"}),
 		runner.NewCommand("lxd", []string{"init", "--minimal"}),
 	)
@@ -91,7 +91,7 @@ func (l *LXD) init() error {
 func (l *LXD) enableNonRootUserControl() error {
 	username := l.runner.User().Username
 
-	return l.runner.RunCommands(
+	return l.runner.RunMany(
 		runner.NewCommand("chmod", []string{"a+wr", "/var/snap/lxd/common/lxd/unix.socket"}),
 		runner.NewCommand("usermod", []string{"-a", "-G", "lxd", username}),
 	)
@@ -101,7 +101,7 @@ func (l *LXD) enableNonRootUserControl() error {
 // This is to avoid a conflict with the default iptables rules that ship with
 // docker on Ubuntu.
 func (l *LXD) deconflictFirewall() error {
-	return l.runner.RunCommands(
+	return l.runner.RunMany(
 		runner.NewCommand("iptables", []string{"-F", "FORWARD"}),
 		runner.NewCommand("iptables", []string{"-P", "FORWARD", "ACCEPT"}),
 	)

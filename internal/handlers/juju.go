@@ -112,7 +112,7 @@ func (j *JujuHandler) bootstrapProvider(provider providers.Provider) error {
 
 	user := j.runner.User().Username
 
-	if err := j.runner.RunCommands(
+	if err := j.runner.RunMany(
 		runner.NewCommandAs(user, provider.GroupName(), "juju", bootstrapArgs),
 		runner.NewCommandAs(user, "", "juju", []string{"add-model", "-c", controllerName, "testing"}),
 	); err != nil {

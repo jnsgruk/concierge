@@ -118,7 +118,7 @@ func (m *MicroK8s) Restore() error {
 
 // init ensures that MicroK8s is installed, minimally configured, and ready.
 func (m *MicroK8s) init() error {
-	return m.runner.RunCommands(
+	return m.runner.RunMany(
 		runner.NewCommand("snap", []string{"start", "microk8s"}),
 		runner.NewCommand("microk8s", []string{"status", "--wait-ready"}),
 	)
