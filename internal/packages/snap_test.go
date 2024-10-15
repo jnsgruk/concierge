@@ -1,7 +1,6 @@
 package packages
 
 import (
-	"reflect"
 	"testing"
 )
 
@@ -19,8 +18,11 @@ func TestNewSnapFromString(t *testing.T) {
 
 	for _, tc := range tests {
 		snap := NewSnapFromString(tc.input)
-		if !reflect.DeepEqual(tc.expected, snap) {
-			t.Fatalf("expected: %v, got: %v", tc.expected, snap)
+		if tc.expected.Channel != snap.Channel {
+			t.Fatalf("incorrect snap channel; expected: %v, got: %v", tc.expected, snap)
+		}
+		if tc.expected.Name != snap.Name {
+			t.Fatalf("incorrect snap name; expected: %v, got: %v", tc.expected, snap)
 		}
 	}
 }

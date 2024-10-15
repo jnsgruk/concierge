@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"strings"
 
-	snapdClient "github.com/snapcore/snapd/client"
+	"github.com/snapcore/snapd/client"
 )
 
 // NewSnapFromString returns a constructed snap instance, where the snap is
@@ -21,25 +21,27 @@ func NewSnapFromString(snap string) *Snap {
 
 // NewSnap constructs a new Snap instance.
 func NewSnap(name string, channel string) *Snap {
-	return &Snap{Name: name, Channel: channel}
+	return &Snap{Name: name, Channel: channel, client: client.New(nil)}
 }
 
 // Snap represents a snap package on the system.
 type Snap struct {
 	Name    string
 	Channel string
+
+	client *client.Client
 }
 
 // Installed is a helper that reports if the snap is currently Installed.
 func (s *Snap) Installed() bool {
 	slog.Debug("Querying snap install status", "snap", s.Name)
 
-	snap, _, err := snapdClient.New(nil).Snap(s.Name)
+	snap, _, err := s.client.Snap(s.Name)
 	if err != nil {
 		return false
 	}
 
-	return snap.Status == snapdClient.StatusActive
+	return snap.Status == client.StatusActive
 }
 
 // Classic reports whether or not the snap at the tip of the specified channel uses
@@ -47,7 +49,7 @@ func (s *Snap) Installed() bool {
 func (s *Snap) Classic() (bool, error) {
 	slog.Debug("Querying snap confinement", "snap", s.Name)
 
-	snap, _, err := snapdClient.New(nil).FindOne(s.Name)
+	snap, _, err := s.client.FindOne(s.Name)
 	if err != nil {
 		return false, fmt.Errorf("failed to find snap: %w", err)
 	}
@@ -64,12 +66,12 @@ func (s *Snap) Classic() (bool, error) {
 func (s *Snap) Tracking() (string, error) {
 	slog.Debug("Querying snap channel tracking", "snap", s.Name)
 
-	snap, _, err := snapdClient.New(nil).Snap(s.Name)
+	snap, _, err := s.client.Snap(s.Name)
 	if err != nil {
 		return "", fmt.Errorf("failed to find snap: %w", err)
 	}
 
-	if snap.Status == snapdClient.StatusActive {
+	if snap.Status == client.StatusActive {
 		return snap.TrackingChannel, nil
 	} else {
 		return "", fmt.Errorf("snap '%s' is not installed", s.Name)
