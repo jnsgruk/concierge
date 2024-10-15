@@ -31,7 +31,7 @@ jobs:
 
       - name: Run tests
         run: |
-          go test -v ./...
+          go test -v -race ./...
 
       - name: Setup goreleaser
         run: |
