@@ -4,16 +4,14 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/jnsgruk/concierge/internal/config"
 	"github.com/jnsgruk/concierge/internal/packages"
 	"github.com/jnsgruk/concierge/internal/runner"
 )
 
 // NewDebHandler constructs a new instance of a DebHandler.
-func NewDebHandler(config *config.Config, runner runner.CommandRunner, debs []*packages.Deb) *DebHandler {
+func NewDebHandler(runner runner.CommandRunner, debs []*packages.Deb) *DebHandler {
 	return &DebHandler{
 		Debs:   debs,
-		config: config,
 		runner: runner,
 	}
 }
@@ -21,7 +19,6 @@ func NewDebHandler(config *config.Config, runner runner.CommandRunner, debs []*p
 // DebHandler can install or remove a set of debs.
 type DebHandler struct {
 	Debs   []*packages.Deb
-	config *config.Config
 	runner runner.CommandRunner
 }
 

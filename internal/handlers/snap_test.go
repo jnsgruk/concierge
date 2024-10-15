@@ -5,7 +5,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/jnsgruk/concierge/internal/config"
 	"github.com/jnsgruk/concierge/internal/packages"
 	"github.com/jnsgruk/concierge/internal/runner"
 )
@@ -65,7 +64,7 @@ func TestSnapHandlerCommands(t *testing.T) {
 
 	for _, tc := range tests {
 		runner := runner.NewTestRunner()
-		tc.testFunc(NewSnapHandler(&config.Config{}, runner, snaps))
+		tc.testFunc(NewSnapHandler(runner, snaps))
 
 		if !reflect.DeepEqual(tc.expected, runner.ExecutedCommands) {
 			t.Fatalf("expected: %v, got: %v", tc.expected, runner.ExecutedCommands)

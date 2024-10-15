@@ -68,8 +68,8 @@ func NewPlan(config *config.Config, runner runner.CommandRunner) *Plan {
 func (p *Plan) Execute(action string) error {
 	var eg errgroup.Group
 
-	snapHandler := handlers.NewSnapHandler(p.config, p.runner, p.Snaps)
-	debHandler := handlers.NewDebHandler(p.config, p.runner, p.Debs)
+	snapHandler := handlers.NewSnapHandler(p.runner, p.Snaps)
+	debHandler := handlers.NewDebHandler(p.runner, p.Debs)
 	jujuHandler := handlers.NewJujuHandler(p.config, p.runner, p.Providers)
 
 	// Prepare/restore package handlers concurrently

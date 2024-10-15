@@ -4,16 +4,14 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/jnsgruk/concierge/internal/config"
 	"github.com/jnsgruk/concierge/internal/packages"
 	"github.com/jnsgruk/concierge/internal/runner"
 )
 
 // NewSnapHandler constructs a new instance of a SnapHandler.
-func NewSnapHandler(config *config.Config, runner runner.CommandRunner, snaps []packages.SnapPackage) *SnapHandler {
+func NewSnapHandler(runner runner.CommandRunner, snaps []packages.SnapPackage) *SnapHandler {
 	return &SnapHandler{
 		Snaps:  snaps,
-		config: config,
 		runner: runner,
 	}
 }
@@ -21,7 +19,6 @@ func NewSnapHandler(config *config.Config, runner runner.CommandRunner, snaps []
 // SnapHandler can install or remove a set of snaps.
 type SnapHandler struct {
 	Snaps  []packages.SnapPackage
-	config *config.Config
 	runner runner.CommandRunner
 }
 
