@@ -47,11 +47,13 @@ func (h *SnapHandler) Restore() error {
 // installSnap ensures that the specified snap is installed at the specified channel.
 // If already installed, but on the wrong channel, the snap is refreshed.
 func (h *SnapHandler) installSnap(s packages.SnapPackage) error {
-	var action string
+	var action, logAction string
 	if s.Installed() {
 		action = "refresh"
+		logAction = "Refreshed"
 	} else {
 		action = "install"
+		logAction = "Installed"
 	}
 
 	args := []string{action, s.Name()}
@@ -80,7 +82,7 @@ func (h *SnapHandler) installSnap(s packages.SnapPackage) error {
 		return fmt.Errorf("failed to resolve which channel the '%s' snap is tracking: %w", s.Name(), err)
 	}
 
-	slog.Info("Installed snap", "snap", s.Name(), "channel", trackingChannel)
+	slog.Info(fmt.Sprintf("%s snap", logAction), "snap", s.Name(), "channel", trackingChannel)
 	return nil
 }
 

@@ -88,6 +88,7 @@ func (j *JujuHandler) bootstrapProvider(provider providers.Provider) error {
 	}
 
 	if bootstrapped {
+		slog.Info("Previous Juju controller found", "provider", provider.Name())
 		return nil
 	}
 
