@@ -1,10 +1,8 @@
 package concierge
 
 import (
-	"errors"
 	"fmt"
 	"log/slog"
-	"os"
 	"path"
 
 	"github.com/jnsgruk/concierge/internal/config"
@@ -13,11 +11,16 @@ import (
 )
 
 // NewManager constructs a new instance of the concierge manager.
-func NewManager(config *config.Config) *Manager {
+func NewManager(config *config.Config) (*Manager, error) {
+	runner, err := runner.NewRunner(config.Trace)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialise runner: %w", err)
+	}
+
 	return &Manager{
 		config: config,
-		runner: runner.NewRunner(config.Trace),
-	}
+		runner: runner,
+	}, nil
 }
 
 // Manager is a construct for controlling the main execution of concierge.
@@ -63,53 +66,27 @@ func (m *Manager) execute(action string) error {
 // recordRuntimeConfig dumps the current manager config into a file in the user's home
 // directory, such that it can be read later and used to restore the machine.
 func (m *Manager) recordRuntimeConfig() error {
-	user, err := runner.RealUser()
-	if err != nil {
-		return fmt.Errorf("failed to lookup real user: %w", err)
-	}
-
-	cachePath := path.Join(user.HomeDir, ".cache", "concierge")
-
-	err = os.MkdirAll(cachePath, os.ModePerm)
-	if err != nil {
-		return fmt.Errorf("failed to create '.cache/concierge' subdirectory in user's home directory: %w", err)
-	}
-
 	configYaml, err := yaml.Marshal(m.config)
 	if err != nil {
 		return fmt.Errorf("failed to marshal config file as yaml: %w", err)
 	}
 
-	recordPath := path.Join(user.HomeDir, ".cache", "concierge", "concierge.yaml")
-
-	if err := os.WriteFile(recordPath, configYaml, 0644); err != nil {
-		return fmt.Errorf("failed to write config record file: %w", err)
-	}
-
-	err = runner.ChownRecursively(cachePath, user)
+	filepath := path.Join(".cache", "concierge", "concierge.yaml")
+	err = m.runner.WriteHomeDirFile(filepath, configYaml)
 	if err != nil {
-		return fmt.Errorf("failed to change ownership of concierge cache directory")
+		return fmt.Errorf("failed to write runtime config file: %w", err)
 	}
 
-	slog.Debug("Merged runtime configuration saved", "path", recordPath)
+	slog.Debug("Merged runtime configuration saved", "path", filepath)
 
 	return nil
 }
 
 // loadRuntimeConfig loads a previously cached concierge runtime configuration.
 func (m *Manager) loadRuntimeConfig() error {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return fmt.Errorf("failed to determine user's home directory: %w", err)
-	}
+	recordPath := path.Join(".cache", "concierge", "concierge.yaml")
 
-	recordPath := path.Join(home, ".cache", "concierge", "concierge.yaml")
-
-	if _, err := os.Stat(recordPath); errors.Is(err, os.ErrNotExist) {
-		return fmt.Errorf("no previous runtime configuration found: %w", err)
-	}
-
-	contents, err := os.ReadFile(recordPath)
+	contents, err := m.runner.ReadHomeDirFile(recordPath)
 	if err != nil {
 		return fmt.Errorf("failed to read file: %w", err)
 	}

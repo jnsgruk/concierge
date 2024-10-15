@@ -1,9 +1,6 @@
 package runner
 
 import (
-	"fmt"
-	"os"
-	"os/user"
 	"reflect"
 	"testing"
 )
@@ -22,19 +19,15 @@ func TestNewCommand(t *testing.T) {
 	}
 }
 
-func TestNewCommandAsRealUserWithGroup(t *testing.T) {
-	// Fake a sudo user
-	user, _ := user.Current()
-	os.Setenv("SUDO_USER", user.Username)
-
+func TestNewCommandAs(t *testing.T) {
 	expected := &Command{
 		Executable: "apt-get",
 		Args:       []string{"install", "-y", "cowsay"},
-		User:       os.Getenv("SUDO_USER"),
+		User:       "test-user",
 		Group:      "foo",
 	}
 
-	command := NewCommandAsRealUserWithGroup("apt-get", []string{"install", "-y", "cowsay"}, "foo")
+	command := NewCommandAs("test-user", "foo", "apt-get", []string{"install", "-y", "cowsay"})
 	if !reflect.DeepEqual(expected, command) {
 		t.Fatalf("expected: %+v, got: %+v", expected, command)
 	}
@@ -46,11 +39,6 @@ func TestCommandString(t *testing.T) {
 		expected string
 	}
 
-	// Fake a SUDO_USER
-	user, _ := user.Current()
-	os.Setenv("SUDO_USER", user.Username)
-	defer os.Setenv("SUDO_USER", "")
-
 	// Use CONCIERGE_TEST_COMMAND to avoid $PATH lookups making tests flaky
 	tests := []test{
 		{
@@ -58,12 +46,12 @@ func TestCommandString(t *testing.T) {
 			expected: "CONCIERGE_TEST_COMMAND add-model testing",
 		},
 		{
-			command:  NewCommandAsRealUser("CONCIERGE_TEST_COMMAND", []string{"install", "-y", "cowsay"}),
-			expected: fmt.Sprintf("sudo -u %s CONCIERGE_TEST_COMMAND install -y cowsay", os.Getenv("SUDO_USER")),
+			command:  NewCommandAs("test-user", "", "CONCIERGE_TEST_COMMAND", []string{"install", "-y", "cowsay"}),
+			expected: "sudo -u test-user CONCIERGE_TEST_COMMAND install -y cowsay",
 		},
 		{
-			command:  NewCommandAsRealUserWithGroup("CONCIERGE_TEST_COMMAND", []string{"install", "-y", "cowsay"}, "apters"),
-			expected: fmt.Sprintf("sudo -u %s -g apters CONCIERGE_TEST_COMMAND install -y cowsay", os.Getenv("SUDO_USER")),
+			command:  NewCommandAs("test-user", "apters", "CONCIERGE_TEST_COMMAND", []string{"install", "-y", "cowsay"}),
+			expected: "sudo -u test-user -g apters CONCIERGE_TEST_COMMAND install -y cowsay",
 		},
 	}
 

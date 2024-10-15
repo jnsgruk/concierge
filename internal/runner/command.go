@@ -3,9 +3,7 @@ package runner
 import (
 	"bytes"
 	"log/slog"
-	"os"
 	"os/exec"
-	"os/user"
 
 	"github.com/canonical/x-go/strutil/shlex"
 )
@@ -35,36 +33,12 @@ func NewCommand(executable string, args []string) *Command {
 	}
 }
 
-// NewCommandAsRealUser constructs a command to be run as the real user/group, which is
-// different to the current user when concierge is executed with sudo.
-func NewCommandAsRealUser(executable string, args []string) *Command {
+// NewCommandAs constructs a command to be run as the specified user/group.
+func NewCommandAs(user string, group string, executable string, args []string) *Command {
 	return &Command{
 		Executable: executable,
 		Args:       args,
-		User:       os.Getenv("SUDO_USER"),
-		Group:      "",
-	}
-}
-
-// NewCommandAsRealUser constructs a command to be run as the real user/group, which is
-// different to the current user when concierge is executed with sudo.
-func NewCommandAsRealUserWithGroup(executable string, args []string, group string) *Command {
-	realUser, err := RealUser()
-	if err != nil {
-		slog.Warn("failed to lookup user, defaulting to 'root'", "error", err.Error())
-		realUser = &user.User{Username: "root"}
-		group = ""
-	}
-
-	// Don't try to drop privileges with a group if the real user is actually root
-	if realUser.Uid == "0" {
-		group = ""
-	}
-
-	return &Command{
-		Executable: executable,
-		Args:       args,
-		User:       realUser.Username,
+		User:       user,
 		Group:      group,
 	}
 }

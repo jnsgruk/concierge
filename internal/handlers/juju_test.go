@@ -3,7 +3,6 @@ package handlers
 import (
 	"fmt"
 	"os"
-	"os/user"
 	"reflect"
 	"testing"
 
@@ -11,20 +10,6 @@ import (
 	"github.com/jnsgruk/concierge/internal/providers"
 	"github.com/jnsgruk/concierge/internal/runner"
 )
-
-func fakeSudoEnv() (string, func()) {
-	// Prevent the path of the test machine interfering with the test results.
-	path := os.Getenv("PATH")
-	os.Setenv("PATH", "")
-	// Fake a sudo user
-	user, _ := user.Current()
-	os.Setenv("SUDO_USER", user.Username)
-
-	return user.Username, func() {
-		os.Setenv("PATH", path)
-		os.Setenv("SUDO_USER", "")
-	}
-}
 
 func setupHandler(preset string) (*runner.TestRunner, *JujuHandler, error) {
 	var err error
@@ -50,30 +35,35 @@ func setupHandler(preset string) (*runner.TestRunner, *JujuHandler, error) {
 }
 
 func TestJujuHandlerCommandsMicroK8s(t *testing.T) {
-	username, reset := fakeSudoEnv()
-	defer reset()
+	// Prevent the path of the test machine interfering with the test results.
+	path := os.Getenv("PATH")
+	os.Setenv("PATH", "")
+	defer os.Setenv("PATH", path)
 
 	type test struct {
-		preset   string
-		expected []string
+		preset           string
+		expectedCommands []string
+		expectedDirs     []string
 	}
 
 	tests := []test{
 		{
 			preset: "machine",
-			expected: []string{
-				fmt.Sprintf("sudo -u %s juju show-controller concierge-lxd", username),
-				fmt.Sprintf("sudo -u %s -g lxd juju bootstrap localhost concierge-lxd --verbose --model-default automatically-retry-hooks=false --model-default test-mode=true", username),
-				fmt.Sprintf("sudo -u %s juju add-model -c concierge-lxd testing", username),
+			expectedCommands: []string{
+				"sudo -u test-user juju show-controller concierge-lxd",
+				"sudo -u test-user -g lxd juju bootstrap localhost concierge-lxd --verbose --model-default automatically-retry-hooks=false --model-default test-mode=true",
+				"sudo -u test-user juju add-model -c concierge-lxd testing",
 			},
+			expectedDirs: []string{".local/share/juju"},
 		},
 		{
 			preset: "k8s",
-			expected: []string{
-				fmt.Sprintf("sudo -u %s juju show-controller concierge-microk8s", username),
-				fmt.Sprintf("sudo -u %s -g snap_microk8s juju bootstrap microk8s concierge-microk8s --verbose --model-default automatically-retry-hooks=false --model-default test-mode=true", username),
-				fmt.Sprintf("sudo -u %s juju add-model -c concierge-microk8s testing", username),
+			expectedCommands: []string{
+				"sudo -u test-user juju show-controller concierge-microk8s",
+				"sudo -u test-user -g snap_microk8s juju bootstrap microk8s concierge-microk8s --verbose --model-default automatically-retry-hooks=false --model-default test-mode=true",
+				"sudo -u test-user juju add-model -c concierge-microk8s testing",
 			},
+			expectedDirs: []string{".local/share/juju"},
 		},
 	}
 
@@ -83,14 +73,37 @@ func TestJujuHandlerCommandsMicroK8s(t *testing.T) {
 			t.Fatal(err.Error())
 		}
 
-		err = handler.bootstrap()
+		err = handler.Prepare()
 		if err != nil {
 			t.Fatal(err.Error())
 		}
 
-		if !reflect.DeepEqual(tc.expected, runner.ExecutedCommands) {
-			t.Fatalf("expected: %v, got: %v", tc.expected, runner.ExecutedCommands)
+		if !reflect.DeepEqual(tc.expectedCommands, runner.ExecutedCommands) {
+			t.Fatalf("expected: %v, got: %v", tc.expectedCommands, runner.ExecutedCommands)
+		}
+		if !reflect.DeepEqual(tc.expectedDirs, runner.CreatedDirectories) {
+			t.Fatalf("expected: %v, got: %v", tc.expectedDirs, runner.CreatedDirectories)
 		}
 	}
 
+}
+
+func TestJujuRestore(t *testing.T) {
+	// Prevent the path of the test machine interfering with the test results.
+	path := os.Getenv("PATH")
+	os.Setenv("PATH", "")
+	defer os.Setenv("PATH", path)
+
+	runner, handler, err := setupHandler("machine")
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	handler.Restore()
+
+	expectedDeleted := []string{".local/share/juju"}
+
+	if !reflect.DeepEqual(expectedDeleted, runner.Deleted) {
+		t.Fatalf("expected: %v, got: %v", expectedDeleted, runner.Deleted)
+	}
 }

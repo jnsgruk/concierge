@@ -106,14 +106,9 @@ func (m *MicroK8s) Snaps() []packages.SnapPackage {
 
 // Remove uninstalls MicroK8s and kubectl.
 func (m *MicroK8s) Restore() error {
-	user, err := runner.RealUser()
+	err := m.runner.RemoveAllHome(".kube")
 	if err != nil {
-		return fmt.Errorf("failed to lookup real user: %w", err)
-	}
-
-	err = os.RemoveAll(path.Join(user.HomeDir, ".kube"))
-	if err != nil {
-		return fmt.Errorf("failed to remove '.kube' subdirectory from user's home directory: %w", err)
+		return fmt.Errorf("failed to remove '.kube' from user's home directory: %w", err)
 	}
 
 	slog.Info("Removed provider", "provider", m.Name())
@@ -152,16 +147,13 @@ func (m *MicroK8s) enableAddons() error {
 // enableNonRootUserControl ensures the current user is in the correct POSIX group
 // that allows them to interact with MicroK8s.
 func (m *MicroK8s) enableNonRootUserControl() error {
-	user, err := runner.RealUser()
-	if err != nil {
-		return fmt.Errorf("failed to lookup real user: %w", err)
-	}
+	username := m.runner.User().Username
 
-	cmd := runner.NewCommand("usermod", []string{"-a", "-G", m.GroupName(), user.Username})
+	cmd := runner.NewCommand("usermod", []string{"-a", "-G", m.GroupName(), username})
 
-	_, err = m.runner.Run(cmd)
+	_, err := m.runner.Run(cmd)
 	if err != nil {
-		return fmt.Errorf("failed to add user '%s' to group 'microk8s': %w", user.Username, err)
+		return fmt.Errorf("failed to add user '%s' to group 'microk8s': %w", username, err)
 	}
 
 	return nil
@@ -170,34 +162,13 @@ func (m *MicroK8s) enableNonRootUserControl() error {
 // setupKubectl both installs the kubectl snap, and writes the relevant kubeconfig
 // file to the user's home directory such that kubectl works with MicroK8s.
 func (m *MicroK8s) setupKubectl() error {
-	user, err := runner.RealUser()
-	if err != nil {
-		return fmt.Errorf("failed to lookup real user: %w", err)
-	}
-
-	dirPath := path.Join(user.HomeDir, ".kube")
-
-	err = os.MkdirAll(dirPath, os.ModePerm)
-	if err != nil {
-		return fmt.Errorf("failed to create '.kube' subdirectory in user's home directory: %w", err)
-	}
-
 	cmd := runner.NewCommand("microk8s", []string{"config"})
 	result, err := m.runner.Run(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to fetch MicroK8s configuration: %w", err)
 	}
 
-	if err := os.WriteFile(path.Join(dirPath, "config"), result, 0600); err != nil {
-		return fmt.Errorf("failed to write kubeconfig file: %w", err)
-	}
-
-	err = runner.ChownRecursively(dirPath, user)
-	if err != nil {
-		return fmt.Errorf("failed to change ownership of '.kube/config' file in user's home directory: %w", err)
-	}
-
-	return nil
+	return m.runner.WriteHomeDirFile(path.Join(".kube", "config"), result)
 }
 
 // Try to compute the "correct" default channel. Concerige prefers that the 'strict'

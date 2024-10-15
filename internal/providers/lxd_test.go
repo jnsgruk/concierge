@@ -23,7 +23,7 @@ func TestNewLXD(t *testing.T) {
 	overrides := &config.Config{}
 	overrides.Overrides.LXDChannel = "5.20/stable"
 
-	runner := runner.NewRunner(false)
+	runner := runner.NewTestRunner()
 
 	tests := []test{
 		{config: noOverrides, expected: &LXD{Channel: "", runner: runner}},
@@ -40,48 +40,27 @@ func TestNewLXD(t *testing.T) {
 }
 
 func TestLXDPrepareCommands(t *testing.T) {
-	type test struct {
-		testFunc func(l *LXD)
-		expected []string
-	}
-
 	// Prevent the path of the test machine interfering with the test results.
 	path := os.Getenv("PATH")
 	defer os.Setenv("PATH", path)
 	os.Setenv("PATH", "")
 
-	tests := []test{
-		{
-			func(l *LXD) { l.init() },
-			[]string{
-				"lxd waitready",
-				"lxd init --minimal",
-			},
-		},
-		{
-			func(l *LXD) { l.enableNonRootUserControl() },
-			[]string{
-				"chmod a+wr /var/snap/lxd/common/lxd/unix.socket",
-				"usermod -a -G lxd root",
-			},
-		},
-		{
-			func(l *LXD) { l.deconflictFirewall() },
-			[]string{
-				"iptables -F FORWARD",
-				"iptables -P FORWARD ACCEPT",
-			},
-		},
-	}
-
 	config := &config.Config{}
 
-	for _, tc := range tests {
-		runner := runner.NewTestRunner()
-		tc.testFunc(NewLXD(runner, config))
+	expected := []string{
+		"lxd waitready",
+		"lxd init --minimal",
+		"chmod a+wr /var/snap/lxd/common/lxd/unix.socket",
+		"usermod -a -G lxd test-user",
+		"iptables -F FORWARD",
+		"iptables -P FORWARD ACCEPT",
+	}
 
-		if !reflect.DeepEqual(tc.expected, runner.ExecutedCommands) {
-			t.Fatalf("expected: %v, got: %v", tc.expected, runner.ExecutedCommands)
-		}
+	runner := runner.NewTestRunner()
+	lxd := NewLXD(runner, config)
+	lxd.Prepare()
+
+	if !reflect.DeepEqual(expected, runner.ExecutedCommands) {
+		t.Fatalf("expected: %v, got: %v", expected, runner.ExecutedCommands)
 	}
 }

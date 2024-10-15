@@ -31,7 +31,7 @@ func TestNewMicroK8s(t *testing.T) {
 	overrides.Overrides.MicroK8sChannel = "1.30/edge"
 	overrides.Providers.MicroK8s.Addons = defaultAddons
 
-	runner := runner.NewRunner(false)
+	runner := runner.NewTestRunner()
 
 	tests := []test{
 		{
@@ -70,7 +70,7 @@ func TestMicroK8sGroupName(t *testing.T) {
 	for _, tc := range tests {
 		config := &config.Config{}
 		config.Providers.MicroK8s.Channel = tc.channel
-		uk8s := NewMicroK8s(runner.NewRunner(false), config)
+		uk8s := NewMicroK8s(runner.NewTestRunner(), config)
 
 		if !reflect.DeepEqual(tc.expected, uk8s.GroupName()) {
 			t.Fatalf("expected: %v, got: %v", tc.expected, uk8s.GroupName())
@@ -79,54 +79,55 @@ func TestMicroK8sGroupName(t *testing.T) {
 }
 
 func TestMicroK8sPrepareCommands(t *testing.T) {
-	type test struct {
-		testFunc func(m *MicroK8s)
-		expected []string
-	}
-
 	// Prevent the path of the test machine interfering with the test results.
 	path := os.Getenv("PATH")
 	defer os.Setenv("PATH", path)
 	os.Setenv("PATH", "")
 
-	tests := []test{
-		{
-			func(m *MicroK8s) { m.init() },
-			[]string{
-				"snap start microk8s",
-				"microk8s status --wait-ready",
-			},
-		},
-		{
-			func(m *MicroK8s) { m.enableAddons() },
-			[]string{
-				"microk8s enable dns",
-				"microk8s enable hostpath-storage",
-				"microk8s enable metallb:10.64.140.43-10.64.140.49",
-			},
-		},
-		{
-			func(m *MicroK8s) { m.enableNonRootUserControl() },
-			[]string{
-				"usermod -a -G snap_microk8s root",
-			},
-		},
-	}
-
 	config := &config.Config{}
 	config.Providers.MicroK8s.Channel = "1.31-strict/stable"
-	config.Providers.MicroK8s.Addons = []string{
-		"dns",
-		"hostpath-storage",
-		"metallb:10.64.140.43-10.64.140.49",
+	config.Providers.MicroK8s.Addons = defaultAddons
+
+	expectedCommands := []string{
+		"snap start microk8s",
+		"microk8s status --wait-ready",
+		"microk8s enable hostpath-storage",
+		"microk8s enable dns",
+		"microk8s enable rbac",
+		"microk8s enable metallb:10.64.140.43-10.64.140.49",
+		"usermod -a -G snap_microk8s test-user",
+		"microk8s config",
 	}
 
-	for _, tc := range tests {
-		runner := runner.NewTestRunner()
-		tc.testFunc(NewMicroK8s(runner, config))
+	expectedFiles := map[string]string{
+		".kube/config": "",
+	}
 
-		if !reflect.DeepEqual(tc.expected, runner.ExecutedCommands) {
-			t.Fatalf("expected: %v, got: %v", tc.expected, runner.ExecutedCommands)
-		}
+	runner := runner.NewTestRunner()
+	uk8s := NewMicroK8s(runner, config)
+	uk8s.Prepare()
+
+	if !reflect.DeepEqual(expectedCommands, runner.ExecutedCommands) {
+		t.Fatalf("expected: %v, got: %v", expectedCommands, runner.ExecutedCommands)
+	}
+
+	if !reflect.DeepEqual(expectedFiles, runner.CreatedFiles) {
+		t.Fatalf("expected: %v, got: %v", expectedFiles, runner.CreatedFiles)
+	}
+}
+
+func TestMicroK8sRestore(t *testing.T) {
+	config := &config.Config{}
+	config.Providers.MicroK8s.Channel = "1.31-strict/stable"
+	config.Providers.MicroK8s.Addons = defaultAddons
+
+	runner := runner.NewTestRunner()
+	uk8s := NewMicroK8s(runner, config)
+	uk8s.Restore()
+
+	expectedDeleted := []string{".kube"}
+
+	if !reflect.DeepEqual(expectedDeleted, runner.Deleted) {
+		t.Fatalf("expected: %v, got: %v", expectedDeleted, runner.Deleted)
 	}
 }

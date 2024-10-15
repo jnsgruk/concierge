@@ -37,12 +37,6 @@ type LXD struct {
 // This includes installing the snap, enabling the user who ran concierge to interact
 // with LXD without sudo, and deconflicting the firewall rules with docker.
 func (l *LXD) Prepare() error {
-	for _, snap := range l.Snaps() {
-		if !snap.Installed() {
-			return fmt.Errorf("snap '%s' not installed and is required by LXD", snap.Name())
-		}
-	}
-
 	err := l.init()
 	if err != nil {
 		return fmt.Errorf("failed to initialise LXD: %w", err)
@@ -95,14 +89,11 @@ func (l *LXD) init() error {
 
 // enableNonRootUserControl ensures the current user is in the `lxd` group.
 func (l *LXD) enableNonRootUserControl() error {
-	user, err := runner.RealUser()
-	if err != nil {
-		return fmt.Errorf("failed to lookup real user: %w", err)
-	}
+	username := l.runner.User().Username
 
 	return l.runner.RunCommands(
 		runner.NewCommand("chmod", []string{"a+wr", "/var/snap/lxd/common/lxd/unix.socket"}),
-		runner.NewCommand("usermod", []string{"-a", "-G", "lxd", user.Username}),
+		runner.NewCommand("usermod", []string{"-a", "-G", "lxd", username}),
 	)
 }
 

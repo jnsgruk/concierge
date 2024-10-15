@@ -28,7 +28,11 @@ func restoreCmd() *cobra.Command {
 				return fmt.Errorf("failed to configure concierge: %w", err)
 			}
 
-			mgr := concierge.NewManager(conf)
+			mgr, err := concierge.NewManager(conf)
+			if err != nil {
+				return err
+			}
+
 			return mgr.Restore()
 		},
 	}
