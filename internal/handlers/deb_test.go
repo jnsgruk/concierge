@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/jnsgruk/concierge/internal/packages"
-	"github.com/jnsgruk/concierge/internal/runner"
+	"github.com/jnsgruk/concierge/internal/runnertest"
 )
 
 func TestDebHandlerCommands(t *testing.T) {
@@ -45,7 +45,7 @@ func TestDebHandlerCommands(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		runner := runner.NewTestRunner()
+		runner := runnertest.NewMockRunner()
 		tc.testFunc(NewDebHandler(runner, debs))
 
 		if !reflect.DeepEqual(tc.expected, runner.ExecutedCommands) {

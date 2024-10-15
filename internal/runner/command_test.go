@@ -70,7 +70,7 @@ func TestCommandString(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		commandString := tc.command.commandString()
+		commandString := tc.command.CommandString()
 		if !reflect.DeepEqual(tc.expected, commandString) {
 			t.Fatalf("expected: %v, got: %v", tc.expected, commandString)
 		}

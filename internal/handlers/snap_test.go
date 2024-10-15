@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/jnsgruk/concierge/internal/packages"
-	"github.com/jnsgruk/concierge/internal/runner"
+	"github.com/jnsgruk/concierge/internal/runnertest"
 )
 
 func NewTestSnap(name, channel string, classic bool, installed bool) *TestSnap {
@@ -65,7 +65,7 @@ func TestSnapHandlerCommands(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		runner := runner.NewTestRunner()
+		runner := runnertest.NewMockRunner()
 		tc.testFunc(NewSnapHandler(runner, snaps))
 
 		if !reflect.DeepEqual(tc.expected, runner.ExecutedCommands) {

@@ -53,14 +53,14 @@ func (r *Runner) Run(c *Command) ([]byte, error) {
 		return nil, fmt.Errorf("unable to determine shell path to run command")
 	}
 
-	cmd := exec.Command(shell, "-c", c.commandString())
+	cmd := exec.Command(shell, "-c", c.CommandString())
 
-	logger.Debug("Running command", "command", c.commandString())
+	logger.Debug("Running command", "command", c.CommandString())
 
 	output, err := cmd.CombinedOutput()
 
 	if r.trace {
-		fmt.Print(generateTraceMessage(c.commandString(), output))
+		fmt.Print(generateTraceMessage(c.CommandString(), output))
 	}
 
 	return output, err

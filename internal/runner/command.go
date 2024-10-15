@@ -47,9 +47,9 @@ func NewCommandAs(user string, group string, executable string, args []string) *
 	}
 }
 
-// commandString puts together a command to be executed in a shell, including the `sudo`
+// CommandString puts together a command to be executed in a shell, including the `sudo`
 // command and its arguments where appropriate.
-func (c *Command) commandString() string {
+func (c *Command) CommandString() string {
 	path, err := exec.LookPath(c.Executable)
 	if err != nil {
 		slog.Warn("Failed to lookup command in path", "command", c.Executable)

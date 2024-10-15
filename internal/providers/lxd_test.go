@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/jnsgruk/concierge/internal/config"
-	"github.com/jnsgruk/concierge/internal/runner"
+	"github.com/jnsgruk/concierge/internal/runnertest"
 )
 
 func TestNewLXD(t *testing.T) {
@@ -23,7 +23,7 @@ func TestNewLXD(t *testing.T) {
 	overrides := &config.Config{}
 	overrides.Overrides.LXDChannel = "5.20/stable"
 
-	runner := runner.NewTestRunner()
+	runner := runnertest.NewMockRunner()
 
 	tests := []test{
 		{config: noOverrides, expected: &LXD{Channel: "", runner: runner}},
@@ -57,7 +57,7 @@ func TestLXDPrepareCommands(t *testing.T) {
 		"iptables -P FORWARD ACCEPT",
 	}
 
-	runner := runner.NewTestRunner()
+	runner := runnertest.NewMockRunner()
 	lxd := NewLXD(runner, config)
 	lxd.Prepare()
 

@@ -8,15 +8,15 @@ import (
 
 	"github.com/jnsgruk/concierge/internal/config"
 	"github.com/jnsgruk/concierge/internal/providers"
-	"github.com/jnsgruk/concierge/internal/runner"
+	"github.com/jnsgruk/concierge/internal/runnertest"
 )
 
-func setupHandler(preset string) (*runner.TestRunner, *JujuHandler, error) {
+func setupHandler(preset string) (*runnertest.MockRunner, *JujuHandler, error) {
 	var err error
 	var cfg *config.Config
 	var provider providers.Provider
 
-	runner := runner.NewTestRunner()
+	runner := runnertest.NewMockRunner()
 	runner.SetNextReturn([]byte("not found"), fmt.Errorf("Test error"))
 
 	cfg, err = config.Preset(preset)
