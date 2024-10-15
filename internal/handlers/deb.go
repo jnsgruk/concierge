@@ -54,7 +54,7 @@ func (h *DebHandler) Restore() error {
 		}
 	}
 
-	cmd := runner.NewCommandSudo("apt-get", []string{"autoremove", "-y"})
+	cmd := runner.NewCommand("apt-get", []string{"autoremove", "-y"})
 
 	_, err := h.runner.Run(cmd)
 	if err != nil {
@@ -66,7 +66,7 @@ func (h *DebHandler) Restore() error {
 
 // installDeb uses `apt` to install the package on the system from the archives.
 func (h *DebHandler) installDeb(d *packages.Deb) error {
-	cmd := runner.NewCommandSudo("apt-get", []string{"install", "-y", d.Name})
+	cmd := runner.NewCommand("apt-get", []string{"install", "-y", d.Name})
 
 	_, err := h.runner.Run(cmd)
 	if err != nil {
@@ -79,7 +79,7 @@ func (h *DebHandler) installDeb(d *packages.Deb) error {
 
 // Remove uninstalls the deb from the system with `apt`.
 func (h *DebHandler) removeDeb(d *packages.Deb) error {
-	cmd := runner.NewCommandSudo("apt-get", []string{"remove", "-y", d.Name})
+	cmd := runner.NewCommand("apt-get", []string{"remove", "-y", d.Name})
 
 	_, err := h.runner.Run(cmd)
 	if err != nil {
@@ -91,7 +91,7 @@ func (h *DebHandler) removeDeb(d *packages.Deb) error {
 
 // updateAptCache is a helper method to update the host's package cache.
 func (h *DebHandler) updateAptCache() error {
-	cmd := runner.NewCommandSudo("apt-get", []string{"update"})
+	cmd := runner.NewCommand("apt-get", []string{"update"})
 
 	_, err := h.runner.Run(cmd)
 	if err != nil {

@@ -3,6 +3,7 @@ package runner
 import (
 	"bytes"
 	"log/slog"
+	"os"
 	"os/exec"
 	"os/user"
 
@@ -34,34 +35,37 @@ func NewCommand(executable string, args []string) *Command {
 	}
 }
 
-// NewCommandSudo constructs a command to be run as the "root" user.
-func NewCommandSudo(executable string, args []string) *Command {
+// NewCommandAsRealUser constructs a command to be run as the real user/group, which is
+// different to the current user when concierge is executed with sudo.
+func NewCommandAsRealUser(executable string, args []string) *Command {
 	return &Command{
 		Executable: executable,
 		Args:       args,
-		User:       "root",
+		User:       os.Getenv("SUDO_USER"),
 		Group:      "",
 	}
 }
 
-// NewCommandWithGroup constructs a command to be run, assuming membership in the specified group.
-func NewCommandWithGroup(executable string, args []string, group string) *Command {
-	assumedGroup := group
+// NewCommandAsRealUser constructs a command to be run as the real user/group, which is
+// different to the current user when concierge is executed with sudo.
+func NewCommandAsRealUserWithGroup(executable string, args []string, group string) *Command {
+	realUser, err := RealUser()
+	if err != nil {
+		slog.Warn("failed to lookup user, defaulting to 'root'", "error", err.Error())
+		realUser = &user.User{Username: "root"}
+		group = ""
+	}
 
-	// We don't check the error here, and instead carry on as we were, trying to use
-	// the specified group.
-	currentUser, _ := user.Current()
-
-	// Don't try to switch group if we're already root
-	if currentUser.Uid == "0" {
-		assumedGroup = ""
+	// Don't try to drop privileges with a group if the real user is actually root
+	if realUser.Uid == "0" {
+		group = ""
 	}
 
 	return &Command{
 		Executable: executable,
 		Args:       args,
-		User:       "",
-		Group:      assumedGroup,
+		User:       realUser.Username,
+		Group:      group,
 	}
 }
 

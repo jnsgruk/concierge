@@ -72,7 +72,7 @@ func (h *SnapHandler) installSnap(s *packages.Snap) error {
 		args = append(args, "--classic")
 	}
 
-	cmd := runner.NewCommandSudo("snap", args)
+	cmd := runner.NewCommand("snap", args)
 	_, err = h.runner.Run(cmd)
 	if err != nil {
 		return fmt.Errorf("command failed: %w", err)
@@ -91,7 +91,7 @@ func (h *SnapHandler) installSnap(s *packages.Snap) error {
 func (h *SnapHandler) removeSnap(s *packages.Snap) error {
 	args := []string{"remove", s.Name, "--purge"}
 
-	cmd := runner.NewCommandSudo("snap", args)
+	cmd := runner.NewCommand("snap", args)
 	_, err := h.runner.Run(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to remove snap '%s': %w", s.Name, err)

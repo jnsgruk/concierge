@@ -3,7 +3,6 @@ package providers
 import (
 	"fmt"
 	"log/slog"
-	"os/user"
 
 	"github.com/jnsgruk/concierge/internal/config"
 	"github.com/jnsgruk/concierge/internal/packages"
@@ -89,21 +88,21 @@ func (l *LXD) Restore() error {
 // init ensures that LXD is installed, minimally configured, and ready.
 func (l *LXD) init() error {
 	return l.runner.RunCommands(
-		runner.NewCommandSudo("lxd", []string{"waitready"}),
-		runner.NewCommandSudo("lxd", []string{"init", "--minimal"}),
+		runner.NewCommand("lxd", []string{"waitready"}),
+		runner.NewCommand("lxd", []string{"init", "--minimal"}),
 	)
 }
 
 // enableNonRootUserControl ensures the current user is in the `lxd` group.
 func (l *LXD) enableNonRootUserControl() error {
-	user, err := user.Current()
+	user, err := runner.RealUser()
 	if err != nil {
-		return fmt.Errorf("could not determine current user info: %w", err)
+		return fmt.Errorf("failed to lookup real user: %w", err)
 	}
 
 	return l.runner.RunCommands(
-		runner.NewCommandSudo("chmod", []string{"a+wr", "/var/snap/lxd/common/lxd/unix.socket"}),
-		runner.NewCommandSudo("usermod", []string{"-a", "-G", "lxd", user.Username}),
+		runner.NewCommand("chmod", []string{"a+wr", "/var/snap/lxd/common/lxd/unix.socket"}),
+		runner.NewCommand("usermod", []string{"-a", "-G", "lxd", user.Username}),
 	)
 }
 
@@ -112,7 +111,7 @@ func (l *LXD) enableNonRootUserControl() error {
 // docker on Ubuntu.
 func (l *LXD) deconflictFirewall() error {
 	return l.runner.RunCommands(
-		runner.NewCommandSudo("iptables", []string{"-F", "FORWARD"}),
-		runner.NewCommandSudo("iptables", []string{"-P", "FORWARD", "ACCEPT"}),
+		runner.NewCommand("iptables", []string{"-F", "FORWARD"}),
+		runner.NewCommand("iptables", []string{"-P", "FORWARD", "ACCEPT"}),
 	)
 }

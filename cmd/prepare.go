@@ -29,8 +29,9 @@ More information at https://github.com/jnsgruk/concierge.
 `,
 		SilenceErrors: true,
 		SilenceUsage:  true,
-		PreRun: func(cmd *cobra.Command, args []string) {
+		PreRunE: func(cmd *cobra.Command, args []string) error {
 			parseLoggingFlags(cmd.Flags())
+			return checkUser()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			flags := cmd.Flags()

@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"fmt"
 	"log/slog"
 	"os"
+	"os/user"
 
 	"github.com/spf13/pflag"
 )
@@ -40,4 +42,17 @@ func parseLoggingFlags(flags *pflag.FlagSet) {
 	logger := slog.New(h)
 	slog.SetDefault(logger)
 	logLevel.Set(level)
+}
+
+func checkUser() error {
+	user, err := user.Current()
+	if err != nil {
+		return err
+	}
+
+	if user.Uid != "0" {
+		return fmt.Errorf("this command should be run with `sudo`, or as `root`")
+	}
+
+	return nil
 }

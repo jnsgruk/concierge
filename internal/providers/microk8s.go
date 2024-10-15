@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"os/user"
 	"path"
 	"slices"
 	"strings"
@@ -107,12 +106,12 @@ func (m *MicroK8s) Snaps() []*packages.Snap {
 
 // Remove uninstalls MicroK8s and kubectl.
 func (m *MicroK8s) Restore() error {
-	home, err := os.UserHomeDir()
+	user, err := runner.RealUser()
 	if err != nil {
-		return fmt.Errorf("failed to determine user's home directory: %w", err)
+		return fmt.Errorf("failed to lookup real user: %w", err)
 	}
 
-	err = os.RemoveAll(path.Join(home, ".kube"))
+	err = os.RemoveAll(path.Join(user.HomeDir, ".kube"))
 	if err != nil {
 		return fmt.Errorf("failed to remove '.kube' subdirectory from user's home directory: %w", err)
 	}
@@ -125,8 +124,8 @@ func (m *MicroK8s) Restore() error {
 // init ensures that MicroK8s is installed, minimally configured, and ready.
 func (m *MicroK8s) init() error {
 	return m.runner.RunCommands(
-		runner.NewCommandSudo("snap", []string{"start", "microk8s"}),
-		runner.NewCommandSudo("microk8s", []string{"status", "--wait-ready"}),
+		runner.NewCommand("snap", []string{"start", "microk8s"}),
+		runner.NewCommand("microk8s", []string{"status", "--wait-ready"}),
 	)
 }
 
@@ -140,7 +139,7 @@ func (m *MicroK8s) enableAddons() error {
 			enableArg = "metallb:10.64.140.43-10.64.140.49"
 		}
 
-		cmd := runner.NewCommandSudo("microk8s", []string{"enable", enableArg})
+		cmd := runner.NewCommand("microk8s", []string{"enable", enableArg})
 		_, err := m.runner.RunWithRetries(cmd, (5 * time.Minute))
 		if err != nil {
 			return fmt.Errorf("failed to enable MicroK8s addon '%s': %w", addon, err)
@@ -153,12 +152,12 @@ func (m *MicroK8s) enableAddons() error {
 // enableNonRootUserControl ensures the current user is in the correct POSIX group
 // that allows them to interact with MicroK8s.
 func (m *MicroK8s) enableNonRootUserControl() error {
-	user, err := user.Current()
+	user, err := runner.RealUser()
 	if err != nil {
-		return fmt.Errorf("could not determine current user info: %w", err)
+		return fmt.Errorf("failed to lookup real user: %w", err)
 	}
 
-	cmd := runner.NewCommandSudo("usermod", []string{"-a", "-G", m.GroupName(), user.Username})
+	cmd := runner.NewCommand("usermod", []string{"-a", "-G", m.GroupName(), user.Username})
 
 	_, err = m.runner.Run(cmd)
 	if err != nil {
@@ -171,25 +170,31 @@ func (m *MicroK8s) enableNonRootUserControl() error {
 // setupKubectl both installs the kubectl snap, and writes the relevant kubeconfig
 // file to the user's home directory such that kubectl works with MicroK8s.
 func (m *MicroK8s) setupKubectl() error {
-	home, err := os.UserHomeDir()
+	user, err := runner.RealUser()
 	if err != nil {
-		return fmt.Errorf("failed to determine user's home directory: %w", err)
+		return fmt.Errorf("failed to lookup real user: %w", err)
 	}
 
-	err = os.MkdirAll(path.Join(home, ".kube"), os.ModePerm)
+	dirPath := path.Join(user.HomeDir, ".kube")
+
+	err = os.MkdirAll(dirPath, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("failed to create '.kube' subdirectory in user's home directory: %w", err)
 	}
 
-	cmd := runner.NewCommandSudo("microk8s", []string{"config"})
+	cmd := runner.NewCommand("microk8s", []string{"config"})
 	result, err := m.runner.Run(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to fetch MicroK8s configuration: %w", err)
 	}
 
-	kubeconfig := path.Join(home, ".kube", "config")
-	if err := os.WriteFile(kubeconfig, result, 0600); err != nil {
+	if err := os.WriteFile(path.Join(dirPath, "config"), result, 0600); err != nil {
 		return fmt.Errorf("failed to write kubeconfig file: %w", err)
+	}
+
+	err = runner.ChownRecursively(dirPath, user)
+	if err != nil {
+		return fmt.Errorf("failed to change ownership of '.kube/config' file in user's home directory: %w", err)
 	}
 
 	return nil

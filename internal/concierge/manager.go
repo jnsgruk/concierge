@@ -63,12 +63,14 @@ func (m *Manager) execute(action string) error {
 // recordRuntimeConfig dumps the current manager config into a file in the user's home
 // directory, such that it can be read later and used to restore the machine.
 func (m *Manager) recordRuntimeConfig() error {
-	home, err := os.UserHomeDir()
+	user, err := runner.RealUser()
 	if err != nil {
-		return fmt.Errorf("failed to determine user's home directory: %w", err)
+		return fmt.Errorf("failed to lookup real user: %w", err)
 	}
 
-	err = os.MkdirAll(path.Join(home, ".cache", "concierge"), os.ModePerm)
+	cachePath := path.Join(user.HomeDir, ".cache", "concierge")
+
+	err = os.MkdirAll(cachePath, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("failed to create '.cache/concierge' subdirectory in user's home directory: %w", err)
 	}
@@ -78,10 +80,15 @@ func (m *Manager) recordRuntimeConfig() error {
 		return fmt.Errorf("failed to marshal config file as yaml: %w", err)
 	}
 
-	recordPath := path.Join(home, ".cache", "concierge", "concierge.yaml")
+	recordPath := path.Join(user.HomeDir, ".cache", "concierge", "concierge.yaml")
 
 	if err := os.WriteFile(recordPath, configYaml, 0644); err != nil {
 		return fmt.Errorf("failed to write config record file: %w", err)
+	}
+
+	err = runner.ChownRecursively(cachePath, user)
+	if err != nil {
+		return fmt.Errorf("failed to change ownership of concierge cache directory")
 	}
 
 	slog.Debug("Merged runtime configuration saved", "path", recordPath)

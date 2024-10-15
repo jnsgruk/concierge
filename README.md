@@ -40,7 +40,7 @@ Or you can clone, build and run like so:
 git clone https://github.com/jnsgruk/concierge
 cd concierge
 go build -o concierge main.go
-./concierge -h
+sudo ./concierge -h
 ```
 
 ## Usage
@@ -95,14 +95,14 @@ The best source of examples for how to invoke `concierge` can be found in the
 1. Run `concierge` using the `dev` preset, adding one additional snap, using CLI flags:
 
 ```bash
-concierge prepare -p dev --extra-snaps node/22/stable
+sudo concierge prepare -p dev --extra-snaps node/22/stable
 ```
 
 2. Run `concierge` using the `dev` preset, overriding the Juju channel:
 
 ```bash
 export CONCIERGE_JUJU_CHANNEL=3.6/beta
-concierge prepare -p dev
+sudo concierge prepare -p dev
 ```
 
 ## Configuration

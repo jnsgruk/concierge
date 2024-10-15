@@ -37,14 +37,21 @@ func (j *JujuHandler) Prepare() error {
 		return fmt.Errorf("juju snap not installed")
 	}
 
-	home, err := os.UserHomeDir()
+	user, err := runner.RealUser()
 	if err != nil {
-		return fmt.Errorf("failed to determine user's home directory: %w", err)
+		return fmt.Errorf("failed to lookup real user: %w", err)
 	}
 
-	err = os.MkdirAll(path.Join(home, ".local", "share", "juju"), os.ModePerm)
+	dirPath := path.Join(user.HomeDir, ".local", "share", "juju")
+
+	err = os.MkdirAll(dirPath, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("failed to create '.local/share/juju' subdirectory in user's home directory: %w", err)
+	}
+
+	err = runner.ChownRecursively(dirPath, user)
+	if err != nil {
+		return fmt.Errorf("failed to change ownership of '.local/share/juju' subdirectory in user's home directory: %w", err)
 	}
 
 	err = j.bootstrap()
@@ -57,12 +64,12 @@ func (j *JujuHandler) Prepare() error {
 
 // Restore uninstalls Juju from the system.
 func (j *JujuHandler) Restore() error {
-	home, err := os.UserHomeDir()
+	user, err := runner.RealUser()
 	if err != nil {
-		return fmt.Errorf("failed to determine user's home directory: %w", err)
+		return fmt.Errorf("failed to lookup real user: %w", err)
 	}
 
-	err = os.RemoveAll(path.Join(home, ".local", "share", "juju"))
+	err = os.RemoveAll(path.Join(user.HomeDir, ".local", "share", "juju"))
 	if err != nil {
 		return fmt.Errorf("failed to remove '.local/share/juju' subdirectory from user's home directory: %w", err)
 	}
@@ -117,8 +124,8 @@ func (j *JujuHandler) bootstrapProvider(provider providers.Provider) error {
 	}
 
 	if err := j.runner.RunCommands(
-		runner.NewCommandWithGroup("juju", bootstrapArgs, provider.GroupName()),
-		runner.NewCommand("juju", []string{"add-model", "-c", controllerName, "testing"}),
+		runner.NewCommandAsRealUserWithGroup("juju", bootstrapArgs, provider.GroupName()),
+		runner.NewCommandAsRealUser("juju", []string{"add-model", "-c", controllerName, "testing"}),
 	); err != nil {
 		return err
 	}
@@ -129,7 +136,7 @@ func (j *JujuHandler) bootstrapProvider(provider providers.Provider) error {
 
 // checkBootstrapped checks whether concierge has already been bootstrapped on a given provider.
 func (j *JujuHandler) checkBootstrapped(controllerName string) (bool, error) {
-	cmd := runner.NewCommand("juju", []string{"show-controller", controllerName})
+	cmd := runner.NewCommandAsRealUser("juju", []string{"show-controller", controllerName})
 
 	result, err := j.runner.Run(cmd)
 	if err != nil && strings.Contains(string(result), "not found") {
