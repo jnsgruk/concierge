@@ -5,6 +5,7 @@ go 1.22.7
 require (
 	github.com/canonical/x-go v0.0.0-20230522092633-7947a7587f5b
 	github.com/fatih/color v1.17.0
+	github.com/sethvargo/go-retry v0.3.0
 	github.com/snapcore/snapd v0.0.0-20240925090801-8bae53ad3248
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
@@ -30,7 +31,6 @@ require (
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
-	github.com/sethvargo/go-retry v0.3.0 // indirect
 	github.com/snapcore/go-gettext v0.0.0-20191107141714-82bbea49e785 // indirect
 	github.com/snapcore/secboot v0.0.0-20240411101434-f3ad7c92552a // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
