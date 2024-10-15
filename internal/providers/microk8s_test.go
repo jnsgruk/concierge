@@ -1,6 +1,7 @@
 package providers
 
 import (
+	"os"
 	"reflect"
 	"testing"
 
@@ -75,4 +76,59 @@ func TestMicroK8sGroupName(t *testing.T) {
 			t.Fatalf("expected: %v, got: %v", tc.expected, uk8s.GroupName())
 		}
 	}
+}
+
+func TestMicroK8sPrepareCommands(t *testing.T) {
+	type test struct {
+		testFunc func(m *MicroK8s)
+		expected []string
+	}
+
+	// Prevent the path of the test machine interfering with the test results.
+	path := os.Getenv("PATH")
+	os.Setenv("PATH", "")
+
+	tests := []test{
+		{
+			func(m *MicroK8s) { m.init() },
+			[]string{
+				"snap start microk8s",
+				"microk8s status --wait-ready",
+			},
+		},
+		{
+			func(m *MicroK8s) { m.enableAddons() },
+			[]string{
+				"microk8s enable dns",
+				"microk8s enable hostpath-storage",
+				"microk8s enable metallb:10.64.140.43-10.64.140.49",
+			},
+		},
+		{
+			func(m *MicroK8s) { m.enableNonRootUserControl() },
+			[]string{
+				"usermod -a -G snap_microk8s root",
+			},
+		},
+	}
+
+	config := &config.Config{}
+	config.Providers.MicroK8s.Channel = "1.31-strict/stable"
+	config.Providers.MicroK8s.Addons = []string{
+		"dns",
+		"hostpath-storage",
+		"metallb:10.64.140.43-10.64.140.49",
+	}
+
+	for _, tc := range tests {
+		runner := runner.NewTestRunner()
+		tc.testFunc(NewMicroK8s(runner, config))
+
+		if !reflect.DeepEqual(tc.expected, runner.ExecutedCommands) {
+			t.Fatalf("expected: %v, got: %v", tc.expected, runner.ExecutedCommands)
+		}
+	}
+
+	// Reset the PATH variable
+	os.Setenv("PATH", path)
 }
