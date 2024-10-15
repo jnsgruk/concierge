@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"path"
+	"slices"
 	"strings"
 
 	"github.com/jnsgruk/concierge/internal/config"
@@ -119,8 +120,16 @@ func (j *JujuHandler) bootstrapProvider(provider providers.Provider) error {
 		"--verbose",
 	}
 
-	for k, v := range j.modelDefaults {
-		bootstrapArgs = append(bootstrapArgs, "--model-default", fmt.Sprintf("%s=%s", k, v))
+	// Get a sorted list of the model-default keys
+	keys := make([]string, 0, len(j.modelDefaults))
+	for k := range j.modelDefaults {
+		keys = append(keys, k)
+	}
+	slices.Sort(keys)
+
+	// Iterate over the model-defaults and append them to the bootstrapArgs
+	for _, k := range keys {
+		bootstrapArgs = append(bootstrapArgs, "--model-default", fmt.Sprintf("%s=%s", k, j.modelDefaults[k]))
 	}
 
 	if err := j.runner.RunCommands(
