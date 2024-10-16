@@ -13,7 +13,7 @@ func rootCmd() *cobra.Command {
 		Short:   "A utility for configuring dev/test machines for charm development.",
 		Long: `concierge is an opinionated utility for provisioning charm development and testing machines.
 	
-It's role is to ensure that a given machine has the relevant "craft" tools and providers installed,
+Its role is to ensure that a given machine has the relevant "craft" tools and providers installed,
 then bootstrap a Juju controller onto each of the providers. Additionally, it can install selected
 tools from the [snap store](https://snapcraft.io) or the Ubuntu archive.
 	`,
