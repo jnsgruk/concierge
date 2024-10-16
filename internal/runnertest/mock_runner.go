@@ -12,7 +12,14 @@ import (
 func NewMockRunner() *MockRunner {
 	return &MockRunner{
 		CreatedFiles: map[string]string{},
+		mockReturns:  map[string]MockCommandReturn{},
 	}
+}
+
+// MockCommandReturn contains mocked Output and Error from a given command.
+type MockCommandReturn struct {
+	Output []byte
+	Error  error
 }
 
 // MockRunner represents a struct that can emulate running commands.
@@ -21,15 +28,14 @@ type MockRunner struct {
 	CreatedFiles       map[string]string
 	CreatedDirectories []string
 	Deleted            []string
-	desiredReturn      []byte
-	desiredError       error
+
+	mockReturns map[string]MockCommandReturn
 }
 
-// SetNextReturn sets a static return value representing command combined output,
-// and a desired error return for the next command executed by the runner.
-func (r *MockRunner) SetNextReturn(b []byte, err error) {
-	r.desiredReturn = b
-	r.desiredError = err
+// MockCommandReturn sets a static return value representing command combined output,
+// and a desired error return for the specified command.
+func (r *MockRunner) MockCommandReturn(command string, b []byte, err error) {
+	r.mockReturns[command] = MockCommandReturn{Output: b, Error: err}
 }
 
 // User returns the user the runner executes commands on behalf of.
@@ -44,12 +50,15 @@ func (r *MockRunner) User() *user.User {
 
 // Run executes the command, returning the stdout/stderr where appropriate.
 func (r *MockRunner) Run(c *runner.Command) ([]byte, error) {
-	r.ExecutedCommands = append(r.ExecutedCommands, c.CommandString())
-	returnValue := r.desiredReturn
-	returnErr := r.desiredError
-	r.desiredReturn = []byte{}
-	r.desiredError = nil
-	return returnValue, returnErr
+	cmd := c.CommandString()
+
+	r.ExecutedCommands = append(r.ExecutedCommands, cmd)
+
+	val, ok := r.mockReturns[cmd]
+	if ok {
+		return val.Output, val.Error
+	}
+	return []byte{}, nil
 }
 
 // RunWithRetries executes the command, retrying utilising an exponential backoff pattern,

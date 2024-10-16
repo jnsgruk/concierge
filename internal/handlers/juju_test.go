@@ -17,7 +17,8 @@ func setupHandler(preset string) (*runnertest.MockRunner, *JujuHandler, error) {
 	var provider providers.Provider
 
 	runner := runnertest.NewMockRunner()
-	runner.SetNextReturn([]byte("not found"), fmt.Errorf("Test error"))
+	runner.MockCommandReturn("sudo -u test-user juju show-controller concierge-lxd", []byte("not found"), fmt.Errorf("Test error"))
+	runner.MockCommandReturn("sudo -u test-user juju show-controller concierge-microk8s", []byte("not found"), fmt.Errorf("Test error"))
 
 	cfg, err = config.Preset(preset)
 	if err != nil {
