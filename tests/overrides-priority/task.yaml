@@ -3,11 +3,11 @@ systems:
   - ubuntu-24.04
 
 execute: |
-  pushd "${PROJECT_PATH}/tests/overrides-priority"
+  pushd "${SPREAD_PATH}/${SPREAD_TASK}"
 
   export CONCIERGE_EXTRA_SNAPS="node/22/stable"
 
-  "$PROJECT_PATH"/concierge --trace prepare --extra-snaps="node/21/stable"
+  "$SPREAD_PATH"/concierge --trace prepare --extra-snaps="node/21/stable"
 
   list="$(snap list node)"
   echo $list | MATCH 22/stable
@@ -16,5 +16,5 @@ execute: |
 
 restore: |
   if [[ -z "${CI:-}" ]]; then
-    "$PROJECT_PATH"/concierge --trace restore
+    "$SPREAD_PATH"/concierge --trace restore
   fi

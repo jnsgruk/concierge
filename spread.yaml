@@ -3,12 +3,7 @@ kill-timeout: 90m
 workers: 1
 
 environment:
-  LANG: "C.UTF-8"
-  LANGUAGE: "en"
-
   CI: "$(HOST: echo $CI)"
-  PROJECT_PATH: /root/proj
-  CRAFT_TEST_PATH: /root/proj/tests/
 
 backends:
   lxd:
@@ -89,7 +84,7 @@ prepare: |
     systemctl mask unattended-upgrades.service
   fi
 
-  pushd "$PROJECT_PATH"
+  pushd "$SPREAD_PATH"
 
   if [[ -f "$PWD/concierge" ]]; then
     chown $(id -u):$(id -g) "$PWD/concierge"

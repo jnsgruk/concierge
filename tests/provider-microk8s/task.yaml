@@ -3,9 +3,9 @@ systems:
   - ubuntu-24.04
 
 execute: |
-  pushd "${PROJECT_PATH}/tests/provider-microk8s"
+  pushd "${SPREAD_PATH}/${SPREAD_TASK}"
 
-  "$PROJECT_PATH"/concierge --trace prepare --extra-snaps="yq"
+  "$SPREAD_PATH"/concierge --trace prepare --extra-snaps="yq"
 
   list="$(snap list microk8s)"
   echo $list | MATCH microk8s
@@ -26,5 +26,5 @@ execute: |
 
 restore: |
   if [[ -z "${CI:-}" ]]; then
-    "$PROJECT_PATH"/concierge --trace restore
+    "$SPREAD_PATH"/concierge --trace restore
   fi

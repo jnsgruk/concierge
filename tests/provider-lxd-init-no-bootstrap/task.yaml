@@ -3,9 +3,9 @@ systems:
   - ubuntu-24.04
 
 execute: |
-  pushd "${PROJECT_PATH}/tests/provider-lxd-init-no-bootstrap"
+  pushd "${SPREAD_PATH}/${SPREAD_TASK}"
 
-  "$PROJECT_PATH"/concierge --trace prepare
+  "$SPREAD_PATH"/concierge --trace prepare
 
   mkdir test-charm
   pushd test-charm
@@ -17,5 +17,5 @@ execute: |
 
 restore: |
   if [[ -z "${CI:-}" ]]; then
-    "$PROJECT_PATH"/concierge --trace restore
+    "$SPREAD_PATH"/concierge --trace restore
   fi

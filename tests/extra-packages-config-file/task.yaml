@@ -3,9 +3,9 @@ systems:
   - ubuntu-24.04
 
 execute: |
-  pushd "${PROJECT_PATH}/tests/extra-packages-config-file"
+  pushd "${SPREAD_PATH}/${SPREAD_TASK}"
 
-  "$PROJECT_PATH"/concierge --trace prepare
+  "$SPREAD_PATH"/concierge --trace prepare
 
   command -v pip | MATCH /usr/bin/pip
   python3 -m venv -h | head -n1 | grep -q -e "usage: venv"
@@ -16,5 +16,5 @@ execute: |
 
 restore: |
   if [[ -z "${CI:-}" ]]; then
-    "$PROJECT_PATH"/concierge --trace restore
+    "$SPREAD_PATH"/concierge --trace restore
   fi

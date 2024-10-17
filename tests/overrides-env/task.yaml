@@ -3,7 +3,7 @@ systems:
   - ubuntu-24.04
 
 execute: |
-  pushd "${PROJECT_PATH}/tests/overrides-env"
+  pushd "${SPREAD_PATH}/${SPREAD_TASK}"
 
   export CONCIERGE_JUJU_CHANNEL=3/stable
   export CONCIERGE_CHARMCRAFT_CHANNEL=latest/edge
@@ -15,7 +15,7 @@ execute: |
   export CONCIERGE_EXTRA_SNAPS="node/22/stable"
   export CONCIERGE_EXTRA_DEBS="make"
 
-  "$PROJECT_PATH"/concierge --trace prepare -p dev
+  "$SPREAD_PATH"/concierge --trace prepare -p dev
 
   for i in charmcraft rockcraft snapcraft; do
     list="$(snap list $i)"
@@ -39,5 +39,5 @@ execute: |
 
 restore: |
   if [[ -z "${CI:-}" ]]; then
-    "$PROJECT_PATH"/concierge --trace restore
+    "$SPREAD_PATH"/concierge --trace restore
   fi

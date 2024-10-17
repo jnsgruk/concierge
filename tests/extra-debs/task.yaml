@@ -3,7 +3,7 @@ systems:
   - ubuntu-24.04
 
 execute: |
-  pushd "${PROJECT_PATH}/tests/extra-debs"
+  pushd "${SPREAD_PATH}/${SPREAD_TASK}"
 
   # Create an empty config file
   touch concierge.yaml
@@ -12,7 +12,7 @@ execute: |
   export CONCIERGE_EXTRA_DEBS="make,fortune"
 
   # Also add some extra debs at the CLI
-  "$PROJECT_PATH"/concierge --trace prepare --extra-debs "cowsay"
+  "$SPREAD_PATH"/concierge --trace prepare --extra-debs "cowsay"
 
   export PATH="/usr/games:$PATH"
 
@@ -23,5 +23,5 @@ execute: |
 
 restore: |
   if [[ -z "${CI:-}" ]]; then
-    "$PROJECT_PATH"/concierge --trace restore
+    "$SPREAD_PATH"/concierge --trace restore
   fi

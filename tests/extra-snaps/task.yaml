@@ -3,7 +3,7 @@ systems:
   - ubuntu-24.04
 
 execute: |
-  pushd "${PROJECT_PATH}/tests/extra-snaps"
+  pushd "${SPREAD_PATH}/${SPREAD_TASK}"
 
   # Test that extra snaps come in from the env var
   export CONCIERGE_EXTRA_SNAPS="yq/latest/edge,node/22/stable"
@@ -12,7 +12,7 @@ execute: |
   touch concierge.yaml
 
   # Also add some extra snaps at the CLI
-  "$PROJECT_PATH"/concierge --trace prepare --extra-snaps "jq/latest/edge,astral-uv"
+  "$SPREAD_PATH"/concierge --trace prepare --extra-snaps "jq/latest/edge,astral-uv"
 
   # Check that each of the snaps is installed as we expect
   list="$(snap list jq)"
@@ -32,5 +32,5 @@ execute: |
 
 restore: |
   if [[ -z "${CI:-}" ]]; then
-    "$PROJECT_PATH"/concierge --trace restore
+    "$SPREAD_PATH"/concierge --trace restore
   fi

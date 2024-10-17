@@ -3,14 +3,14 @@ systems:
   - ubuntu-24.04
 
 execute: |
-  pushd "${PROJECT_PATH}/tests/provider-none"
+  pushd "${SPREAD_PATH}/${SPREAD_TASK}"
 
-  "$PROJECT_PATH"/concierge --trace prepare
+  "$SPREAD_PATH"/concierge --trace prepare
 
   snap list juju | MATCH juju
   snap list juju | MATCH 3.5/stable
 
 restore: |
   if [[ -z "${CI:-}" ]]; then
-    "$PROJECT_PATH"/concierge --trace restore
+    "$SPREAD_PATH"/concierge --trace restore
   fi
