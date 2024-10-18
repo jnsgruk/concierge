@@ -52,7 +52,7 @@ func NewCommandAs(user string, group string, executable string, args []string) *
 func (c *Command) CommandString() string {
 	path, err := exec.LookPath(c.Executable)
 	if err != nil {
-		slog.Warn("Failed to lookup command in path", "command", c.Executable)
+		slog.Debug("Failed to lookup command in path", "command", c.Executable)
 		path = c.Executable
 	}
 
