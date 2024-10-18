@@ -134,4 +134,4 @@ jobs:
           goreleaser release --clean --verbose
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.STORE_SECRET }}
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.STORE_TOKEN }}
