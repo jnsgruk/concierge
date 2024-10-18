@@ -28,7 +28,6 @@ snapcrafts:
     publish: true
     license: Apache-2.0
     base: core24
-    icon: concierge.png
     confinement: classic
     grade: stable
     summary: A utility for configuring dev/test machines for charm development
