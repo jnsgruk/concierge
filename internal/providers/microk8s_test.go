@@ -99,7 +99,6 @@ func TestMicroK8sPrepareCommands(t *testing.T) {
 
 	expectedCommands := []string{
 		"snap install microk8s --channel 1.31-strict/stable",
-		"snap start microk8s",
 		"microk8s status --wait-ready",
 		"microk8s enable hostpath-storage",
 		"microk8s enable dns",

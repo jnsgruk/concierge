@@ -142,14 +142,8 @@ func (m *MicroK8s) install() error {
 
 // init ensures that MicroK8s is installed, minimally configured, and ready.
 func (m *MicroK8s) init() error {
-	cmd := runner.NewCommand("snap", []string{"start", "microk8s"})
-	_, err := m.runner.Run(cmd)
-	if err != nil {
-		return err
-	}
-
-	cmd = runner.NewCommand("microk8s", []string{"status", "--wait-ready"})
-	_, err = m.runner.RunWithRetries(cmd, (5 * time.Minute))
+	cmd := runner.NewCommand("microk8s", []string{"status", "--wait-ready"})
+	_, err := m.runner.RunWithRetries(cmd, (5 * time.Minute))
 
 	return err
 }
