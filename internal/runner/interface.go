@@ -26,6 +26,8 @@ type CommandRunner interface {
 	MkHomeSubdirectory(subdirectory string) error
 	// RemoveAllHome recursively removes a file path from the user's home directory.
 	RemoveAllHome(filePath string) error
-	// RmHomeDirFile takes a relative file path and removes it from the user's home directory.
+	// ReadHomeDirFile reads a file from the user's home directory.
 	ReadHomeDirFile(filepath string) ([]byte, error)
+	// ReadFile reads a file with an arbitrary path from the system.
+	ReadFile(filePath string) ([]byte, error)
 }

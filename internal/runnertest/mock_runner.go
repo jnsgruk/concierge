@@ -13,6 +13,7 @@ func NewMockRunner() *MockRunner {
 	return &MockRunner{
 		CreatedFiles: map[string]string{},
 		mockReturns:  map[string]MockCommandReturn{},
+		mockFiles:    map[string][]byte{},
 	}
 }
 
@@ -30,12 +31,18 @@ type MockRunner struct {
 	Deleted            []string
 
 	mockReturns map[string]MockCommandReturn
+	mockFiles   map[string][]byte
 }
 
 // MockCommandReturn sets a static return value representing command combined output,
 // and a desired error return for the specified command.
 func (r *MockRunner) MockCommandReturn(command string, b []byte, err error) {
 	r.mockReturns[command] = MockCommandReturn{Output: b, Error: err}
+}
+
+// MockFile sets a faked expected file contents for a given file.
+func (r *MockRunner) MockFile(filePath string, contents []byte) {
+	r.mockFiles[filePath] = contents
 }
 
 // User returns the user the runner executes commands on behalf of.
@@ -95,8 +102,21 @@ func (r *MockRunner) MkHomeSubdirectory(subdirectory string) error {
 
 // ReadHomeDirFile takes a path relative to the real user's home dir, and reads the content
 // from the file
-func (r *MockRunner) ReadHomeDirFile(filepath string) ([]byte, error) {
-	return nil, nil
+func (r *MockRunner) ReadHomeDirFile(filePath string) ([]byte, error) {
+	val, ok := r.mockFiles[filePath]
+	if !ok {
+		return nil, fmt.Errorf("file not found")
+	}
+	return val, nil
+}
+
+// ReadFile takes a path and reads the content from the specified file.
+func (r *MockRunner) ReadFile(filePath string) ([]byte, error) {
+	val, ok := r.mockFiles[filePath]
+	if !ok {
+		return nil, fmt.Errorf("file not found")
+	}
+	return val, nil
 }
 
 // RemoveAllHome recursively removes a file path from the user's home directory.

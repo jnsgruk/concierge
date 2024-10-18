@@ -150,12 +150,15 @@ func (r *Runner) MkHomeSubdirectory(subdirectory string) error {
 // from the file
 func (r *Runner) ReadHomeDirFile(filePath string) ([]byte, error) {
 	homePath := path.Join(r.user.HomeDir, filePath)
+	return r.ReadFile(homePath)
+}
 
-	if _, err := os.Stat(homePath); errors.Is(err, os.ErrNotExist) {
-		return nil, fmt.Errorf("file '%s' does not exist: %w", homePath, err)
+// ReadFile takes a path and reads the content from the specified file.
+func (r *Runner) ReadFile(filePath string) ([]byte, error) {
+	if _, err := os.Stat(filePath); errors.Is(err, os.ErrNotExist) {
+		return nil, fmt.Errorf("file '%s' does not exist: %w", filePath, err)
 	}
-
-	return os.ReadFile(homePath)
+	return os.ReadFile(filePath)
 }
 
 // RemoveAllHome recursively removes a file path from the user's home directory.
