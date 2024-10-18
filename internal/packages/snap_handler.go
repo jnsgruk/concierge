@@ -1,15 +1,14 @@
-package handlers
+package packages
 
 import (
 	"fmt"
 	"log/slog"
 
-	"github.com/jnsgruk/concierge/internal/packages"
 	"github.com/jnsgruk/concierge/internal/runner"
 )
 
 // NewSnapHandler constructs a new instance of a SnapHandler.
-func NewSnapHandler(runner runner.CommandRunner, snaps []packages.SnapPackage) *SnapHandler {
+func NewSnapHandler(runner runner.CommandRunner, snaps []SnapPackage) *SnapHandler {
 	return &SnapHandler{
 		Snaps:  snaps,
 		runner: runner,
@@ -18,7 +17,7 @@ func NewSnapHandler(runner runner.CommandRunner, snaps []packages.SnapPackage) *
 
 // SnapHandler can install or remove a set of snaps.
 type SnapHandler struct {
-	Snaps  []packages.SnapPackage
+	Snaps  []SnapPackage
 	runner runner.CommandRunner
 }
 
@@ -46,7 +45,7 @@ func (h *SnapHandler) Restore() error {
 
 // installSnap ensures that the specified snap is installed at the specified channel.
 // If already installed, but on the wrong channel, the snap is refreshed.
-func (h *SnapHandler) installSnap(s packages.SnapPackage) error {
+func (h *SnapHandler) installSnap(s SnapPackage) error {
 	var action, logAction string
 	if s.Installed() {
 		action = "refresh"
@@ -72,7 +71,7 @@ func (h *SnapHandler) installSnap(s packages.SnapPackage) error {
 	}
 
 	cmd := runner.NewCommand("snap", args)
-	_, err = h.runner.Run(cmd)
+	_, err = h.runner.RunExclusive(cmd)
 	if err != nil {
 		return fmt.Errorf("command failed: %w", err)
 	}
@@ -87,11 +86,11 @@ func (h *SnapHandler) installSnap(s packages.SnapPackage) error {
 }
 
 // Remove uninstalls the specified snap from the system, optionally purging its data.
-func (h *SnapHandler) removeSnap(s packages.SnapPackage) error {
+func (h *SnapHandler) removeSnap(s SnapPackage) error {
 	args := []string{"remove", s.Name(), "--purge"}
 
 	cmd := runner.NewCommand("snap", args)
-	_, err := h.runner.Run(cmd)
+	_, err := h.runner.RunExclusive(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to remove snap '%s': %w", s.Name(), err)
 	}

@@ -1,31 +1,12 @@
-package handlers
+package packages
 
 import (
 	"os"
 	"reflect"
 	"testing"
 
-	"github.com/jnsgruk/concierge/internal/packages"
 	"github.com/jnsgruk/concierge/internal/runnertest"
 )
-
-func NewTestSnap(name, channel string, classic bool, installed bool) *TestSnap {
-	return &TestSnap{name: name, channel: channel, classic: classic, installed: installed}
-}
-
-type TestSnap struct {
-	name      string
-	channel   string
-	classic   bool
-	installed bool
-}
-
-func (ts *TestSnap) Name() string              { return ts.name }
-func (ts *TestSnap) Classic() (bool, error)    { return ts.classic, nil }
-func (ts *TestSnap) Installed() bool           { return ts.installed }
-func (ts *TestSnap) Tracking() (string, error) { return ts.channel, nil }
-func (ts *TestSnap) Channel() string           { return ts.channel }
-func (ts *TestSnap) SetChannel(c string)       { ts.channel = c }
 
 func TestSnapHandlerCommands(t *testing.T) {
 	type test struct {
@@ -58,10 +39,10 @@ func TestSnapHandlerCommands(t *testing.T) {
 		},
 	}
 
-	snaps := []packages.SnapPackage{
-		NewTestSnap("charmcraft", "latest/stable", true, true),
-		NewTestSnap("jq", "latest/stable", false, false),
-		NewTestSnap("microk8s", "1.30-strict/stable", false, false),
+	snaps := []SnapPackage{
+		runnertest.NewTestSnap("charmcraft", "latest/stable", true, true),
+		runnertest.NewTestSnap("jq", "latest/stable", false, false),
+		runnertest.NewTestSnap("microk8s", "1.30-strict/stable", false, false),
 	}
 
 	for _, tc := range tests {

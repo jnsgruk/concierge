@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/jnsgruk/concierge/internal/config"
+	"github.com/jnsgruk/concierge/internal/packages"
 	"github.com/jnsgruk/concierge/internal/runnertest"
 )
 
@@ -50,6 +51,14 @@ func TestNewMicroK8s(t *testing.T) {
 
 	for _, tc := range tests {
 		uk8s := NewMicroK8s(runner, tc.config)
+
+		// Check the constructed snaps are correct
+		if uk8s.snaps[0].Channel() != tc.expected.Channel {
+			t.Fatalf("expected: %v, got: %v", uk8s.snaps[0].Channel(), tc.expected.Channel)
+		}
+
+		// Remove the snaps so the rest of the object can be compared
+		uk8s.snaps = nil
 		if !reflect.DeepEqual(tc.expected, uk8s) {
 			t.Fatalf("expected: %v, got: %v", tc.expected, uk8s)
 		}
@@ -89,6 +98,7 @@ func TestMicroK8sPrepareCommands(t *testing.T) {
 	config.Providers.MicroK8s.Addons = defaultAddons
 
 	expectedCommands := []string{
+		"snap install microk8s --channel 1.31-strict/stable",
 		"snap start microk8s",
 		"microk8s status --wait-ready",
 		"microk8s enable hostpath-storage",
@@ -105,6 +115,12 @@ func TestMicroK8sPrepareCommands(t *testing.T) {
 
 	runner := runnertest.NewMockRunner()
 	uk8s := NewMicroK8s(runner, config)
+
+	// Override the snaps with fake ones that don't call the snapd socket.
+	uk8s.snaps = []packages.SnapPackage{
+		runnertest.NewTestSnap("microk8s", "1.31-strict/stable", false, false),
+	}
+
 	uk8s.Prepare()
 
 	if !reflect.DeepEqual(expectedCommands, runner.ExecutedCommands) {
@@ -117,6 +133,11 @@ func TestMicroK8sPrepareCommands(t *testing.T) {
 }
 
 func TestMicroK8sRestore(t *testing.T) {
+	// Prevent the path of the test machine interfering with the test results.
+	path := os.Getenv("PATH")
+	defer os.Setenv("PATH", path)
+	os.Setenv("PATH", "")
+
 	config := &config.Config{}
 	config.Providers.MicroK8s.Channel = "1.31-strict/stable"
 	config.Providers.MicroK8s.Addons = defaultAddons
@@ -129,5 +150,14 @@ func TestMicroK8sRestore(t *testing.T) {
 
 	if !reflect.DeepEqual(expectedDeleted, runner.Deleted) {
 		t.Fatalf("expected: %v, got: %v", expectedDeleted, runner.Deleted)
+	}
+
+	expectedCommands := []string{
+		"snap remove microk8s --purge",
+		"snap remove kubectl --purge",
+	}
+
+	if !reflect.DeepEqual(expectedCommands, runner.ExecutedCommands) {
+		t.Fatalf("expected: %v, got: %v", expectedCommands, runner.ExecutedCommands)
 	}
 }

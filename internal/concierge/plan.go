@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jnsgruk/concierge/internal/config"
-	"github.com/jnsgruk/concierge/internal/handlers"
+	"github.com/jnsgruk/concierge/internal/juju"
 	"github.com/jnsgruk/concierge/internal/packages"
 	"github.com/jnsgruk/concierge/internal/providers"
 	"github.com/jnsgruk/concierge/internal/runner"
@@ -41,25 +41,11 @@ func NewPlan(config *config.Config, runner runner.CommandRunner) *Plan {
 		plan.Debs = append(plan.Debs, packages.NewDeb(p))
 	}
 
-	if config.Providers.MicroK8s.Enable {
-		p := providers.NewMicroK8s(runner, config)
-		plan.Providers = append(plan.Providers, p)
-		plan.Snaps = append(plan.Snaps, p.Snaps()...)
+	for _, providerName := range providers.SupportedProviders {
+		if p := providers.NewProvider(providerName, runner, config); p != nil {
+			plan.Providers = append(plan.Providers, p)
+		}
 	}
-
-	if config.Providers.LXD.Enable {
-		p := providers.NewLXD(runner, config)
-		plan.Providers = append(plan.Providers, p)
-		plan.Snaps = append(plan.Snaps, p.Snaps()...)
-	}
-
-	var jujuChannel string
-	if config.Overrides.JujuChannel != "" {
-		jujuChannel = config.Overrides.JujuChannel
-	} else {
-		jujuChannel = config.Juju.Channel
-	}
-	plan.Snaps = append(plan.Snaps, packages.NewSnap("juju", jujuChannel))
 
 	return plan
 }
@@ -68,9 +54,9 @@ func NewPlan(config *config.Config, runner runner.CommandRunner) *Plan {
 func (p *Plan) Execute(action string) error {
 	var eg errgroup.Group
 
-	snapHandler := handlers.NewSnapHandler(p.runner, p.Snaps)
-	debHandler := handlers.NewDebHandler(p.runner, p.Debs)
-	jujuHandler := handlers.NewJujuHandler(p.config, p.runner, p.Providers)
+	snapHandler := packages.NewSnapHandler(p.runner, p.Snaps)
+	debHandler := packages.NewDebHandler(p.runner, p.Debs)
+	jujuHandler := juju.NewJujuHandler(p.config, p.runner, p.Providers)
 
 	// Prepare/restore package handlers concurrently
 	eg.Go(func() error { return DoAction(snapHandler, action) })

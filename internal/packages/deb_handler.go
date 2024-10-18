@@ -1,15 +1,14 @@
-package handlers
+package packages
 
 import (
 	"fmt"
 	"log/slog"
 
-	"github.com/jnsgruk/concierge/internal/packages"
 	"github.com/jnsgruk/concierge/internal/runner"
 )
 
 // NewDebHandler constructs a new instance of a DebHandler.
-func NewDebHandler(runner runner.CommandRunner, debs []*packages.Deb) *DebHandler {
+func NewDebHandler(runner runner.CommandRunner, debs []*Deb) *DebHandler {
 	return &DebHandler{
 		Debs:   debs,
 		runner: runner,
@@ -18,7 +17,7 @@ func NewDebHandler(runner runner.CommandRunner, debs []*packages.Deb) *DebHandle
 
 // DebHandler can install or remove a set of debs.
 type DebHandler struct {
-	Debs   []*packages.Deb
+	Debs   []*Deb
 	runner runner.CommandRunner
 }
 
@@ -53,7 +52,7 @@ func (h *DebHandler) Restore() error {
 
 	cmd := runner.NewCommand("apt-get", []string{"autoremove", "-y"})
 
-	_, err := h.runner.Run(cmd)
+	_, err := h.runner.RunExclusive(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to install apt package: %w", err)
 	}
@@ -62,10 +61,10 @@ func (h *DebHandler) Restore() error {
 }
 
 // installDeb uses `apt` to install the package on the system from the archives.
-func (h *DebHandler) installDeb(d *packages.Deb) error {
+func (h *DebHandler) installDeb(d *Deb) error {
 	cmd := runner.NewCommand("apt-get", []string{"install", "-y", d.Name})
 
-	_, err := h.runner.Run(cmd)
+	_, err := h.runner.RunExclusive(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to install apt package '%s': %w", d.Name, err)
 	}
@@ -75,10 +74,10 @@ func (h *DebHandler) installDeb(d *packages.Deb) error {
 }
 
 // Remove uninstalls the deb from the system with `apt`.
-func (h *DebHandler) removeDeb(d *packages.Deb) error {
+func (h *DebHandler) removeDeb(d *Deb) error {
 	cmd := runner.NewCommand("apt-get", []string{"remove", "-y", d.Name})
 
-	_, err := h.runner.Run(cmd)
+	_, err := h.runner.RunExclusive(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to remove apt package '%s': %w", d.Name, err)
 	}
@@ -91,7 +90,7 @@ func (h *DebHandler) removeDeb(d *packages.Deb) error {
 func (h *DebHandler) updateAptCache() error {
 	cmd := runner.NewCommand("apt-get", []string{"update"})
 
-	_, err := h.runner.Run(cmd)
+	_, err := h.runner.RunExclusive(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to update apt package lists: %w", err)
 	}

@@ -37,6 +37,10 @@ func NewMicroK8s(runner runner.CommandRunner, config *config.Config) *MicroK8s {
 		Addons:    config.Providers.MicroK8s.Addons,
 		bootstrap: config.Providers.MicroK8s.Bootstrap,
 		runner:    runner,
+		snaps: []packages.SnapPackage{
+			packages.NewSnap("microk8s", channel),
+			packages.NewSnap("kubectl", "stable"),
+		},
 	}
 }
 
@@ -47,13 +51,19 @@ type MicroK8s struct {
 
 	bootstrap bool
 	runner    runner.CommandRunner
+	snaps     []packages.SnapPackage
 }
 
 // Prepare installs and configures MicroK8s such that it can work in testing environments.
 // This includes installing the snap, enabling the user who ran concierge to interact
 // with MicroK8s without sudo, and sets up the user's kubeconfig file.
 func (m *MicroK8s) Prepare() error {
-	err := m.init()
+	err := m.install()
+	if err != nil {
+		return fmt.Errorf("failed to install MicroK8s: %w", err)
+	}
+
+	err = m.init()
 	if err != nil {
 		return fmt.Errorf("failed to install MicroK8s: %w", err)
 	}
@@ -96,22 +106,36 @@ func (m *MicroK8s) GroupName() string {
 	}
 }
 
-// Snaps reports the snaps required by the MicroK8s provider.
-func (m *MicroK8s) Snaps() []packages.SnapPackage {
-	return []packages.SnapPackage{
-		packages.NewSnap("microk8s", m.Channel),
-		packages.NewSnap("kubectl", "stable"),
-	}
-}
+// Credentials reports the section of Juju's credentials.yaml for the provider
+func (m MicroK8s) Credentials() map[string]interface{} { return nil }
 
 // Remove uninstalls MicroK8s and kubectl.
 func (m *MicroK8s) Restore() error {
-	err := m.runner.RemoveAllHome(".kube")
+	snapHandler := packages.NewSnapHandler(m.runner, m.snaps)
+
+	err := snapHandler.Restore()
+	if err != nil {
+		return err
+	}
+
+	err = m.runner.RemoveAllHome(".kube")
 	if err != nil {
 		return fmt.Errorf("failed to remove '.kube' from user's home directory: %w", err)
 	}
 
 	slog.Info("Removed provider", "provider", m.Name())
+
+	return nil
+}
+
+// install ensures that MicroK8s is installed.
+func (m *MicroK8s) install() error {
+	snapHandler := packages.NewSnapHandler(m.runner, m.snaps)
+
+	err := snapHandler.Prepare()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

@@ -1,11 +1,10 @@
-package handlers
+package packages
 
 import (
 	"os"
 	"reflect"
 	"testing"
 
-	"github.com/jnsgruk/concierge/internal/packages"
 	"github.com/jnsgruk/concierge/internal/runnertest"
 )
 
@@ -39,9 +38,9 @@ func TestDebHandlerCommands(t *testing.T) {
 		},
 	}
 
-	debs := []*packages.Deb{
-		packages.NewDeb("cowsay"),
-		packages.NewDeb("python3-venv"),
+	debs := []*Deb{
+		NewDeb("cowsay"),
+		NewDeb("python3-venv"),
 	}
 
 	for _, tc := range tests {

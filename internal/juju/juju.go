@@ -1,4 +1,4 @@
-package handlers
+package juju
 
 import (
 	"fmt"
@@ -9,34 +9,57 @@ import (
 	"time"
 
 	"github.com/jnsgruk/concierge/internal/config"
+	"github.com/jnsgruk/concierge/internal/packages"
 	"github.com/jnsgruk/concierge/internal/providers"
 	"github.com/jnsgruk/concierge/internal/runner"
 	"golang.org/x/sync/errgroup"
+	"gopkg.in/yaml.v3"
 )
 
 // NewJujuHandler constructs a new JujuHandler instance.
 func NewJujuHandler(config *config.Config, runner runner.CommandRunner, providers []providers.Provider) *JujuHandler {
+	var channel string
+	if config.Overrides.JujuChannel != "" {
+		channel = config.Overrides.JujuChannel
+	} else {
+		channel = config.Juju.Channel
+	}
+
 	return &JujuHandler{
+		channel:       channel,
 		modelDefaults: config.Juju.ModelDefaults,
 		providers:     providers,
 		runner:        runner,
+		snaps:         []packages.SnapPackage{packages.NewSnap("juju", channel)},
 	}
 }
 
 // JujuHandler represents a Juju installation on the system.
 type JujuHandler struct {
+	channel       string
 	modelDefaults map[string]string
 	providers     []providers.Provider
 	runner        runner.CommandRunner
+	snaps         []packages.SnapPackage
 }
 
 // Prepare bootstraps Juju on the configured providers.
 func (j *JujuHandler) Prepare() error {
+	err := j.install()
+	if err != nil {
+		return fmt.Errorf("failed to install Juju: %w", err)
+	}
+
 	dir := path.Join(".local", "share", "juju")
 
-	err := j.runner.MkHomeSubdirectory(dir)
+	err = j.runner.MkHomeSubdirectory(dir)
 	if err != nil {
 		return fmt.Errorf("failed to create directory '%s': %w", dir, err)
+	}
+
+	err = j.writeCredentials()
+	if err != nil {
+		return fmt.Errorf("failed to write juju credentials file: %w", err)
 	}
 
 	err = j.bootstrap()
@@ -54,7 +77,67 @@ func (j *JujuHandler) Restore() error {
 		return fmt.Errorf("failed to remove '.local/share/juju' subdirectory from user's home directory: %w", err)
 	}
 
+	snapHandler := packages.NewSnapHandler(j.runner, j.snaps)
+
+	err = snapHandler.Restore()
+	if err != nil {
+		return err
+	}
+
 	slog.Info("Restored Juju")
+
+	return nil
+}
+
+// install ensures that Juju is installed.
+func (j *JujuHandler) install() error {
+	snapHandler := packages.NewSnapHandler(j.runner, j.snaps)
+
+	err := snapHandler.Prepare()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// writeCredentials iterates over any provided cloud credentials and authors Juju's
+// credentials.yaml
+func (j *JujuHandler) writeCredentials() error {
+	credentials := map[string]interface{}{"credentials": map[string]interface{}{}}
+	addedCredentials := false
+
+	// Iterate over the providers
+	for _, p := range j.providers {
+		// If the provider doesn't specify any credentials, move on to the next.
+		if p.Credentials() == nil {
+			continue
+		}
+
+		// Set the credentials for the provider, under the credential name "concierge".
+		credentials["credentials"] = map[string]interface{}{
+			p.CloudName(): map[string]interface{}{
+				"concierge": p.Credentials(),
+			},
+		}
+		addedCredentials = true
+	}
+
+	// Don't write the file if there are no credentials to add
+	if !addedCredentials {
+		return nil
+	}
+
+	// Marshall the credentials map and write it to the credentials.yaml file.
+	content, err := yaml.Marshal(credentials)
+	if err != nil {
+		return fmt.Errorf("failed to marshal juju credentials to yaml: %w", err)
+	}
+
+	err = j.runner.WriteHomeDirFile(path.Join(".local", "share", "juju", "credentials.yaml"), content)
+	if err != nil {
+		return fmt.Errorf("failed to write credentials.yaml: %w", err)
+	}
 
 	return nil
 }
@@ -92,6 +175,8 @@ func (j *JujuHandler) bootstrapProvider(provider providers.Provider) error {
 		slog.Info("Previous Juju controller found", "provider", provider.Name())
 		return nil
 	}
+
+	slog.Info("Bootstrapping Juju", "provider", provider.Name())
 
 	bootstrapArgs := []string{
 		"bootstrap",

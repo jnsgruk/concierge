@@ -1,8 +1,12 @@
 package providers
 
 import (
-	"github.com/jnsgruk/concierge/internal/packages"
+	"github.com/jnsgruk/concierge/internal/config"
+	"github.com/jnsgruk/concierge/internal/runner"
 )
+
+// SupportedProviders is a list of stringified names of supported providers.
+var SupportedProviders []string = []string{"lxd", "microk8s", "google"}
 
 // Provider describes the set of methods expected to be available on a
 // provider that concierge can try to bootstrap Juju onto.
@@ -20,6 +24,17 @@ type Provider interface {
 	// GroupName reports the name of a POSIX user group that can be used
 	// to allow non-root users to interact with the provider (where applicable).
 	GroupName() string
-	// Snaps reports the list of snaps required by the provider.
-	Snaps() []packages.SnapPackage
+	// Credentials reports the section of Juju's credentials.yaml for the provider
+	Credentials() map[string]interface{}
+}
+
+// NewProvider returns a newly constructed provider based on a stringified name of the provider.
+func NewProvider(providerName string, runner runner.CommandRunner, config *config.Config) Provider {
+	if providerName == "lxd" && config.Providers.LXD.Enable {
+		return NewLXD(runner, config)
+	} else if providerName == "microk8s" && config.Providers.MicroK8s.Enable {
+		return NewMicroK8s(runner, config)
+	} else {
+		return nil
+	}
 }

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/jnsgruk/concierge/internal/config"
+	"github.com/jnsgruk/concierge/internal/packages"
 	"github.com/jnsgruk/concierge/internal/runnertest"
 )
 
@@ -33,6 +34,14 @@ func TestNewLXD(t *testing.T) {
 
 	for _, tc := range tests {
 		lxd := NewLXD(runner, tc.config)
+
+		// Check the constructed snaps are correct
+		if lxd.snaps[0].Channel() != tc.expected.Channel {
+			t.Fatalf("expected: %v, got: %v", lxd.snaps[0].Channel(), tc.expected.Channel)
+		}
+
+		// Remove the snaps so the rest of the object can be compared
+		lxd.snaps = nil
 		if !reflect.DeepEqual(tc.expected, lxd) {
 			t.Fatalf("expected: %v, got: %v", tc.expected, lxd)
 		}
@@ -48,6 +57,7 @@ func TestLXDPrepareCommands(t *testing.T) {
 	config := &config.Config{}
 
 	expected := []string{
+		"snap install lxd --channel latest/stable",
 		"lxd waitready",
 		"lxd init --minimal",
 		"lxc network set lxdbr0 ipv6.address none",
@@ -59,9 +69,34 @@ func TestLXDPrepareCommands(t *testing.T) {
 
 	runner := runnertest.NewMockRunner()
 	lxd := NewLXD(runner, config)
+
+	// Override the snaps with fake ones that don't call the snapd socket.
+	lxd.snaps = []packages.SnapPackage{
+		runnertest.NewTestSnap("lxd", "latest/stable", false, false),
+	}
+
 	lxd.Prepare()
 
 	if !reflect.DeepEqual(expected, runner.ExecutedCommands) {
 		t.Fatalf("expected: %v, got: %v", expected, runner.ExecutedCommands)
+	}
+}
+
+func TestLXDRestore(t *testing.T) {
+	// Prevent the path of the test machine interfering with the test results.
+	path := os.Getenv("PATH")
+	defer os.Setenv("PATH", path)
+	os.Setenv("PATH", "")
+
+	config := &config.Config{}
+
+	runner := runnertest.NewMockRunner()
+	lxd := NewLXD(runner, config)
+	lxd.Restore()
+
+	expectedCommands := []string{"snap remove lxd --purge"}
+
+	if !reflect.DeepEqual(expectedCommands, runner.ExecutedCommands) {
+		t.Fatalf("expected: %v, got: %v", expectedCommands, runner.ExecutedCommands)
 	}
 }

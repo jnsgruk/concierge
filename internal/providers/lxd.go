@@ -22,6 +22,7 @@ func NewLXD(runner runner.CommandRunner, config *config.Config) *LXD {
 		Channel:   channel,
 		runner:    runner,
 		bootstrap: config.Providers.LXD.Bootstrap,
+		snaps:     []packages.SnapPackage{packages.NewSnap("lxd", channel)},
 	}
 }
 
@@ -31,13 +32,19 @@ type LXD struct {
 
 	bootstrap bool
 	runner    runner.CommandRunner
+	snaps     []packages.SnapPackage
 }
 
 // Prepare installs and configures LXD such that it can work in testing environments.
 // This includes installing the snap, enabling the user who ran concierge to interact
 // with LXD without sudo, and deconflicting the firewall rules with docker.
 func (l *LXD) Prepare() error {
-	err := l.init()
+	err := l.install()
+	if err != nil {
+		return fmt.Errorf("failed to install LXD: %w", err)
+	}
+
+	err = l.init()
 	if err != nil {
 		return fmt.Errorf("failed to initialise LXD: %w", err)
 	}
@@ -68,18 +75,35 @@ func (l *LXD) CloudName() string { return "localhost" }
 // GroupName reports the name of the POSIX group with permissions over the LXD socket.
 func (l *LXD) GroupName() string { return "lxd" }
 
-// Snaps reports the snaps required by the LXD provider.
-func (l *LXD) Snaps() []packages.SnapPackage {
-	return []packages.SnapPackage{packages.NewSnap("lxd", l.Channel)}
-}
+// Credentials reports the section of Juju's credentials.yaml for the provider
+func (l *LXD) Credentials() map[string]interface{} { return nil }
 
 // Remove uninstalls LXD.
 func (l *LXD) Restore() error {
+	snapHandler := packages.NewSnapHandler(l.runner, l.snaps)
+
+	err := snapHandler.Restore()
+	if err != nil {
+		return err
+	}
+
 	slog.Info("Restored provider", "provider", l.Name())
 	return nil
 }
 
-// init ensures that LXD is installed, minimally configured, and ready.
+// install ensures that LXD is installed.
+func (l *LXD) install() error {
+	snapHandler := packages.NewSnapHandler(l.runner, l.snaps)
+
+	err := snapHandler.Prepare()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// init ensures that LXD is minimally configured, and ready.
 func (l *LXD) init() error {
 	return l.runner.RunMany(
 		runner.NewCommand("lxd", []string{"waitready"}),
