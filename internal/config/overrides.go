@@ -8,6 +8,8 @@ type ConfigOverrides struct {
 	SnapcraftChannel  string
 	RockcraftChannel  string
 
+	GoogleCredentialFile string
+
 	ExtraSnaps []string
 	ExtraDebs  []string
 }

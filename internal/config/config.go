@@ -111,8 +111,11 @@ func getOverrides(flags *pflag.FlagSet) ConfigOverrides {
 		CharmcraftChannel: envOrFlagString(flags, "charmcraft-channel"),
 		SnapcraftChannel:  envOrFlagString(flags, "snapcraft-channel"),
 		RockcraftChannel:  envOrFlagString(flags, "rockcraft-channel"),
-		ExtraSnaps:        envOrFlagSlice(flags, "extra-snaps"),
-		ExtraDebs:         envOrFlagSlice(flags, "extra-debs"),
+
+		GoogleCredentialFile: envOrFlagString(flags, "google-credential-file"),
+
+		ExtraSnaps: envOrFlagSlice(flags, "extra-snaps"),
+		ExtraDebs:  envOrFlagSlice(flags, "extra-debs"),
 	}
 }
 

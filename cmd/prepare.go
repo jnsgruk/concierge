@@ -68,6 +68,8 @@ More information at https://github.com/jnsgruk/concierge.
 	flags.String("snapcraft-channel", "", "override snap channel for snapcraft")
 	flags.String("rockcraft-channel", "", "override snap channel for rockcraft")
 
+	flags.String("google-credential-file", "", "override path to google credentials file")
+
 	// Additional package specification
 	flags.StringSlice(
 		"extra-snaps",

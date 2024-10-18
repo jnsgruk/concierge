@@ -1,0 +1,10 @@
+providers:
+  google:
+    enable: true
+    bootstrap: false
+    credentials-file: credentials.yaml
+
+host:
+  snaps:
+    - yq
+    - jq

@@ -23,6 +23,7 @@ type jujuConfig struct {
 // providerConfig represents the set of providers to be configured and bootstrapped.
 type providerConfig struct {
 	LXD      lxdConfig      `mapstructure:"lxd"`
+	Google   googleConfig   `mapstructure:"google"`
 	MicroK8s microk8sConfig `mapstructure:"microk8s"`
 }
 
@@ -31,6 +32,13 @@ type lxdConfig struct {
 	Enable    bool   `mapstructure:"enable"`
 	Bootstrap bool   `mapstructure:"bootstrap"`
 	Channel   string `mapstructure:"channel"`
+}
+
+// googleConfig represents how Juju should be configured for Google Cloud use.
+type googleConfig struct {
+	Enable          bool   `mapstructure:"enable"`
+	Bootstrap       bool   `mapstructure:"bootstrap"`
+	CredentialsFile string `mapstructure:"credentials-file"`
 }
 
 // microk8sConfig represents how MicroK8s should be configured on the host.

@@ -72,6 +72,18 @@ func (j *JujuHandler) Prepare() error {
 
 // Restore uninstalls Juju from the system.
 func (j *JujuHandler) Restore() error {
+	// Kill controllers for credentialed providers.
+	for _, p := range j.providers {
+		if p.Credentials() == nil {
+			continue
+		}
+
+		err := j.killProvider(p)
+		if err != nil {
+			return err
+		}
+	}
+
 	err := j.runner.RemoveAllHome(path.Join(".local", "share", "juju"))
 	if err != nil {
 		return fmt.Errorf("failed to remove '.local/share/juju' subdirectory from user's home directory: %w", err)
@@ -212,6 +224,34 @@ func (j *JujuHandler) bootstrapProvider(provider providers.Provider) error {
 	}
 
 	slog.Info("Bootstrapped Juju", "provider", provider.Name())
+	return nil
+}
+
+// killProvider destroys the controller for a specific provider.
+func (j *JujuHandler) killProvider(provider providers.Provider) error {
+	controllerName := fmt.Sprintf("concierge-%s", provider.Name())
+
+	bootstrapped, err := j.checkBootstrapped(controllerName)
+	if err != nil {
+		return fmt.Errorf("error checking bootstrap status for provider '%s'", provider.Name())
+	}
+
+	if !bootstrapped {
+		slog.Info("No Juju controller found", "provider", provider.Name())
+		return nil
+	}
+
+	slog.Info("Destroying Juju controller", "provider", provider.Name())
+
+	killArgs := []string{"kill-controller", "--verbose", "--no-prompt", controllerName}
+
+	cmd := runner.NewCommandAs(j.runner.User().Username, "", "juju", killArgs)
+	_, err = j.runner.Run(cmd)
+	if err != nil {
+		return fmt.Errorf("failed to destroy controller: '%s': %w", controllerName, err)
+	}
+
+	slog.Info("Destroyed Juju controller", "provider", provider.Name())
 	return nil
 }
 

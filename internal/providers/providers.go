@@ -34,6 +34,8 @@ func NewProvider(providerName string, runner runner.CommandRunner, config *confi
 		return NewLXD(runner, config)
 	} else if providerName == "microk8s" && config.Providers.MicroK8s.Enable {
 		return NewMicroK8s(runner, config)
+	} else if providerName == "google" && config.Providers.Google.Enable {
+		return NewGoogle(runner, config)
 	} else {
 		return nil
 	}

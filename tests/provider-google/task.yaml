@@ -1,0 +1,17 @@
+summary: Test Google provider writes credentials correctly
+systems:
+  - ubuntu-24.04
+
+execute: |
+  pushd "${SPREAD_PATH}/${SPREAD_TASK}"
+
+  "$SPREAD_PATH"/concierge --trace prepare
+
+  # Match a nested key of the creds file to ensure the map was filled in correctly
+  email="$(cat ~/.local/share/juju/credentials.yaml | yq -r '.credentials.google.concierge.client-email')"
+  echo "$email" | MATCH "juju-gce-1-sa@myname.iam.gserviceaccount.com"
+
+restore: |
+  if [[ -z "${CI:-}" ]]; then
+    "$SPREAD_PATH"/concierge --trace restore
+  fi

@@ -125,6 +125,8 @@ how to provision your machine.
 `concierge` takes configuration in the form of a YAML file named `concierge.yaml` in the current
 working directory.
 
+#### Schema
+
 ```yaml
 # (Optional): Target Juju configuration.
 juju:
@@ -157,6 +159,16 @@ providers:
     # (Optional): Channel from which to install LXD.
     channel: <channel>
 
+  # (Optional) LXD provider configuration.
+  google:
+    # (Optional) Enable or disable LXD.
+    enable: true | false
+    # (Optional) Whether or not to bootstrap a controller onto LXD.
+    bootstrap: true | false
+    # (Optional): File containing credentials for Google cloud.
+    # See below note on the credentials file format.
+    credentials-file: <path>
+
 # (Optional) Additional host configuration.
 host:
   # (Optional) List of apt packages to install on the host.
@@ -166,6 +178,61 @@ host:
   snaps:
     - <snap name/channel>
 ```
+
+#### Providing Credentials Files
+
+Juju has some "built-in" clouds for which it can obtain credentials automatically, such as LXD and MicroK8s. Other clouds require credentials for the bootstrap process.
+
+Concierge handles this with the `credentials-file` option for supported providers.
+
+Juju's credentials are specified in `~/.local/share/juju/credentials.yaml`, in the following format:
+
+```yaml
+credentials:
+  <cloud-name>:
+    <credential-name>:
+      key: value
+      key: value
+```
+
+For example, a pre-configured `credentials.yaml` might look like so where Google Cloud had already been configured:
+
+```yaml
+credentials:
+  google:
+    mycred:
+      auth-type: oauth2
+      client-email: juju-gce-1-sa@myname.iam.gserviceaccount.com
+      client-id: "1234567891234"
+      private-key: |
+        -----BEGIN PRIVATE KEY-----
+        deadbeef
+        -----END PRIVATE KEY-----
+      project-id: foobar
+```
+
+When providing the path to a `credentials-file` for `concierge`, it should contain _only_ the details for a specific credential, so the example above would require a file like so:
+
+```yaml
+auth-type: oauth2
+client-email: juju-gce-1-sa@myname.iam.gserviceaccount.com
+client-id: "1234567891234"
+private-key: |
+  -----BEGIN PRIVATE KEY-----
+  deadbeef
+  -----END PRIVATE KEY-----
+project-id: foobar
+```
+
+If you already have a `credentials.yaml` pre-populated with credentials, you can use `yq` to build the file for you, for example:
+
+```bash
+cat ~/.local/share/juju/credentials.yaml | yq -r '.credentials.google.mycred' > google-creds.yaml
+```
+
+In the above example `google-creds.yaml` would be valid for the `credentials-file` option.
+
+#### Example Config
 
 An example config file can be seen below:
 
@@ -191,6 +258,11 @@ providers:
     enable: true
     bootstrap: false
     channel: latest/stable
+
+  google:
+    enable: true
+    bootstrap: false
+    credentials-file: /home/ubuntu/google-credentials.yaml
 
 host:
   packages:
