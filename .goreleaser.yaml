@@ -25,7 +25,7 @@ archives:
 
 snapcrafts:
   - name: concierge
-    publish: false
+    publish: true
     license: Apache-2.0
     base: core24
     icon: concierge.png
