@@ -1,6 +1,7 @@
 package runnertest
 
 import (
+	"fmt"
 	"os"
 	"os/user"
 	"time"
@@ -84,6 +85,12 @@ func (r *MockRunner) RunMany(commands ...*runner.Command) error {
 		}
 	}
 	return nil
+}
+
+// RunExclusive is a wrapper around Run that uses a mutex to ensure that only one of that
+// particular command can be run at a time.
+func (r *MockRunner) RunExclusive(c *runner.Command) ([]byte, error) {
+	return r.Run(c)
 }
 
 // WriteHomeDirFile takes a path relative to the real user's home dir, and writes the contents

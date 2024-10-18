@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/fatih/color"
@@ -25,13 +26,19 @@ func NewRunner(trace bool) (*Runner, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to lookup effective user details: %w", err)
 	}
-	return &Runner{trace: trace, user: realUser}, nil
+	return &Runner{
+		trace:      trace,
+		user:       realUser,
+		cmdMutexes: map[string]*sync.Mutex{},
+	}, nil
 }
 
 // Runner represents a struct that can run commands.
 type Runner struct {
 	trace bool
 	user  *user.User
+	// Map of mutexes to prevent the concurrent execution of certain commands.
+	cmdMutexes map[string]*sync.Mutex
 }
 
 // User returns a user struct containing details of the "real" user, which
@@ -93,6 +100,22 @@ func (r *Runner) RunMany(commands ...*Command) error {
 		}
 	}
 	return nil
+}
+
+// RunExclusive is a wrapper around Run that uses a mutex to ensure that only one of that
+// particular command can be run at a time.
+func (r *Runner) RunExclusive(c *Command) ([]byte, error) {
+	mtx, ok := r.cmdMutexes[c.Executable]
+	if !ok {
+		mtx = &sync.Mutex{}
+		r.cmdMutexes[c.Executable] = mtx
+	}
+
+	mtx.Lock()
+	defer mtx.Unlock()
+
+	output, err := r.Run(c)
+	return output, err
 }
 
 // WriteHomeDirFile takes a path relative to the real user's home dir, and writes the contents

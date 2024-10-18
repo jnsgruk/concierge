@@ -15,6 +15,9 @@ type CommandRunner interface {
 	// RunMany takes multiple commands and runs them in sequence, returning an error on the
 	// first error encountered.
 	RunMany(commands ...*Command) error
+	// RunExclusive is a wrapper around Run that uses a mutex to ensure that only one of that
+	// particular command can be run at a time.
+	RunExclusive(c *Command) ([]byte, error)
 	// RunWithRetries executes the command, retrying utilising an exponential backoff pattern,
 	// which starts at 1 second. Retries will be attempted up to the specified maximum duration.
 	RunWithRetries(c *Command, maxDuration time.Duration) ([]byte, error)
