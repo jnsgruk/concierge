@@ -73,16 +73,17 @@ Use "concierge [command] --help" for more information about a command.
 Some flags can be set by environment variable, and if specified by flag and environment variable,
 the environment variable version will always take precedent. The equivalents are:
 
-|          Flag          |            Env Var             |
-| :--------------------: | :----------------------------: |
-|    `--juju-channel`    |    `CONCIERGE_JUJU_CHANNEL`    |
-|  `--microk8s-channel`  |  `CONCIERGE_MICROK8S_CHANNEL`  |
-|    `--lxd-channel`     |    `CONCIERGE_LXD_CHANNEL`     |
-| `--charmcraft-channel` | `CONCIERGE_CHARMCRAFT_CHANNEL` |
-| `--snapcraft-channel`  | `CONCIERGE_SNAPCRAFT_CHANNEL`  |
-| `--rockcraft-channel`  | `CONCIERGE_ROCKCRAFT_CHANNEL`  |
-|    `--extra-snaps`     |    `CONCIERGE_EXTRA_SNAPS`     |
-|     `--extra-debs`     |     `CONCIERGE_EXTRA_DEBS`     |
+|            Flag            |              Env Var               |
+| :------------------------: | :--------------------------------: |
+|      `--juju-channel`      |      `CONCIERGE_JUJU_CHANNEL`      |
+|    `--microk8s-channel`    |    `CONCIERGE_MICROK8S_CHANNEL`    |
+|      `--lxd-channel`       |      `CONCIERGE_LXD_CHANNEL`       |
+|   `--charmcraft-channel`   |   `CONCIERGE_CHARMCRAFT_CHANNEL`   |
+|   `--snapcraft-channel`    |   `CONCIERGE_SNAPCRAFT_CHANNEL`    |
+|   `--rockcraft-channel`    |   `CONCIERGE_ROCKCRAFT_CHANNEL`    |
+| `--google-credential-file` | `CONCIERGE_GOOGLE_CREDENTIAL_FILE` |
+|      `--extra-snaps`       |      `CONCIERGE_EXTRA_SNAPS`       |
+|       `--extra-debs`       |       `CONCIERGE_EXTRA_DEBS`       |
 
 ### Command Examples
 
