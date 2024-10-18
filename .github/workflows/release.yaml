@@ -104,6 +104,7 @@ jobs:
   release:
     name: Release concierge
     runs-on: ubuntu-latest
+    environment: main
     needs:
       - spread-test
     steps:
