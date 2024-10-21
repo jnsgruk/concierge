@@ -160,11 +160,11 @@ providers:
     # (Optional): Channel from which to install LXD.
     channel: <channel>
 
-  # (Optional) LXD provider configuration.
+  # (Optional) Google provider configuration.
   google:
-    # (Optional) Enable or disable LXD.
+    # (Optional) Enable or disable the Google provider.
     enable: true | false
-    # (Optional) Whether or not to bootstrap a controller onto LXD.
+    # (Optional) Whether or not to bootstrap a controller onto Google Cloud.
     bootstrap: true | false
     # (Optional): File containing credentials for Google cloud.
     # See below note on the credentials file format.
