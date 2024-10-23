@@ -139,6 +139,21 @@ juju:
 
 # (Required): Define the providers to be installed and bootstrapped.
 providers:
+  # (Optional) Canonical K8s provider configuration.
+  canonical-k8s:
+    # (Optional) Enable or disable Canonical K8s.
+    enable: true | false
+    # (Optional) Whether or not to bootstrap a controller onto Canonical K8s.
+    bootstrap: true | false
+    # (Optional): Channel from which to install Canonical K8s.
+    channel: <channel>
+    # (Optional): Canonical K8s addons to enable.
+    features:
+      # (Optional) Name of the Canonical K8s feature. E.g. `load-balancer`.
+      <feature name>:
+        # (Optional) Feature configuration key/value
+        <key>: <value>
+
   # (Optional) MicroK8s provider configuration.
   microk8s:
     # (Optional) Enable or disable MicroK8s.
@@ -245,9 +260,19 @@ juju:
     automatically-retry-hooks: "false"
 
 providers:
-  microk8s:
+  canonical-k8s:
     enable: true
     bootstrap: true
+    channel: 1.31/candidate
+    features:
+      local-storage:
+      load-balancer:
+        l2-mode: true
+        cidrs: 10.64.140.43/32
+
+  microk8s:
+    enable: false
+    bootstrap: false
     channel: 1.31-strict/stable
     addons:
       - hostpath-storage
@@ -329,7 +354,7 @@ To run any of the tests on a locally provisioned machine, use the `github-ci` ba
 
 ```bash
 # List available tests
-$ spread --list github-ci:
+$ spread -list github-ci:
 # Run all of the tests
 $ spread -v github-ci:
 # Run a particular test
