@@ -1,0 +1,10 @@
+providers:
+  canonical-k8s:
+    enable: true
+    bootstrap: true
+    channel: 1.31/candidate
+    features:
+      local-storage:
+      load-balancer:
+        l2-mode: true
+        cidrs: 10.64.140.43/32

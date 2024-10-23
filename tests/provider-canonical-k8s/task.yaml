@@ -1,0 +1,31 @@
+summary: Run concierge with just a MicroK8s provider
+systems:
+  - ubuntu-24.04
+
+execute: |
+  pushd "${SPREAD_PATH}/${SPREAD_TASK}"
+
+  "$SPREAD_PATH"/concierge --trace prepare --extra-snaps="yq"
+
+  list="$(snap list k8s)"
+  echo $list | MATCH k8s
+  echo $list | MATCH 1.31/candidate
+
+  list="$(snap list)"
+  echo $list | MATCH juju
+  echo $list | MATCH kubectl
+
+  sudo k8s status --output-format yaml | yq '.dns.enabled' | MATCH true
+  sudo k8s status --output-format yaml | yq '.load-balancer.enabled' | MATCH true
+  sudo k8s status --output-format yaml | yq '.load-balancer.message' | MATCH "enabled, L2 mode"
+  sudo k8s get | yq '.load-balancer.cidrs' | MATCH "10.64.140.43/32"
+
+  kubectl config current-context | MATCH "k8s"
+
+  juju controllers | tail -n1 | MATCH concierge-canonical-k8s
+  juju models | tail -n1 | MATCH testing
+
+restore: |
+  if [[ -z "${CI:-}" ]]; then
+    "$SPREAD_PATH"/concierge --trace restore
+  fi
