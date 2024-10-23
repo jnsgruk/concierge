@@ -52,6 +52,11 @@ func NewPlan(config *config.Config, runner runner.CommandRunner) *Plan {
 
 // Execute either prepares or restores a given plan
 func (p *Plan) Execute(action string) error {
+	err := p.validate()
+	if err != nil {
+		return fmt.Errorf("failed to validate plan: %w", err)
+	}
+
 	var eg errgroup.Group
 
 	snapHandler := packages.NewSnapHandler(p.runner, p.Snaps)
@@ -74,9 +79,25 @@ func (p *Plan) Execute(action string) error {
 	}
 
 	// Prepare/Restore juju controllers
-	err := DoAction(jujuHandler, action)
+	err = DoAction(jujuHandler, action)
 	if err != nil {
 		return fmt.Errorf("failed to prepare Juju: %w", err)
+	}
+
+	return nil
+}
+
+// validate returns an error if the generated plan contains errors that would prevent a successful
+// configuration of the machine.
+func (p *Plan) validate() error {
+	var eg errgroup.Group
+
+	// Run the validators in parallel in an errgroup
+	for _, v := range planValidators {
+		eg.Go(func() error { return v(p) })
+	}
+	if err := eg.Wait(); err != nil {
+		return err
 	}
 
 	return nil
