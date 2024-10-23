@@ -6,7 +6,12 @@ import (
 )
 
 // SupportedProviders is a list of stringified names of supported providers.
-var SupportedProviders []string = []string{"lxd", "microk8s", "google"}
+var SupportedProviders []string = []string{
+	"canonical-k8s",
+	"google",
+	"lxd",
+	"microk8s",
+}
 
 // Provider describes the set of methods expected to be available on a
 // provider that concierge can try to bootstrap Juju onto.
@@ -36,6 +41,8 @@ func NewProvider(providerName string, runner runner.CommandRunner, config *confi
 		return NewMicroK8s(runner, config)
 	} else if providerName == "google" && config.Providers.Google.Enable {
 		return NewGoogle(runner, config)
+	} else if providerName == "canonical-k8s" && config.Providers.CanonicalK8s.Enable {
+		return NewCanonicalK8s(runner, config)
 	} else {
 		return nil
 	}

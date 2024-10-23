@@ -22,9 +22,10 @@ type jujuConfig struct {
 
 // providerConfig represents the set of providers to be configured and bootstrapped.
 type providerConfig struct {
-	LXD      lxdConfig      `mapstructure:"lxd"`
-	Google   googleConfig   `mapstructure:"google"`
-	MicroK8s microk8sConfig `mapstructure:"microk8s"`
+	CanonicalK8s canonicalK8sConfig `mapstructure:"canonical-k8s"`
+	LXD          lxdConfig          `mapstructure:"lxd"`
+	Google       googleConfig       `mapstructure:"google"`
+	MicroK8s     microk8sConfig     `mapstructure:"microk8s"`
 }
 
 // lxdConfig represents how LXD should be configured on the host.
@@ -47,6 +48,14 @@ type microk8sConfig struct {
 	Bootstrap bool     `mapstructure:"bootstrap"`
 	Channel   string   `mapstructure:"channel"`
 	Addons    []string `mapstructure:"addons"`
+}
+
+// canonicalK8sConfig represents how MicroK8s should be configured on the host.
+type canonicalK8sConfig struct {
+	Enable    bool                         `mapstructure:"enable"`
+	Bootstrap bool                         `mapstructure:"bootstrap"`
+	Channel   string                       `mapstructure:"channel"`
+	Features  map[string]map[string]string `mapstructure:"features"`
 }
 
 // hostConfig is a top-level field containing addition configuration for the host being
