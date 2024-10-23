@@ -1,4 +1,4 @@
-summary: Run concierge with just a MicroK8s provider
+summary: Run concierge with just a Canonical K8s provider
 systems:
   - ubuntu-24.04
 
