@@ -1,10 +1,13 @@
 package packages
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"strings"
+	"time"
 
+	retry "github.com/sethvargo/go-retry"
 	"github.com/snapcore/snapd/client"
 )
 
@@ -62,8 +65,16 @@ func (s *Snap) SetChannel(c string) { s.channel = c }
 func (s *Snap) Installed() bool {
 	slog.Debug("Querying snap install status", "snap", s.name)
 
-	snap, _, err := s.client.Snap(s.name)
-	if err != nil {
+	snap, err := s.withRetry(func(ctx context.Context) (*client.Snap, error) {
+		snap, _, err := s.client.Snap(s.name)
+		if err != nil && strings.Contains(err.Error(), "snap not installed") {
+			return snap, nil
+		} else if err != nil {
+			return nil, retry.RetryableError(err)
+		}
+		return snap, nil
+	})
+	if err != nil || snap == nil {
 		return false
 	}
 
@@ -75,7 +86,13 @@ func (s *Snap) Installed() bool {
 func (s *Snap) Classic() (bool, error) {
 	slog.Debug("Querying snap confinement", "snap", s.name)
 
-	snap, _, err := s.client.FindOne(s.name)
+	snap, err := s.withRetry(func(ctx context.Context) (*client.Snap, error) {
+		snap, _, err := s.client.FindOne(s.name)
+		if err != nil {
+			return nil, retry.RetryableError(err)
+		}
+		return snap, nil
+	})
 	if err != nil {
 		return false, fmt.Errorf("failed to find snap: %w", err)
 	}
@@ -92,7 +109,13 @@ func (s *Snap) Classic() (bool, error) {
 func (s *Snap) Tracking() (string, error) {
 	slog.Debug("Querying snap channel tracking", "snap", s.name)
 
-	snap, _, err := s.client.Snap(s.name)
+	snap, err := s.withRetry(func(ctx context.Context) (*client.Snap, error) {
+		snap, _, err := s.client.Snap(s.name)
+		if err != nil {
+			return nil, retry.RetryableError(err)
+		}
+		return snap, nil
+	})
 	if err != nil {
 		return "", fmt.Errorf("failed to find snap: %w", err)
 	}
@@ -102,4 +125,11 @@ func (s *Snap) Tracking() (string, error) {
 	} else {
 		return "", fmt.Errorf("snap '%s' is not installed", s.name)
 	}
+}
+
+func (s *Snap) withRetry(f func(ctx context.Context) (*client.Snap, error)) (*client.Snap, error) {
+	backoff := retry.NewExponential(1 * time.Second)
+	backoff = retry.WithMaxRetries(10, backoff)
+	ctx := context.Background()
+	return retry.DoValue(ctx, backoff, f)
 }
