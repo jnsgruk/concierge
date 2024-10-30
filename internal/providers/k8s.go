@@ -11,14 +11,19 @@ import (
 	"github.com/jnsgruk/concierge/internal/runner"
 )
 
+// Default channel from which K8s is installed.
+const defaultK8sChannel = "1.31/candidate"
+
 // NewK8s constructs a new K8s provider instance.
 func NewK8s(runner runner.CommandRunner, config *config.Config) *K8s {
 	var channel string
 
 	if config.Overrides.K8sChannel != "" {
 		channel = config.Overrides.K8sChannel
-	} else {
+	} else if config.Providers.K8s.Channel != "" {
 		channel = config.Providers.K8s.Channel
+	} else {
+		channel = defaultK8sChannel
 	}
 
 	return &K8s{

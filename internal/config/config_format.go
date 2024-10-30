@@ -22,7 +22,7 @@ type jujuConfig struct {
 
 // providerConfig represents the set of providers to be configured and bootstrapped.
 type providerConfig struct {
-	K8s      K8sConfig      `mapstructure:"k8s"`
+	K8s      k8sConfig      `mapstructure:"k8s"`
 	LXD      lxdConfig      `mapstructure:"lxd"`
 	Google   googleConfig   `mapstructure:"google"`
 	MicroK8s microk8sConfig `mapstructure:"microk8s"`
@@ -50,8 +50,8 @@ type microk8sConfig struct {
 	Addons    []string `mapstructure:"addons"`
 }
 
-// K8sConfig represents how MicroK8s should be configured on the host.
-type K8sConfig struct {
+// k8sConfig represents how MicroK8s should be configured on the host.
+type k8sConfig struct {
 	Enable    bool                         `mapstructure:"enable"`
 	Bootstrap bool                         `mapstructure:"bootstrap"`
 	Channel   string                       `mapstructure:"channel"`

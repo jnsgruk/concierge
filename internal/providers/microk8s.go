@@ -18,7 +18,7 @@ import (
 
 // Default channel from which MicroK8s is installed when the latest strict
 // version cannot be determined.
-const defaultChannel = "1.31-strict/stable"
+const defaultMicroK8sChannel = "1.31-strict/stable"
 
 // NewMicroK8s constructs a new MicroK8s provider instance.
 func NewMicroK8s(runner runner.CommandRunner, config *config.Config) *MicroK8s {
@@ -201,12 +201,12 @@ func (m *MicroK8s) setupKubectl() error {
 func computeDefaultChannel() string {
 	// If the snapd socket doesn't exist on the system, return a default value
 	if _, err := os.Stat("/run/snapd.socket"); errors.Is(err, os.ErrNotExist) {
-		return defaultChannel
+		return defaultMicroK8sChannel
 	}
 
 	snap, _, err := snapdClient.New(nil).FindOne("microk8s")
 	if err != nil {
-		return defaultChannel
+		return defaultMicroK8sChannel
 	}
 
 	keys := []string{}

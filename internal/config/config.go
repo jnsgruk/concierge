@@ -106,6 +106,7 @@ func parseConfig(configFile string) (*Config, error) {
 func getOverrides(flags *pflag.FlagSet) ConfigOverrides {
 	return ConfigOverrides{
 		JujuChannel:       envOrFlagString(flags, "juju-channel"),
+		K8sChannel:        envOrFlagString(flags, "k8s-channel"),
 		MicroK8sChannel:   envOrFlagString(flags, "microk8s-channel"),
 		LXDChannel:        envOrFlagString(flags, "lxd-channel"),
 		CharmcraftChannel: envOrFlagString(flags, "charmcraft-channel"),

@@ -5,6 +5,8 @@ import "fmt"
 // Preset returns a configuration preset by name.
 func Preset(preset string) (*Config, error) {
 	switch preset {
+	case "k8s":
+		return k8sPreset, nil
 	case "microk8s":
 		return microk8sPreset, nil
 	case "machine":
@@ -55,6 +57,19 @@ var defaultMicroK8sConfig microk8sConfig = microk8sConfig{
 	},
 }
 
+// defaultK8sConfig is the standard K8s config used throughout presets.
+var defaultK8sConfig k8sConfig = k8sConfig{
+	Enable:    true,
+	Bootstrap: true,
+	Features: map[string]map[string]string{
+		"load-balancer": {
+			"l2-mode": "true",
+			"cidrs":   "10.43.45.0/28",
+		},
+		"local-storage": {},
+	},
+}
+
 // machinePreset is a configuration preset designed to be used when testing
 // machine charms.
 var machinePreset *Config = &Config{
@@ -65,6 +80,21 @@ var machinePreset *Config = &Config{
 	Host: hostConfig{
 		Packages: defaultPackages,
 		Snaps:    append(defaultSnaps, "snapcraft/latest/stable"),
+	},
+}
+
+// k8sPreset is a configuration preset designed to be used when testing
+// k8s charms.
+var k8sPreset *Config = &Config{
+	Juju: defaultJujuConfig,
+	Providers: providerConfig{
+		// Enable LXD so charms can be built, but don't bootstrap onto it.
+		LXD: lxdConfig{Enable: true},
+		K8s: defaultK8sConfig,
+	},
+	Host: hostConfig{
+		Packages: defaultPackages,
+		Snaps:    append(defaultSnaps, "rockcraft/latest/stable"),
 	},
 }
 

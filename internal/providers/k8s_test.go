@@ -28,7 +28,7 @@ func TestNewK8s(t *testing.T) {
 	noOverrides := &config.Config{}
 
 	channelInConfig := &config.Config{}
-	channelInConfig.Providers.K8s.Channel = "1.31/candidate"
+	channelInConfig.Providers.K8s.Channel = "1.32/candidate"
 
 	overrides := &config.Config{}
 	overrides.Overrides.K8sChannel = "1.32/edge"
@@ -39,11 +39,11 @@ func TestNewK8s(t *testing.T) {
 	tests := []test{
 		{
 			config:   noOverrides,
-			expected: &K8s{Channel: "", runner: runner},
+			expected: &K8s{Channel: "1.31/candidate", runner: runner},
 		},
 		{
 			config:   channelInConfig,
-			expected: &K8s{Channel: "1.31/candidate", runner: runner},
+			expected: &K8s{Channel: "1.32/candidate", runner: runner},
 		},
 		{
 			config:   overrides,

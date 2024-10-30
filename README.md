@@ -113,11 +113,12 @@ sudo concierge prepare -p dev
 | Preset Name | Included                                                         |
 | :---------: | :--------------------------------------------------------------- |
 |    `dev`    | `juju`, `microk8s`, `lxd` `snapcraft`, `charmcraft`, `rockcraft` |
+|    `k8s`    | `juju`, `k8s`, `lxd`, `rockcraft`, `charmcraft`                  |
 | `microk8s`  | `juju`, `microk8s`, `lxd`, `rockcraft`, `charmcraft`             |
 |  `machine`  | `juju`, `lxd`, `snapcraft`, `charmcraft`                         |
 
-Note that in the `microk8s` preset, while `lxd` is installed, it is not bootstrapped. It is installed
-and initialised with enough config such that `charmcraft` can use it as a build backend.
+Note that in the `microk8s`/`k8s` presets, while `lxd` is installed, it is not bootstrapped. It is
+installed and initialised with enough config such that `charmcraft` can use it as a build backend.
 
 ### Config File
 

@@ -1,0 +1,40 @@
+summary: Run concierge with the k8s preset
+systems:
+  - ubuntu-24.04
+
+execute: |
+  pushd "${SPREAD_PATH}/${SPREAD_TASK}"
+
+  "$SPREAD_PATH"/concierge --trace prepare -p k8s
+
+  # Check that relevant snaps are installed
+  for s in juju k8s kubectl jq yq charmcraft rockcraft; do
+    snap list "$s" | MATCH $s
+  done
+
+  # Check the relevant debs are installed
+  command -v pip | MATCH /usr/bin/pip
+  python3 -m venv -h | head -n1 | grep -q -e "usage: venv"
+
+  sudo k8s status --output-format yaml | yq '.dns.enabled' | MATCH true
+  sudo k8s status --output-format yaml | yq '.load-balancer.enabled' | MATCH true
+  sudo k8s status --output-format yaml | yq '.load-balancer.message' | MATCH "enabled, L2 mode"
+  sudo k8s get | yq '.load-balancer.cidrs' | MATCH "10.43.45.0/28"
+
+  kubectl config current-context | MATCH "k8s"
+
+  juju controllers | tail -n1 | MATCH concierge-k8s
+  juju models | tail -n1 | MATCH testing
+
+  # Ensure the juju controller is bootstrapped and has models
+  juju switch concierge-k8s:admin/testing
+  juju model-defaults | grep test-mode | tr -s " " | MATCH "test-mode false true"
+  juju model-defaults | grep automatically-retry-hooks | tr -s " " | MATCH "automatically-retry-hooks true false"
+
+  # Check that even though we installed/initialised LXD, we didn't bootstrap it
+  juju controllers | NOMATCH lxd-concierge
+
+restore: |
+  if [[ -z "${CI:-}" ]]; then
+    "$SPREAD_PATH"/concierge --trace restore
+  fi
