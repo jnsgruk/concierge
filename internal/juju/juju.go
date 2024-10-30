@@ -26,21 +26,23 @@ func NewJujuHandler(config *config.Config, runner runner.CommandRunner, provider
 	}
 
 	return &JujuHandler{
-		channel:       channel,
-		modelDefaults: config.Juju.ModelDefaults,
-		providers:     providers,
-		runner:        runner,
-		snaps:         []packages.SnapPackage{packages.NewSnap("juju", channel)},
+		channel:              channel,
+		bootstrapConstraints: config.Juju.BootstrapConstraints,
+		modelDefaults:        config.Juju.ModelDefaults,
+		providers:            providers,
+		runner:               runner,
+		snaps:                []packages.SnapPackage{packages.NewSnap("juju", channel)},
 	}
 }
 
 // JujuHandler represents a Juju installation on the system.
 type JujuHandler struct {
-	channel       string
-	modelDefaults map[string]string
-	providers     []providers.Provider
-	runner        runner.CommandRunner
-	snaps         []packages.SnapPackage
+	channel              string
+	bootstrapConstraints map[string]string
+	modelDefaults        map[string]string
+	providers            []providers.Provider
+	runner               runner.CommandRunner
+	snaps                []packages.SnapPackage
 }
 
 // Prepare bootstraps Juju on the configured providers.
@@ -197,16 +199,14 @@ func (j *JujuHandler) bootstrapProvider(provider providers.Provider) error {
 		"--verbose",
 	}
 
-	// Get a sorted list of the model-default keys
-	keys := make([]string, 0, len(j.modelDefaults))
-	for k := range j.modelDefaults {
-		keys = append(keys, k)
-	}
-	slices.Sort(keys)
-
 	// Iterate over the model-defaults and append them to the bootstrapArgs
-	for _, k := range keys {
+	for _, k := range sortedKeys(j.modelDefaults) {
 		bootstrapArgs = append(bootstrapArgs, "--model-default", fmt.Sprintf("%s=%s", k, j.modelDefaults[k]))
+	}
+
+	// Iterate over the bootstrap-constraints and append them to the bootstrapArgs
+	for _, k := range sortedKeys(j.bootstrapConstraints) {
+		bootstrapArgs = append(bootstrapArgs, "--bootstrap-constraints", fmt.Sprintf("%s=%s", k, j.bootstrapConstraints[k]))
 	}
 
 	user := j.runner.User().Username
@@ -268,4 +268,14 @@ func (j *JujuHandler) checkBootstrapped(controllerName string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+// sortedKeys gets an alphabetically sorted list of keys from a map.
+func sortedKeys(m map[string]string) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	slices.Sort(keys)
+	return keys
 }

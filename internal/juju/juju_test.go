@@ -30,6 +30,7 @@ func setupHandlerWithPreset(preset string) (*runnertest.MockRunner, *JujuHandler
 	runner := runnertest.NewMockRunner()
 	runner.MockCommandReturn("sudo -u test-user juju show-controller concierge-lxd", []byte("not found"), fmt.Errorf("Test error"))
 	runner.MockCommandReturn("sudo -u test-user juju show-controller concierge-microk8s", []byte("not found"), fmt.Errorf("Test error"))
+	runner.MockCommandReturn("sudo -u test-user juju show-controller concierge-k8s", []byte("not found"), fmt.Errorf("Test error"))
 
 	cfg, err = config.Preset(preset)
 	if err != nil {
@@ -41,6 +42,8 @@ func setupHandlerWithPreset(preset string) (*runnertest.MockRunner, *JujuHandler
 		provider = providers.NewLXD(runner, cfg)
 	case "microk8s":
 		provider = providers.NewMicroK8s(runner, cfg)
+	case "k8s":
+		provider = providers.NewK8s(runner, cfg)
 	}
 
 	handler := NewJujuHandler(cfg, runner, []providers.Provider{provider})
@@ -98,6 +101,16 @@ func TestJujuHandlerCommandsPresets(t *testing.T) {
 				"sudo -u test-user juju show-controller concierge-microk8s",
 				"sudo -u test-user -g snap_microk8s juju bootstrap microk8s concierge-microk8s --verbose --model-default automatically-retry-hooks=false --model-default test-mode=true",
 				"sudo -u test-user juju add-model -c concierge-microk8s testing",
+			},
+			expectedDirs: []string{".local/share/juju"},
+		},
+		{
+			preset: "k8s",
+			expectedCommands: []string{
+				"snap install juju",
+				"sudo -u test-user juju show-controller concierge-k8s",
+				"sudo -u test-user juju bootstrap k8s concierge-k8s --verbose --model-default automatically-retry-hooks=false --model-default test-mode=true --bootstrap-constraints root-disk=2G",
+				"sudo -u test-user juju add-model -c concierge-k8s testing",
 			},
 			expectedDirs: []string{".local/share/juju"},
 		},

@@ -18,7 +18,7 @@ func Preset(preset string) (*Config, error) {
 	}
 }
 
-// defaultPackages is the default Juju config for all presets.
+// defaultJujuConfig is the default Juju config for all presets.
 var defaultJujuConfig jujuConfig = jujuConfig{
 	ModelDefaults: map[string]string{
 		"test-mode":                 "true",
@@ -86,7 +86,15 @@ var machinePreset *Config = &Config{
 // k8sPreset is a configuration preset designed to be used when testing
 // k8s charms.
 var k8sPreset *Config = &Config{
-	Juju: defaultJujuConfig,
+	Juju: jujuConfig{
+		ModelDefaults: map[string]string{
+			"test-mode":                 "true",
+			"automatically-retry-hooks": "false",
+		},
+		BootstrapConstraints: map[string]string{
+			"root-disk": "2G",
+		},
+	},
 	Providers: providerConfig{
 		// Enable LXD so charms can be built, but don't bootstrap onto it.
 		LXD: lxdConfig{Enable: true},

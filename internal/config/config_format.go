@@ -18,6 +18,8 @@ type jujuConfig struct {
 	Channel string `mapstructure:"channel"`
 	// The set of model-defaults to be passed to Juju during bootstrap
 	ModelDefaults map[string]string `mapstructure:"model-defaults"`
+	// The set of bootstrap constraints to be passed to Juju
+	BootstrapConstraints map[string]string `mapstructure:"bootstrap-constraints"`
 }
 
 // providerConfig represents the set of providers to be configured and bootstrapped.
