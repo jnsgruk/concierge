@@ -5,8 +5,8 @@ import "fmt"
 // Preset returns a configuration preset by name.
 func Preset(preset string) (*Config, error) {
 	switch preset {
-	case "k8s":
-		return k8sPreset, nil
+	case "microk8s":
+		return microk8sPreset, nil
 	case "machine":
 		return machinePreset, nil
 	case "dev":
@@ -43,8 +43,8 @@ var defaultLXDConfig lxdConfig = lxdConfig{
 	Bootstrap: true,
 }
 
-// defaultK8sConfig is the standard MicroK8s config used throughout presets.
-var defaultK8sConfig microk8sConfig = microk8sConfig{
+// defaultMicroK8sConfig is the standard MicroK8s config used throughout presets.
+var defaultMicroK8sConfig microk8sConfig = microk8sConfig{
 	Enable:    true,
 	Bootstrap: true,
 	Addons: []string{
@@ -68,14 +68,14 @@ var machinePreset *Config = &Config{
 	},
 }
 
-// k8sPreset is a configuration preset designed to be used when testing
+// microk8sPreset is a configuration preset designed to be used when testing
 // k8s charms.
-var k8sPreset *Config = &Config{
+var microk8sPreset *Config = &Config{
 	Juju: defaultJujuConfig,
 	Providers: providerConfig{
 		// Enable LXD so charms can be built, but don't bootstrap onto it.
 		LXD:      lxdConfig{Enable: true},
-		MicroK8s: defaultK8sConfig,
+		MicroK8s: defaultMicroK8sConfig,
 	},
 	Host: hostConfig{
 		Packages: defaultPackages,
@@ -89,7 +89,7 @@ var devPreset *Config = &Config{
 	Juju: defaultJujuConfig,
 	Providers: providerConfig{
 		LXD:      defaultLXDConfig,
-		MicroK8s: defaultK8sConfig,
+		MicroK8s: defaultMicroK8sConfig,
 	},
 	Host: hostConfig{
 		Packages: defaultPackages,
