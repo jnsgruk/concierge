@@ -11,7 +11,7 @@ func TestSingleK8sValidator(t *testing.T) {
 	runner := runnertest.NewMockRunner()
 
 	twoK8s := &config.Config{}
-	twoK8s.Providers.CanonicalK8s.Enable = true
+	twoK8s.Providers.K8s.Enable = true
 	twoK8s.Providers.MicroK8s.Enable = true
 
 	plan := NewPlan(twoK8s, runner)
@@ -20,9 +20,9 @@ func TestSingleK8sValidator(t *testing.T) {
 		t.Fatalf("should not allow enabling two local kubernetes providers")
 	}
 
-	justCanonicalK8s := &config.Config{}
-	justCanonicalK8s.Providers.CanonicalK8s.Enable = true
-	plan = NewPlan(justCanonicalK8s, runner)
+	justK8s := &config.Config{}
+	justK8s.Providers.K8s.Enable = true
+	plan = NewPlan(justK8s, runner)
 	err = plan.validate()
 	if err != nil {
 		t.Fatalf("single kubernetes provider should be permitted")

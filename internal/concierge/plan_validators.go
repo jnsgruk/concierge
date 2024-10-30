@@ -19,7 +19,7 @@ func validateSingleLocalKubernetesInstance(plan *Plan) error {
 		providerNames = append(providerNames, p.Name())
 	}
 
-	if slices.Contains(providerNames, "microk8s") && slices.Contains(providerNames, "canonical-k8s") {
+	if slices.Contains(providerNames, "microk8s") && slices.Contains(providerNames, "k8s") {
 		return fmt.Errorf("cannot configure multiple local kubernetes providers")
 	}
 

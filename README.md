@@ -76,7 +76,7 @@ the environment variable version will always take precedent. The equivalents are
 |            Flag            |              Env Var               |
 | :------------------------: | :--------------------------------: |
 |      `--juju-channel`      |      `CONCIERGE_JUJU_CHANNEL`      |
-| `--canonical-k8s-channel`  | `CONCIERGE_CANONICAL_K8S_CHANNEL`  |
+|      `--k8s-channel`       |      `CONCIERGE_K8S_CHANNEL`       |
 |    `--microk8s-channel`    |    `CONCIERGE_MICROK8S_CHANNEL`    |
 |      `--lxd-channel`       |      `CONCIERGE_LXD_CHANNEL`       |
 |   `--charmcraft-channel`   |   `CONCIERGE_CHARMCRAFT_CHANNEL`   |

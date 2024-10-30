@@ -39,7 +39,7 @@ func setupHandlerWithPreset(preset string) (*runnertest.MockRunner, *JujuHandler
 	switch preset {
 	case "machine":
 		provider = providers.NewLXD(runner, cfg)
-	case "k8s":
+	case "microk8s":
 		provider = providers.NewMicroK8s(runner, cfg)
 	}
 
@@ -92,7 +92,7 @@ func TestJujuHandlerCommandsPresets(t *testing.T) {
 			expectedDirs: []string{".local/share/juju"},
 		},
 		{
-			preset: "k8s",
+			preset: "microk8s",
 			expectedCommands: []string{
 				"snap install juju",
 				"sudo -u test-user juju show-controller concierge-microk8s",

@@ -1,4 +1,4 @@
-summary: Run concierge with just a Canonical K8s provider
+summary: Run concierge with just a K8s provider
 systems:
   - ubuntu-24.04
 
@@ -22,7 +22,7 @@ execute: |
 
   kubectl config current-context | MATCH "k8s"
 
-  juju controllers | tail -n1 | MATCH concierge-canonical-k8s
+  juju controllers | tail -n1 | MATCH concierge-k8s
   juju models | tail -n1 | MATCH testing
 
 restore: |

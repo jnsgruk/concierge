@@ -62,7 +62,7 @@ More information at https://github.com/jnsgruk/concierge.
 	flags.StringP("config", "c", "", "path to a specific config file to use")
 	flags.StringP("preset", "p", "", "config preset to use (k8s | machine | dev)")
 	flags.String("juju-channel", "", "override the snap channel for juju")
-	flags.String("canonical-k8s-channel", "", "override snap channel for Canonical K8s")
+	flags.String("k8s-channel", "", "override snap channel for the k8s snap")
 	flags.String("microk8s-channel", "", "override snap channel for microk8s")
 	flags.String("lxd-channel", "", "override snap channel for lxd")
 	flags.String("charmcraft-channel", "", "override snap channel for charmcraft")

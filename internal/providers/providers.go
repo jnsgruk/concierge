@@ -7,7 +7,7 @@ import (
 
 // SupportedProviders is a list of stringified names of supported providers.
 var SupportedProviders []string = []string{
-	"canonical-k8s",
+	"k8s",
 	"google",
 	"lxd",
 	"microk8s",
@@ -41,8 +41,8 @@ func NewProvider(providerName string, runner runner.CommandRunner, config *confi
 		return NewMicroK8s(runner, config)
 	} else if providerName == "google" && config.Providers.Google.Enable {
 		return NewGoogle(runner, config)
-	} else if providerName == "canonical-k8s" && config.Providers.CanonicalK8s.Enable {
-		return NewCanonicalK8s(runner, config)
+	} else if providerName == "k8s" && config.Providers.K8s.Enable {
+		return NewK8s(runner, config)
 	} else {
 		return nil
 	}

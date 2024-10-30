@@ -19,40 +19,40 @@ var defaultFeatureConfig = map[string]map[string]string{
 	"local-storage": {},
 }
 
-func TestNewCanonicalK8s(t *testing.T) {
+func TestNewK8s(t *testing.T) {
 	type test struct {
 		config   *config.Config
-		expected *CanonicalK8s
+		expected *K8s
 	}
 
 	noOverrides := &config.Config{}
 
 	channelInConfig := &config.Config{}
-	channelInConfig.Providers.CanonicalK8s.Channel = "1.31/candidate"
+	channelInConfig.Providers.K8s.Channel = "1.31/candidate"
 
 	overrides := &config.Config{}
-	overrides.Overrides.CanonicalK8sChannel = "1.32/edge"
-	overrides.Providers.CanonicalK8s.Features = defaultFeatureConfig
+	overrides.Overrides.K8sChannel = "1.32/edge"
+	overrides.Providers.K8s.Features = defaultFeatureConfig
 
 	runner := runnertest.NewMockRunner()
 
 	tests := []test{
 		{
 			config:   noOverrides,
-			expected: &CanonicalK8s{Channel: "", runner: runner},
+			expected: &K8s{Channel: "", runner: runner},
 		},
 		{
 			config:   channelInConfig,
-			expected: &CanonicalK8s{Channel: "1.31/candidate", runner: runner},
+			expected: &K8s{Channel: "1.31/candidate", runner: runner},
 		},
 		{
 			config:   overrides,
-			expected: &CanonicalK8s{Channel: "1.32/edge", Features: defaultFeatureConfig, runner: runner},
+			expected: &K8s{Channel: "1.32/edge", Features: defaultFeatureConfig, runner: runner},
 		},
 	}
 
 	for _, tc := range tests {
-		ck8s := NewCanonicalK8s(runner, tc.config)
+		ck8s := NewK8s(runner, tc.config)
 
 		// Check the constructed snaps are correct
 		if ck8s.snaps[0].Channel() != tc.expected.Channel {
@@ -67,15 +67,15 @@ func TestNewCanonicalK8s(t *testing.T) {
 	}
 }
 
-func TestCanonicalK8sPrepareCommands(t *testing.T) {
+func TestK8sPrepareCommands(t *testing.T) {
 	// Prevent the path of the test machine interfering with the test results.
 	path := os.Getenv("PATH")
 	defer os.Setenv("PATH", path)
 	os.Setenv("PATH", "")
 
 	config := &config.Config{}
-	config.Providers.CanonicalK8s.Channel = ""
-	config.Providers.CanonicalK8s.Features = defaultFeatureConfig
+	config.Providers.K8s.Channel = ""
+	config.Providers.K8s.Features = defaultFeatureConfig
 
 	expectedCommands := []string{
 		"snap install k8s",
@@ -93,7 +93,7 @@ func TestCanonicalK8sPrepareCommands(t *testing.T) {
 	}
 
 	runner := runnertest.NewMockRunner()
-	ck8s := NewCanonicalK8s(runner, config)
+	ck8s := NewK8s(runner, config)
 
 	// Override the snaps with fake ones that don't call the snapd socket.
 	ck8s.snaps = []packages.SnapPackage{
@@ -114,18 +114,18 @@ func TestCanonicalK8sPrepareCommands(t *testing.T) {
 	}
 }
 
-func TestCanonicalK8sRestore(t *testing.T) {
+func TestK8sRestore(t *testing.T) {
 	// Prevent the path of the test machine interfering with the test results.
 	path := os.Getenv("PATH")
 	defer os.Setenv("PATH", path)
 	os.Setenv("PATH", "")
 
 	config := &config.Config{}
-	config.Providers.CanonicalK8s.Channel = ""
-	config.Providers.CanonicalK8s.Features = defaultFeatureConfig
+	config.Providers.K8s.Channel = ""
+	config.Providers.K8s.Features = defaultFeatureConfig
 
 	runner := runnertest.NewMockRunner()
-	ck8s := NewCanonicalK8s(runner, config)
+	ck8s := NewK8s(runner, config)
 	ck8s.Restore()
 
 	expectedDeleted := []string{".kube"}

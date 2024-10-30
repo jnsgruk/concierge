@@ -1,5 +1,5 @@
 providers:
-  canonical-k8s:
+  k8s:
     enable: true
     bootstrap: true
     channel: 1.31/candidate
