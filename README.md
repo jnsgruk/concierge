@@ -138,6 +138,9 @@ juju:
   # (Optional): A map of model-defaults to set when bootstrapping Juju controllers.
   model-defaults:
     <model-default>: <value>
+  # (Optional): A map of bootstrap-constraints to set when bootstrapping Juju controllers.
+  bootstrap-constraints:
+    <bootstrap-constraint>: <value>
 
 # (Required): Define the providers to be installed and bootstrapped.
 providers:
@@ -245,6 +248,8 @@ juju:
   model-defaults:
     test-mode: "true"
     automatically-retry-hooks: "false"
+  bootstrap-constraints:
+    root-size: 2G
 
 providers:
   microk8s:
