@@ -7,26 +7,26 @@ import (
 	"github.com/jnsgruk/concierge/internal/juju"
 	"github.com/jnsgruk/concierge/internal/packages"
 	"github.com/jnsgruk/concierge/internal/providers"
-	"github.com/jnsgruk/concierge/internal/runner"
+	"github.com/jnsgruk/concierge/internal/system"
 	"golang.org/x/sync/errgroup"
 )
 
 // Plan represents a set of packages and providers that are to be prepared/restored.
 type Plan struct {
 	Providers []providers.Provider
-	Snaps     []*runner.Snap
+	Snaps     []*system.Snap
 	Debs      []*packages.Deb
 
 	config *config.Config
-	runner runner.CommandRunner
+	system system.Worker
 }
 
 // NewPlan constructs a new plan consisting of snaps/debs/providers & juju.
-func NewPlan(config *config.Config, runner runner.CommandRunner) *Plan {
-	plan := &Plan{config: config, runner: runner}
+func NewPlan(config *config.Config, system system.Worker) *Plan {
+	plan := &Plan{config: config, system: system}
 
 	for _, s := range append(config.Host.Snaps, config.Overrides.ExtraSnaps...) {
-		snap := runner.NewSnapFromString(s)
+		snap := system.NewSnapFromString(s)
 
 		// Check if the channel has been overridden by a CLI argument/env var
 		channelOverride := getSnapChannelOverride(config, snap.Name)
@@ -42,7 +42,7 @@ func NewPlan(config *config.Config, runner runner.CommandRunner) *Plan {
 	}
 
 	for _, providerName := range providers.SupportedProviders {
-		if p := providers.NewProvider(providerName, runner, config); p != nil {
+		if p := providers.NewProvider(providerName, system, config); p != nil {
 			plan.Providers = append(plan.Providers, p)
 		}
 	}
@@ -59,9 +59,9 @@ func (p *Plan) Execute(action string) error {
 
 	var eg errgroup.Group
 
-	snapHandler := packages.NewSnapHandler(p.runner, p.Snaps)
-	debHandler := packages.NewDebHandler(p.runner, p.Debs)
-	jujuHandler := juju.NewJujuHandler(p.config, p.runner, p.Providers)
+	snapHandler := packages.NewSnapHandler(p.system, p.Snaps)
+	debHandler := packages.NewDebHandler(p.system, p.Debs)
+	jujuHandler := juju.NewJujuHandler(p.config, p.system, p.Providers)
 
 	// Prepare/restore package handlers concurrently
 	eg.Go(func() error { return DoAction(snapHandler, action) })

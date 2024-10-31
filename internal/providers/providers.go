@@ -2,7 +2,7 @@ package providers
 
 import (
 	"github.com/jnsgruk/concierge/internal/config"
-	"github.com/jnsgruk/concierge/internal/runner"
+	"github.com/jnsgruk/concierge/internal/system"
 )
 
 // SupportedProviders is a list of stringified names of supported providers.
@@ -34,15 +34,15 @@ type Provider interface {
 }
 
 // NewProvider returns a newly constructed provider based on a stringified name of the provider.
-func NewProvider(providerName string, runner runner.CommandRunner, config *config.Config) Provider {
+func NewProvider(providerName string, system system.Worker, config *config.Config) Provider {
 	if providerName == "lxd" && config.Providers.LXD.Enable {
-		return NewLXD(runner, config)
+		return NewLXD(system, config)
 	} else if providerName == "microk8s" && config.Providers.MicroK8s.Enable {
-		return NewMicroK8s(runner, config)
+		return NewMicroK8s(system, config)
 	} else if providerName == "google" && config.Providers.Google.Enable {
-		return NewGoogle(runner, config)
+		return NewGoogle(system, config)
 	} else if providerName == "k8s" && config.Providers.K8s.Enable {
-		return NewK8s(runner, config)
+		return NewK8s(system, config)
 	} else {
 		return nil
 	}

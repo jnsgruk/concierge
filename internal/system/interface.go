@@ -1,13 +1,13 @@
-package runner
+package system
 
 import (
 	"os/user"
 	"time"
 )
 
-// CommandRunner is an interface for a struct that can run commands on the underlying system.
-type CommandRunner interface {
-	// User returns the 'real user' the runner executes command as. This may be different from
+// Worker is an interface for a struct that can run commands on the underlying system.
+type Worker interface {
+	// User returns the 'real user' the system executes command as. This may be different from
 	// the current user since the command is often executed with `sudo`.
 	User() *user.User
 	// Run takes a single command and runs it, returning the combined output and an error value.

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/jnsgruk/concierge/internal/config"
-	"github.com/jnsgruk/concierge/internal/runner"
+	"github.com/jnsgruk/concierge/internal/system"
 	"gopkg.in/yaml.v3"
 )
 
@@ -23,20 +23,20 @@ func TestNewGoogle(t *testing.T) {
 	overrides := &config.Config{}
 	overrides.Overrides.GoogleCredentialFile = "/home/ubuntu/alternate-credentials.yaml"
 
-	runner := runner.NewMockRunner()
+	system := system.NewMockSystem()
 
 	tests := []test{
 		{
 			config: noOverrides,
 			expected: &Google{
-				runner:      runner,
+				system:      system,
 				credentials: map[string]interface{}{},
 			},
 		},
 		{
 			config: credsInConfig,
 			expected: &Google{
-				runner:          runner,
+				system:          system,
 				credentialsFile: "/home/ubuntu/credentials.yaml",
 				credentials:     map[string]interface{}{},
 			},
@@ -44,7 +44,7 @@ func TestNewGoogle(t *testing.T) {
 		{
 			config: overrides,
 			expected: &Google{
-				runner:          runner,
+				system:          system,
 				credentialsFile: "/home/ubuntu/alternate-credentials.yaml",
 				credentials:     map[string]interface{}{},
 			},
@@ -52,7 +52,7 @@ func TestNewGoogle(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		uk8s := NewGoogle(runner, tc.config)
+		uk8s := NewGoogle(system, tc.config)
 		if !reflect.DeepEqual(tc.expected, uk8s) {
 			t.Fatalf("expected: %v, got: %v", tc.expected, uk8s)
 		}
@@ -63,15 +63,15 @@ func TestGooglePrepareCommands(t *testing.T) {
 	config := &config.Config{}
 	config.Providers.Google.CredentialsFile = "/home/ubuntu/credentials.yaml"
 
-	runner := runner.NewMockRunner()
-	uk8s := NewGoogle(runner, config)
+	system := system.NewMockSystem()
+	uk8s := NewGoogle(system, config)
 	uk8s.Prepare()
 
-	if len(runner.ExecutedCommands) != 0 {
+	if len(system.ExecutedCommands) != 0 {
 		t.Fatalf("expected no commands to have been run")
 	}
 
-	if len(runner.CreatedFiles) != 0 {
+	if len(system.CreatedFiles) != 0 {
 		t.Fatalf("expected no files to have been created")
 	}
 }
@@ -80,7 +80,7 @@ func TestGoogleReadCredentials(t *testing.T) {
 	config := &config.Config{}
 	config.Providers.Google.CredentialsFile = "credentials.yaml"
 
-	runner := runner.NewMockRunner()
+	system := system.NewMockSystem()
 
 	creds := []byte(`auth-type: oauth2
 client-email: juju-gce-1-sa@concierge.iam.gserviceaccount.com
@@ -98,9 +98,9 @@ project-id: concierge
 		t.Fatal(err)
 	}
 
-	runner.MockFile("credentials.yaml", creds)
+	system.MockFile("credentials.yaml", creds)
 
-	google := NewGoogle(runner, config)
+	google := NewGoogle(system, config)
 	google.Prepare()
 
 	if !reflect.DeepEqual(google.Credentials(), fakeCredsMarshalled) {

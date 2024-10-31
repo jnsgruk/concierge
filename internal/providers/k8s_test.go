@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/jnsgruk/concierge/internal/config"
-	"github.com/jnsgruk/concierge/internal/runner"
+	"github.com/jnsgruk/concierge/internal/system"
 )
 
 var defaultFeatureConfig = map[string]map[string]string{
@@ -32,25 +32,25 @@ func TestNewK8s(t *testing.T) {
 	overrides.Overrides.K8sChannel = "1.32/edge"
 	overrides.Providers.K8s.Features = defaultFeatureConfig
 
-	runner := runner.NewMockRunner()
+	system := system.NewMockSystem()
 
 	tests := []test{
 		{
 			config:   noOverrides,
-			expected: &K8s{Channel: "1.31/candidate", runner: runner},
+			expected: &K8s{Channel: "1.31/candidate", system: system},
 		},
 		{
 			config:   channelInConfig,
-			expected: &K8s{Channel: "1.32/candidate", runner: runner},
+			expected: &K8s{Channel: "1.32/candidate", system: system},
 		},
 		{
 			config:   overrides,
-			expected: &K8s{Channel: "1.32/edge", Features: defaultFeatureConfig, runner: runner},
+			expected: &K8s{Channel: "1.32/edge", Features: defaultFeatureConfig, system: system},
 		},
 	}
 
 	for _, tc := range tests {
-		ck8s := NewK8s(runner, tc.config)
+		ck8s := NewK8s(system, tc.config)
 
 		// Check the constructed snaps are correct
 		if ck8s.snaps[0].Channel != tc.expected.Channel {
@@ -86,19 +86,19 @@ func TestK8sPrepareCommands(t *testing.T) {
 		".kube/config": "",
 	}
 
-	runner := runner.NewMockRunner()
-	ck8s := NewK8s(runner, config)
+	system := system.NewMockSystem()
+	ck8s := NewK8s(system, config)
 	ck8s.Prepare()
 
 	slices.Sort(expectedCommands)
-	slices.Sort(runner.ExecutedCommands)
+	slices.Sort(system.ExecutedCommands)
 
-	if !reflect.DeepEqual(expectedCommands, runner.ExecutedCommands) {
-		t.Fatalf("expected: %v, got: %v", expectedCommands, runner.ExecutedCommands)
+	if !reflect.DeepEqual(expectedCommands, system.ExecutedCommands) {
+		t.Fatalf("expected: %v, got: %v", expectedCommands, system.ExecutedCommands)
 	}
 
-	if !reflect.DeepEqual(expectedFiles, runner.CreatedFiles) {
-		t.Fatalf("expected: %v, got: %v", expectedFiles, runner.CreatedFiles)
+	if !reflect.DeepEqual(expectedFiles, system.CreatedFiles) {
+		t.Fatalf("expected: %v, got: %v", expectedFiles, system.CreatedFiles)
 	}
 }
 
@@ -107,14 +107,14 @@ func TestK8sRestore(t *testing.T) {
 	config.Providers.K8s.Channel = ""
 	config.Providers.K8s.Features = defaultFeatureConfig
 
-	runner := runner.NewMockRunner()
-	ck8s := NewK8s(runner, config)
+	system := system.NewMockSystem()
+	ck8s := NewK8s(system, config)
 	ck8s.Restore()
 
 	expectedDeleted := []string{".kube"}
 
-	if !reflect.DeepEqual(expectedDeleted, runner.Deleted) {
-		t.Fatalf("expected: %v, got: %v", expectedDeleted, runner.Deleted)
+	if !reflect.DeepEqual(expectedDeleted, system.Deleted) {
+		t.Fatalf("expected: %v, got: %v", expectedDeleted, system.Deleted)
 	}
 
 	expectedCommands := []string{
@@ -122,7 +122,7 @@ func TestK8sRestore(t *testing.T) {
 		"snap remove kubectl --purge",
 	}
 
-	if !reflect.DeepEqual(expectedCommands, runner.ExecutedCommands) {
-		t.Fatalf("expected: %v, got: %v", expectedCommands, runner.ExecutedCommands)
+	if !reflect.DeepEqual(expectedCommands, system.ExecutedCommands) {
+		t.Fatalf("expected: %v, got: %v", expectedCommands, system.ExecutedCommands)
 	}
 }

@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/jnsgruk/concierge/internal/runner"
+	"github.com/jnsgruk/concierge/internal/system"
 )
 
 func TestDebHandlerCommands(t *testing.T) {
@@ -38,11 +38,11 @@ func TestDebHandlerCommands(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		runner := runner.NewMockRunner()
-		tc.testFunc(NewDebHandler(runner, debs))
+		system := system.NewMockSystem()
+		tc.testFunc(NewDebHandler(system, debs))
 
-		if !reflect.DeepEqual(tc.expected, runner.ExecutedCommands) {
-			t.Fatalf("expected: %v, got: %v", tc.expected, runner.ExecutedCommands)
+		if !reflect.DeepEqual(tc.expected, system.ExecutedCommands) {
+			t.Fatalf("expected: %v, got: %v", tc.expected, system.ExecutedCommands)
 		}
 	}
 }

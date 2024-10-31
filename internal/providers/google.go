@@ -5,19 +5,19 @@ import (
 	"log/slog"
 
 	"github.com/jnsgruk/concierge/internal/config"
-	"github.com/jnsgruk/concierge/internal/runner"
+	"github.com/jnsgruk/concierge/internal/system"
 	"gopkg.in/yaml.v3"
 )
 
 // NewGoogle constructs a new Google provider instance.
-func NewGoogle(runner runner.CommandRunner, config *config.Config) *Google {
+func NewGoogle(system system.Worker, config *config.Config) *Google {
 	credentialsFile := config.Providers.Google.CredentialsFile
 	if config.Overrides.GoogleCredentialFile != "" {
 		credentialsFile = config.Overrides.GoogleCredentialFile
 	}
 
 	return &Google{
-		runner:          runner,
+		system:          system,
 		bootstrap:       config.Providers.Google.Bootstrap,
 		credentialsFile: credentialsFile,
 		credentials:     map[string]interface{}{},
@@ -27,7 +27,7 @@ func NewGoogle(runner runner.CommandRunner, config *config.Config) *Google {
 // Google represents a Google cloud to bootstrap.
 type Google struct {
 	bootstrap       bool
-	runner          runner.CommandRunner
+	system          system.Worker
 	credentialsFile string
 	credentials     map[string]interface{}
 }
@@ -36,7 +36,7 @@ type Google struct {
 // This includes installing the snap, enabling the user who ran concierge to interact
 // with Google without sudo, and deconflicting the firewall rules with docker.
 func (l *Google) Prepare() error {
-	contents, err := l.runner.ReadFile(l.credentialsFile)
+	contents, err := l.system.ReadFile(l.credentialsFile)
 	if err != nil {
 		return fmt.Errorf("failed to read credentials file: %w", err)
 	}

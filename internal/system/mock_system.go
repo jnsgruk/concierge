@@ -1,4 +1,4 @@
-package runner
+package system
 
 import (
 	"fmt"
@@ -8,9 +8,9 @@ import (
 	"time"
 )
 
-// NewMockRunner constructs a new mock command
-func NewMockRunner() *MockRunner {
-	return &MockRunner{
+// NewMockSystem constructs a new mock command
+func NewMockSystem() *MockSystem {
+	return &MockSystem{
 		CreatedFiles: map[string]string{},
 		mockReturns:  map[string]MockCommandReturn{},
 		mockFiles:    map[string][]byte{},
@@ -24,8 +24,8 @@ type MockCommandReturn struct {
 	Error  error
 }
 
-// MockRunner represents a struct that can emulate running commands.
-type MockRunner struct {
+// MockSystem represents a struct that can emulate running commands.
+type MockSystem struct {
 	ExecutedCommands   []string
 	CreatedFiles       map[string]string
 	CreatedDirectories []string
@@ -38,17 +38,17 @@ type MockRunner struct {
 
 // MockCommandReturn sets a static return value representing command combined output,
 // and a desired error return for the specified command.
-func (r *MockRunner) MockCommandReturn(command string, b []byte, err error) {
+func (r *MockSystem) MockCommandReturn(command string, b []byte, err error) {
 	r.mockReturns[command] = MockCommandReturn{Output: b, Error: err}
 }
 
 // MockFile sets a faked expected file contents for a given file.
-func (r *MockRunner) MockFile(filePath string, contents []byte) {
+func (r *MockSystem) MockFile(filePath string, contents []byte) {
 	r.mockFiles[filePath] = contents
 }
 
 // MockSnapStoreLookup gets a new test snap and adds a mock snap into the mock test
-func (r *MockRunner) MockSnapStoreLookup(name, channel string, classic, installed bool) *Snap {
+func (r *MockSystem) MockSnapStoreLookup(name, channel string, classic, installed bool) *Snap {
 	r.mockSnapInfo[name] = &SnapInfo{
 		Installed: installed,
 		Classic:   classic,
@@ -56,8 +56,8 @@ func (r *MockRunner) MockSnapStoreLookup(name, channel string, classic, installe
 	return &Snap{Name: name, Channel: channel}
 }
 
-// User returns the user the runner executes commands on behalf of.
-func (r *MockRunner) User() *user.User {
+// User returns the user the system executes commands on behalf of.
+func (r *MockSystem) User() *user.User {
 	return &user.User{
 		Username: "test-user",
 		Uid:      "666",
@@ -67,7 +67,7 @@ func (r *MockRunner) User() *user.User {
 }
 
 // Run executes the command, returning the stdout/stderr where appropriate.
-func (r *MockRunner) Run(c *Command) ([]byte, error) {
+func (r *MockSystem) Run(c *Command) ([]byte, error) {
 	// Prevent the path of the test machine interfering with the test results.
 	path := os.Getenv("PATH")
 	defer os.Setenv("PATH", path)
@@ -86,13 +86,13 @@ func (r *MockRunner) Run(c *Command) ([]byte, error) {
 
 // RunWithRetries executes the command, retrying utilising an exponential backoff pattern,
 // which starts at 1 second. Retries will be attempted up to the specified maximum duration.
-func (r *MockRunner) RunWithRetries(c *Command, maxDuration time.Duration) ([]byte, error) {
+func (r *MockSystem) RunWithRetries(c *Command, maxDuration time.Duration) ([]byte, error) {
 	return r.Run(c)
 }
 
 // RunMany takes a variadic number of Command's, and runs them in a loop, returning
 // and error if any command fails.
-func (r *MockRunner) RunMany(commands ...*Command) error {
+func (r *MockSystem) RunMany(commands ...*Command) error {
 	for _, cmd := range commands {
 		_, err := r.Run(cmd)
 		if err != nil {
@@ -104,27 +104,27 @@ func (r *MockRunner) RunMany(commands ...*Command) error {
 
 // RunExclusive is a wrapper around Run that uses a mutex to ensure that only one of that
 // particular command can be run at a time.
-func (r *MockRunner) RunExclusive(c *Command) ([]byte, error) {
+func (r *MockSystem) RunExclusive(c *Command) ([]byte, error) {
 	return r.Run(c)
 }
 
 // WriteHomeDirFile takes a path relative to the real user's home dir, and writes the contents
 // specified to it.
-func (r *MockRunner) WriteHomeDirFile(filepath string, contents []byte) error {
+func (r *MockSystem) WriteHomeDirFile(filepath string, contents []byte) error {
 	r.CreatedFiles[filepath] = string(contents)
 	return nil
 }
 
 // MkHomeSubdirectory takes a relative folder path and creates it recursively in the real
 // user's home directory.
-func (r *MockRunner) MkHomeSubdirectory(subdirectory string) error {
+func (r *MockSystem) MkHomeSubdirectory(subdirectory string) error {
 	r.CreatedDirectories = append(r.CreatedDirectories, subdirectory)
 	return nil
 }
 
 // ReadHomeDirFile takes a path relative to the real user's home dir, and reads the content
 // from the file
-func (r *MockRunner) ReadHomeDirFile(filePath string) ([]byte, error) {
+func (r *MockSystem) ReadHomeDirFile(filePath string) ([]byte, error) {
 	val, ok := r.mockFiles[filePath]
 	if !ok {
 		return nil, fmt.Errorf("file not found")
@@ -133,7 +133,7 @@ func (r *MockRunner) ReadHomeDirFile(filePath string) ([]byte, error) {
 }
 
 // ReadFile takes a path and reads the content from the specified file.
-func (r *MockRunner) ReadFile(filePath string) ([]byte, error) {
+func (r *MockSystem) ReadFile(filePath string) ([]byte, error) {
 	val, ok := r.mockFiles[filePath]
 	if !ok {
 		return nil, fmt.Errorf("file not found")
@@ -142,14 +142,14 @@ func (r *MockRunner) ReadFile(filePath string) ([]byte, error) {
 }
 
 // RemoveAllHome recursively removes a file path from the user's home directory.
-func (r *MockRunner) RemoveAllHome(filePath string) error {
+func (r *MockSystem) RemoveAllHome(filePath string) error {
 	r.Deleted = append(r.Deleted, filePath)
 	return nil
 }
 
 // SnapInfo returns information about a given snap, looking up details in the snap
 // store using the snapd client API where necessary.
-func (r *MockRunner) SnapInfo(snap string, channel string) (*SnapInfo, error) {
+func (r *MockSystem) SnapInfo(snap string, channel string) (*SnapInfo, error) {
 	snapInfo, ok := r.mockSnapInfo[snap]
 	if ok {
 		return snapInfo, nil
@@ -162,13 +162,13 @@ func (r *MockRunner) SnapInfo(snap string, channel string) (*SnapInfo, error) {
 }
 
 // NewSnap returns a Snap object with details populated from the snap store and local system.
-func (r *MockRunner) NewSnap(name, channel string) *Snap {
+func (r *MockSystem) NewSnap(name, channel string) *Snap {
 	return &Snap{Name: name, Channel: channel}
 }
 
 // NewSnapFromString returns a constructed snap instance, where the snap is
 // specified in shorthand form, i.e. `charmcraft/latest/edge`.
-func (r *MockRunner) NewSnapFromString(snap string) *Snap {
+func (r *MockSystem) NewSnapFromString(snap string) *Snap {
 	before, after, found := strings.Cut(snap, "/")
 	if found {
 		return r.NewSnap(before, after)

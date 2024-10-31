@@ -6,27 +6,27 @@ import (
 	"path"
 
 	"github.com/jnsgruk/concierge/internal/config"
-	"github.com/jnsgruk/concierge/internal/runner"
+	"github.com/jnsgruk/concierge/internal/system"
 	"gopkg.in/yaml.v3"
 )
 
 // NewManager constructs a new instance of the concierge manager.
 func NewManager(config *config.Config) (*Manager, error) {
-	runner, err := runner.NewRunner(config.Trace)
+	system, err := system.Newsystem(config.Trace)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialise runner: %w", err)
+		return nil, fmt.Errorf("failed to initialise system: %w", err)
 	}
 
 	return &Manager{
 		config: config,
-		runner: runner,
+		system: system,
 	}, nil
 }
 
 // Manager is a construct for controlling the main execution of concierge.
 type Manager struct {
 	Plan   *Plan
-	runner runner.CommandRunner
+	system system.Worker
 	config *config.Config
 }
 
@@ -59,7 +59,7 @@ func (m *Manager) execute(action string) error {
 	}
 
 	// Create the installation/preparation plan
-	m.Plan = NewPlan(m.config, m.runner)
+	m.Plan = NewPlan(m.config, m.system)
 	return m.Plan.Execute(action)
 }
 
@@ -72,7 +72,7 @@ func (m *Manager) recordRuntimeConfig() error {
 	}
 
 	filepath := path.Join(".cache", "concierge", "concierge.yaml")
-	err = m.runner.WriteHomeDirFile(filepath, configYaml)
+	err = m.system.WriteHomeDirFile(filepath, configYaml)
 	if err != nil {
 		return fmt.Errorf("failed to write runtime config file: %w", err)
 	}
@@ -86,7 +86,7 @@ func (m *Manager) recordRuntimeConfig() error {
 func (m *Manager) loadRuntimeConfig() error {
 	recordPath := path.Join(".cache", "concierge", "concierge.yaml")
 
-	contents, err := m.runner.ReadHomeDirFile(recordPath)
+	contents, err := m.system.ReadHomeDirFile(recordPath)
 	if err != nil {
 		return fmt.Errorf("failed to read file: %w", err)
 	}

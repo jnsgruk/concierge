@@ -1,4 +1,4 @@
-package runner
+package system
 
 import (
 	"testing"
@@ -17,8 +17,8 @@ func TestNewSnapFromString(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		runner := NewMockRunner()
-		snap := runner.NewSnapFromString(tc.input)
+		system := NewMockSystem()
+		snap := system.NewSnapFromString(tc.input)
 
 		if tc.expected.Channel != snap.Channel {
 			t.Fatalf("incorrect snap channel; expected: %v, got: %v", tc.expected, snap)

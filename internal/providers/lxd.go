@@ -6,11 +6,11 @@ import (
 
 	"github.com/jnsgruk/concierge/internal/config"
 	"github.com/jnsgruk/concierge/internal/packages"
-	"github.com/jnsgruk/concierge/internal/runner"
+	"github.com/jnsgruk/concierge/internal/system"
 )
 
 // NewLXD constructs a new LXD provider instance.
-func NewLXD(r runner.CommandRunner, config *config.Config) *LXD {
+func NewLXD(r system.Worker, config *config.Config) *LXD {
 	var channel string
 	if config.Overrides.LXDChannel != "" {
 		channel = config.Overrides.LXDChannel
@@ -20,9 +20,9 @@ func NewLXD(r runner.CommandRunner, config *config.Config) *LXD {
 
 	return &LXD{
 		Channel:   channel,
-		runner:    r,
+		system:    r,
 		bootstrap: config.Providers.LXD.Bootstrap,
-		snaps:     []*runner.Snap{{Name: "lxd", Channel: channel}},
+		snaps:     []*system.Snap{{Name: "lxd", Channel: channel}},
 	}
 }
 
@@ -31,8 +31,8 @@ type LXD struct {
 	Channel string
 
 	bootstrap bool
-	runner    runner.CommandRunner
-	snaps     []*runner.Snap
+	system    system.Worker
+	snaps     []*system.Snap
 }
 
 // Prepare installs and configures LXD such that it can work in testing environments.
@@ -80,7 +80,7 @@ func (l *LXD) Credentials() map[string]interface{} { return nil }
 
 // Remove uninstalls LXD.
 func (l *LXD) Restore() error {
-	snapHandler := packages.NewSnapHandler(l.runner, l.snaps)
+	snapHandler := packages.NewSnapHandler(l.system, l.snaps)
 
 	err := snapHandler.Restore()
 	if err != nil {
@@ -93,7 +93,7 @@ func (l *LXD) Restore() error {
 
 // install ensures that LXD is installed.
 func (l *LXD) install() error {
-	snapHandler := packages.NewSnapHandler(l.runner, l.snaps)
+	snapHandler := packages.NewSnapHandler(l.system, l.snaps)
 
 	err := snapHandler.Prepare()
 	if err != nil {
@@ -105,20 +105,20 @@ func (l *LXD) install() error {
 
 // init ensures that LXD is minimally configured, and ready.
 func (l *LXD) init() error {
-	return l.runner.RunMany(
-		runner.NewCommand("lxd", []string{"waitready"}),
-		runner.NewCommand("lxd", []string{"init", "--minimal"}),
-		runner.NewCommand("lxc", []string{"network", "set", "lxdbr0", "ipv6.address", "none"}),
+	return l.system.RunMany(
+		system.NewCommand("lxd", []string{"waitready"}),
+		system.NewCommand("lxd", []string{"init", "--minimal"}),
+		system.NewCommand("lxc", []string{"network", "set", "lxdbr0", "ipv6.address", "none"}),
 	)
 }
 
 // enableNonRootUserControl ensures the current user is in the `lxd` group.
 func (l *LXD) enableNonRootUserControl() error {
-	username := l.runner.User().Username
+	username := l.system.User().Username
 
-	return l.runner.RunMany(
-		runner.NewCommand("chmod", []string{"a+wr", "/var/snap/lxd/common/lxd/unix.socket"}),
-		runner.NewCommand("usermod", []string{"-a", "-G", "lxd", username}),
+	return l.system.RunMany(
+		system.NewCommand("chmod", []string{"a+wr", "/var/snap/lxd/common/lxd/unix.socket"}),
+		system.NewCommand("usermod", []string{"-a", "-G", "lxd", username}),
 	)
 }
 
@@ -126,8 +126,8 @@ func (l *LXD) enableNonRootUserControl() error {
 // This is to avoid a conflict with the default iptables rules that ship with
 // docker on Ubuntu.
 func (l *LXD) deconflictFirewall() error {
-	return l.runner.RunMany(
-		runner.NewCommand("iptables", []string{"-F", "FORWARD"}),
-		runner.NewCommand("iptables", []string{"-P", "FORWARD", "ACCEPT"}),
+	return l.system.RunMany(
+		system.NewCommand("iptables", []string{"-F", "FORWARD"}),
+		system.NewCommand("iptables", []string{"-P", "FORWARD", "ACCEPT"}),
 	)
 }

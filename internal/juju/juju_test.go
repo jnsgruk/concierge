@@ -7,7 +7,7 @@ import (
 
 	"github.com/jnsgruk/concierge/internal/config"
 	"github.com/jnsgruk/concierge/internal/providers"
-	"github.com/jnsgruk/concierge/internal/runner"
+	"github.com/jnsgruk/concierge/internal/system"
 )
 
 var fakeGoogleCreds = []byte(`auth-type: oauth2
@@ -20,15 +20,15 @@ private-key: |
 project-id: concierge
 `)
 
-func setupHandlerWithPreset(preset string) (*runner.MockRunner, *JujuHandler, error) {
+func setupHandlerWithPreset(preset string) (*system.MockSystem, *JujuHandler, error) {
 	var err error
 	var cfg *config.Config
 	var provider providers.Provider
 
-	runner := runner.NewMockRunner()
-	runner.MockCommandReturn("sudo -u test-user juju show-controller concierge-lxd", []byte("not found"), fmt.Errorf("Test error"))
-	runner.MockCommandReturn("sudo -u test-user juju show-controller concierge-microk8s", []byte("not found"), fmt.Errorf("Test error"))
-	runner.MockCommandReturn("sudo -u test-user juju show-controller concierge-k8s", []byte("not found"), fmt.Errorf("Test error"))
+	system := system.NewMockSystem()
+	system.MockCommandReturn("sudo -u test-user juju show-controller concierge-lxd", []byte("not found"), fmt.Errorf("Test error"))
+	system.MockCommandReturn("sudo -u test-user juju show-controller concierge-microk8s", []byte("not found"), fmt.Errorf("Test error"))
+	system.MockCommandReturn("sudo -u test-user juju show-controller concierge-k8s", []byte("not found"), fmt.Errorf("Test error"))
 
 	cfg, err = config.Preset(preset)
 	if err != nil {
@@ -37,36 +37,36 @@ func setupHandlerWithPreset(preset string) (*runner.MockRunner, *JujuHandler, er
 
 	switch preset {
 	case "machine":
-		provider = providers.NewLXD(runner, cfg)
+		provider = providers.NewLXD(system, cfg)
 	case "microk8s":
-		provider = providers.NewMicroK8s(runner, cfg)
+		provider = providers.NewMicroK8s(system, cfg)
 	case "k8s":
-		provider = providers.NewK8s(runner, cfg)
+		provider = providers.NewK8s(system, cfg)
 	}
 
-	handler := NewJujuHandler(cfg, runner, []providers.Provider{provider})
+	handler := NewJujuHandler(cfg, system, []providers.Provider{provider})
 
-	return runner, handler, nil
+	return system, handler, nil
 }
 
-func setupHandlerWithGoogleProvider() (*runner.MockRunner, *JujuHandler, error) {
+func setupHandlerWithGoogleProvider() (*system.MockSystem, *JujuHandler, error) {
 	cfg := &config.Config{}
 	cfg.Providers.Google.Enable = true
 	cfg.Providers.Google.Bootstrap = true
 	cfg.Providers.Google.CredentialsFile = "google.yaml"
 
-	runner := runner.NewMockRunner()
-	runner.MockFile("google.yaml", fakeGoogleCreds)
+	system := system.NewMockSystem()
+	system.MockFile("google.yaml", fakeGoogleCreds)
 
-	provider := providers.NewProvider("google", runner, cfg)
+	provider := providers.NewProvider("google", system, cfg)
 
 	err := provider.Prepare()
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to prepare google provider: %w", err)
 	}
 
-	handler := NewJujuHandler(cfg, runner, []providers.Provider{provider})
-	return runner, handler, nil
+	handler := NewJujuHandler(cfg, system, []providers.Provider{provider})
+	return system, handler, nil
 }
 func TestJujuHandlerCommandsPresets(t *testing.T) {
 	type test struct {
@@ -109,7 +109,7 @@ func TestJujuHandlerCommandsPresets(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		runner, handler, err := setupHandlerWithPreset(tc.preset)
+		system, handler, err := setupHandlerWithPreset(tc.preset)
 		if err != nil {
 			t.Fatal(err.Error())
 		}
@@ -119,14 +119,14 @@ func TestJujuHandlerCommandsPresets(t *testing.T) {
 			t.Fatal(err.Error())
 		}
 
-		if !reflect.DeepEqual(tc.expectedCommands, runner.ExecutedCommands) {
-			t.Fatalf("expected: %v, got: %v", tc.expectedCommands, runner.ExecutedCommands)
+		if !reflect.DeepEqual(tc.expectedCommands, system.ExecutedCommands) {
+			t.Fatalf("expected: %v, got: %v", tc.expectedCommands, system.ExecutedCommands)
 		}
-		if !reflect.DeepEqual(tc.expectedDirs, runner.CreatedDirectories) {
-			t.Fatalf("expected: %v, got: %v", tc.expectedDirs, runner.CreatedDirectories)
+		if !reflect.DeepEqual(tc.expectedDirs, system.CreatedDirectories) {
+			t.Fatalf("expected: %v, got: %v", tc.expectedDirs, system.CreatedDirectories)
 		}
-		if len(runner.CreatedFiles) > 0 {
-			t.Fatalf("expected no files to be created, got: %v", runner.CreatedFiles)
+		if len(system.CreatedFiles) > 0 {
+			t.Fatalf("expected no files to be created, got: %v", system.CreatedFiles)
 		}
 	}
 }
@@ -145,7 +145,7 @@ func TestJujuHandlerWithCredentialedProvider(t *testing.T) {
             project-id: concierge
 `)
 
-	runner, handler, err := setupHandlerWithGoogleProvider()
+	system, handler, err := setupHandlerWithGoogleProvider()
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -157,13 +157,13 @@ func TestJujuHandlerWithCredentialedProvider(t *testing.T) {
 
 	expectedFiles := map[string]string{".local/share/juju/credentials.yaml": string(expectedCredsFileContent)}
 
-	if !reflect.DeepEqual(expectedFiles, runner.CreatedFiles) {
-		t.Fatalf("expected: %v, got: %v", expectedFiles, runner.CreatedFiles)
+	if !reflect.DeepEqual(expectedFiles, system.CreatedFiles) {
+		t.Fatalf("expected: %v, got: %v", expectedFiles, system.CreatedFiles)
 	}
 }
 
 func TestJujuRestoreNoKillController(t *testing.T) {
-	runner, handler, err := setupHandlerWithPreset("machine")
+	system, handler, err := setupHandlerWithPreset("machine")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -173,17 +173,17 @@ func TestJujuRestoreNoKillController(t *testing.T) {
 	expectedDeleted := []string{".local/share/juju"}
 	expectedCommands := []string{"snap remove juju --purge"}
 
-	if !reflect.DeepEqual(expectedDeleted, runner.Deleted) {
-		t.Fatalf("expected: %v, got: %v", expectedDeleted, runner.Deleted)
+	if !reflect.DeepEqual(expectedDeleted, system.Deleted) {
+		t.Fatalf("expected: %v, got: %v", expectedDeleted, system.Deleted)
 	}
 
-	if !reflect.DeepEqual(expectedCommands, runner.ExecutedCommands) {
-		t.Fatalf("expected: %v, got: %v", expectedCommands, runner.ExecutedCommands)
+	if !reflect.DeepEqual(expectedCommands, system.ExecutedCommands) {
+		t.Fatalf("expected: %v, got: %v", expectedCommands, system.ExecutedCommands)
 	}
 }
 
 func TestJujuRestoreKillController(t *testing.T) {
-	runner, handler, err := setupHandlerWithGoogleProvider()
+	system, handler, err := setupHandlerWithGoogleProvider()
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -197,11 +197,11 @@ func TestJujuRestoreKillController(t *testing.T) {
 		"snap remove juju --purge",
 	}
 
-	if !reflect.DeepEqual(expectedDeleted, runner.Deleted) {
-		t.Fatalf("expected: %v, got: %v", expectedDeleted, runner.Deleted)
+	if !reflect.DeepEqual(expectedDeleted, system.Deleted) {
+		t.Fatalf("expected: %v, got: %v", expectedDeleted, system.Deleted)
 	}
 
-	if !reflect.DeepEqual(expectedCommands, runner.ExecutedCommands) {
-		t.Fatalf("expected: %v, got: %v", expectedCommands, runner.ExecutedCommands)
+	if !reflect.DeepEqual(expectedCommands, system.ExecutedCommands) {
+		t.Fatalf("expected: %v, got: %v", expectedCommands, system.ExecutedCommands)
 	}
 }

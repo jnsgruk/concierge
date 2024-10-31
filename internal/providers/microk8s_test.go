@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/jnsgruk/concierge/internal/config"
-	"github.com/jnsgruk/concierge/internal/runner"
+	"github.com/jnsgruk/concierge/internal/system"
 )
 
 var defaultAddons []string = []string{
@@ -30,25 +30,25 @@ func TestNewMicroK8s(t *testing.T) {
 	overrides.Overrides.MicroK8sChannel = "1.30/edge"
 	overrides.Providers.MicroK8s.Addons = defaultAddons
 
-	runner := runner.NewMockRunner()
+	system := system.NewMockSystem()
 
 	tests := []test{
 		{
 			config:   noOverrides,
-			expected: &MicroK8s{Channel: "1.31-strict/stable", runner: runner},
+			expected: &MicroK8s{Channel: "1.31-strict/stable", system: system},
 		},
 		{
 			config:   channelInConfig,
-			expected: &MicroK8s{Channel: "1.29-strict/stable", runner: runner},
+			expected: &MicroK8s{Channel: "1.29-strict/stable", system: system},
 		},
 		{
 			config:   overrides,
-			expected: &MicroK8s{Channel: "1.30/edge", Addons: defaultAddons, runner: runner},
+			expected: &MicroK8s{Channel: "1.30/edge", Addons: defaultAddons, system: system},
 		},
 	}
 
 	for _, tc := range tests {
-		uk8s := NewMicroK8s(runner, tc.config)
+		uk8s := NewMicroK8s(system, tc.config)
 
 		// Check the constructed snaps are correct
 		if uk8s.snaps[0].Channel != tc.expected.Channel {
@@ -77,7 +77,7 @@ func TestMicroK8sGroupName(t *testing.T) {
 	for _, tc := range tests {
 		config := &config.Config{}
 		config.Providers.MicroK8s.Channel = tc.channel
-		uk8s := NewMicroK8s(runner.NewMockRunner(), config)
+		uk8s := NewMicroK8s(system.NewMockSystem(), config)
 
 		if !reflect.DeepEqual(tc.expected, uk8s.GroupName()) {
 			t.Fatalf("expected: %v, got: %v", tc.expected, uk8s.GroupName())
@@ -106,16 +106,16 @@ func TestMicroK8sPrepareCommands(t *testing.T) {
 		".kube/config": "",
 	}
 
-	runner := runner.NewMockRunner()
-	uk8s := NewMicroK8s(runner, config)
+	system := system.NewMockSystem()
+	uk8s := NewMicroK8s(system, config)
 	uk8s.Prepare()
 
-	if !reflect.DeepEqual(expectedCommands, runner.ExecutedCommands) {
-		t.Fatalf("expected: %v, got: %v", expectedCommands, runner.ExecutedCommands)
+	if !reflect.DeepEqual(expectedCommands, system.ExecutedCommands) {
+		t.Fatalf("expected: %v, got: %v", expectedCommands, system.ExecutedCommands)
 	}
 
-	if !reflect.DeepEqual(expectedFiles, runner.CreatedFiles) {
-		t.Fatalf("expected: %v, got: %v", expectedFiles, runner.CreatedFiles)
+	if !reflect.DeepEqual(expectedFiles, system.CreatedFiles) {
+		t.Fatalf("expected: %v, got: %v", expectedFiles, system.CreatedFiles)
 	}
 }
 
@@ -124,14 +124,14 @@ func TestMicroK8sRestore(t *testing.T) {
 	config.Providers.MicroK8s.Channel = "1.31-strict/stable"
 	config.Providers.MicroK8s.Addons = defaultAddons
 
-	runner := runner.NewMockRunner()
-	uk8s := NewMicroK8s(runner, config)
+	system := system.NewMockSystem()
+	uk8s := NewMicroK8s(system, config)
 	uk8s.Restore()
 
 	expectedDeleted := []string{".kube"}
 
-	if !reflect.DeepEqual(expectedDeleted, runner.Deleted) {
-		t.Fatalf("expected: %v, got: %v", expectedDeleted, runner.Deleted)
+	if !reflect.DeepEqual(expectedDeleted, system.Deleted) {
+		t.Fatalf("expected: %v, got: %v", expectedDeleted, system.Deleted)
 	}
 
 	expectedCommands := []string{
@@ -139,7 +139,7 @@ func TestMicroK8sRestore(t *testing.T) {
 		"snap remove kubectl --purge",
 	}
 
-	if !reflect.DeepEqual(expectedCommands, runner.ExecutedCommands) {
-		t.Fatalf("expected: %v, got: %v", expectedCommands, runner.ExecutedCommands)
+	if !reflect.DeepEqual(expectedCommands, system.ExecutedCommands) {
+		t.Fatalf("expected: %v, got: %v", expectedCommands, system.ExecutedCommands)
 	}
 }

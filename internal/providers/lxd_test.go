@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/jnsgruk/concierge/internal/config"
-	"github.com/jnsgruk/concierge/internal/runner"
+	"github.com/jnsgruk/concierge/internal/system"
 )
 
 func TestNewLXD(t *testing.T) {
@@ -22,16 +22,16 @@ func TestNewLXD(t *testing.T) {
 	overrides := &config.Config{}
 	overrides.Overrides.LXDChannel = "5.20/stable"
 
-	runner := runner.NewMockRunner()
+	system := system.NewMockSystem()
 
 	tests := []test{
-		{config: noOverrides, expected: &LXD{Channel: "", runner: runner}},
-		{config: channelInConfig, expected: &LXD{Channel: "latest/edge", runner: runner}},
-		{config: overrides, expected: &LXD{Channel: "5.20/stable", runner: runner}},
+		{config: noOverrides, expected: &LXD{Channel: "", system: system}},
+		{config: channelInConfig, expected: &LXD{Channel: "latest/edge", system: system}},
+		{config: overrides, expected: &LXD{Channel: "5.20/stable", system: system}},
 	}
 
 	for _, tc := range tests {
-		lxd := NewLXD(runner, tc.config)
+		lxd := NewLXD(system, tc.config)
 
 		// Check the constructed snaps are correct
 		if lxd.snaps[0].Channel != tc.expected.Channel {
@@ -60,25 +60,25 @@ func TestLXDPrepareCommands(t *testing.T) {
 		"iptables -P FORWARD ACCEPT",
 	}
 
-	runner := runner.NewMockRunner()
-	lxd := NewLXD(runner, config)
+	system := system.NewMockSystem()
+	lxd := NewLXD(system, config)
 	lxd.Prepare()
 
-	if !reflect.DeepEqual(expected, runner.ExecutedCommands) {
-		t.Fatalf("expected: %v, got: %v", expected, runner.ExecutedCommands)
+	if !reflect.DeepEqual(expected, system.ExecutedCommands) {
+		t.Fatalf("expected: %v, got: %v", expected, system.ExecutedCommands)
 	}
 }
 
 func TestLXDRestore(t *testing.T) {
 	config := &config.Config{}
 
-	runner := runner.NewMockRunner()
-	lxd := NewLXD(runner, config)
+	system := system.NewMockSystem()
+	lxd := NewLXD(system, config)
 	lxd.Restore()
 
 	expectedCommands := []string{"snap remove lxd --purge"}
 
-	if !reflect.DeepEqual(expectedCommands, runner.ExecutedCommands) {
-		t.Fatalf("expected: %v, got: %v", expectedCommands, runner.ExecutedCommands)
+	if !reflect.DeepEqual(expectedCommands, system.ExecutedCommands) {
+		t.Fatalf("expected: %v, got: %v", expectedCommands, system.ExecutedCommands)
 	}
 }

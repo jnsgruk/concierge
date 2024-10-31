@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/jnsgruk/concierge/internal/runner"
+	"github.com/jnsgruk/concierge/internal/system"
 )
 
 // NewDeb constructs a new Deb instance.
@@ -18,17 +18,17 @@ type Deb struct {
 }
 
 // NewDebHandler constructs a new instance of a DebHandler.
-func NewDebHandler(runner runner.CommandRunner, debs []*Deb) *DebHandler {
+func NewDebHandler(system system.Worker, debs []*Deb) *DebHandler {
 	return &DebHandler{
 		Debs:   debs,
-		runner: runner,
+		system: system,
 	}
 }
 
 // DebHandler can install or remove a set of debs.
 type DebHandler struct {
 	Debs   []*Deb
-	runner runner.CommandRunner
+	system system.Worker
 }
 
 // Prepare updates the apt cache and installs a set of debs from the archive.
@@ -60,9 +60,9 @@ func (h *DebHandler) Restore() error {
 		}
 	}
 
-	cmd := runner.NewCommand("apt-get", []string{"autoremove", "-y"})
+	cmd := system.NewCommand("apt-get", []string{"autoremove", "-y"})
 
-	_, err := h.runner.RunExclusive(cmd)
+	_, err := h.system.RunExclusive(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to install apt package: %w", err)
 	}
@@ -72,9 +72,9 @@ func (h *DebHandler) Restore() error {
 
 // installDeb uses `apt` to install the package on the system from the archives.
 func (h *DebHandler) installDeb(d *Deb) error {
-	cmd := runner.NewCommand("apt-get", []string{"install", "-y", d.Name})
+	cmd := system.NewCommand("apt-get", []string{"install", "-y", d.Name})
 
-	_, err := h.runner.RunExclusive(cmd)
+	_, err := h.system.RunExclusive(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to install apt package '%s': %w", d.Name, err)
 	}
@@ -85,9 +85,9 @@ func (h *DebHandler) installDeb(d *Deb) error {
 
 // Remove uninstalls the deb from the system with `apt`.
 func (h *DebHandler) removeDeb(d *Deb) error {
-	cmd := runner.NewCommand("apt-get", []string{"remove", "-y", d.Name})
+	cmd := system.NewCommand("apt-get", []string{"remove", "-y", d.Name})
 
-	_, err := h.runner.RunExclusive(cmd)
+	_, err := h.system.RunExclusive(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to remove apt package '%s': %w", d.Name, err)
 	}
@@ -98,9 +98,9 @@ func (h *DebHandler) removeDeb(d *Deb) error {
 
 // updateAptCache is a helper method to update the host's package cache.
 func (h *DebHandler) updateAptCache() error {
-	cmd := runner.NewCommand("apt-get", []string{"update"})
+	cmd := system.NewCommand("apt-get", []string{"update"})
 
-	_, err := h.runner.RunExclusive(cmd)
+	_, err := h.system.RunExclusive(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to update apt package lists: %w", err)
 	}

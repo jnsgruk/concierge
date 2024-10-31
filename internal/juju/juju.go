@@ -11,13 +11,13 @@ import (
 	"github.com/jnsgruk/concierge/internal/config"
 	"github.com/jnsgruk/concierge/internal/packages"
 	"github.com/jnsgruk/concierge/internal/providers"
-	"github.com/jnsgruk/concierge/internal/runner"
+	"github.com/jnsgruk/concierge/internal/system"
 	"golang.org/x/sync/errgroup"
 	"gopkg.in/yaml.v3"
 )
 
 // NewJujuHandler constructs a new JujuHandler instance.
-func NewJujuHandler(config *config.Config, r runner.CommandRunner, providers []providers.Provider) *JujuHandler {
+func NewJujuHandler(config *config.Config, r system.Worker, providers []providers.Provider) *JujuHandler {
 	var channel string
 	if config.Overrides.JujuChannel != "" {
 		channel = config.Overrides.JujuChannel
@@ -30,8 +30,8 @@ func NewJujuHandler(config *config.Config, r runner.CommandRunner, providers []p
 		bootstrapConstraints: config.Juju.BootstrapConstraints,
 		modelDefaults:        config.Juju.ModelDefaults,
 		providers:            providers,
-		runner:               r,
-		snaps:                []*runner.Snap{{Name: "juju", Channel: channel}},
+		system:               r,
+		snaps:                []*system.Snap{{Name: "juju", Channel: channel}},
 	}
 }
 
@@ -41,8 +41,8 @@ type JujuHandler struct {
 	bootstrapConstraints map[string]string
 	modelDefaults        map[string]string
 	providers            []providers.Provider
-	runner               runner.CommandRunner
-	snaps                []*runner.Snap
+	system               system.Worker
+	snaps                []*system.Snap
 }
 
 // Prepare bootstraps Juju on the configured providers.
@@ -54,7 +54,7 @@ func (j *JujuHandler) Prepare() error {
 
 	dir := path.Join(".local", "share", "juju")
 
-	err = j.runner.MkHomeSubdirectory(dir)
+	err = j.system.MkHomeSubdirectory(dir)
 	if err != nil {
 		return fmt.Errorf("failed to create directory '%s': %w", dir, err)
 	}
@@ -86,12 +86,12 @@ func (j *JujuHandler) Restore() error {
 		}
 	}
 
-	err := j.runner.RemoveAllHome(path.Join(".local", "share", "juju"))
+	err := j.system.RemoveAllHome(path.Join(".local", "share", "juju"))
 	if err != nil {
 		return fmt.Errorf("failed to remove '.local/share/juju' subdirectory from user's home directory: %w", err)
 	}
 
-	snapHandler := packages.NewSnapHandler(j.runner, j.snaps)
+	snapHandler := packages.NewSnapHandler(j.system, j.snaps)
 
 	err = snapHandler.Restore()
 	if err != nil {
@@ -105,7 +105,7 @@ func (j *JujuHandler) Restore() error {
 
 // install ensures that Juju is installed.
 func (j *JujuHandler) install() error {
-	snapHandler := packages.NewSnapHandler(j.runner, j.snaps)
+	snapHandler := packages.NewSnapHandler(j.system, j.snaps)
 
 	err := snapHandler.Prepare()
 	if err != nil {
@@ -148,7 +148,7 @@ func (j *JujuHandler) writeCredentials() error {
 		return fmt.Errorf("failed to marshal juju credentials to yaml: %w", err)
 	}
 
-	err = j.runner.WriteHomeDirFile(path.Join(".local", "share", "juju", "credentials.yaml"), content)
+	err = j.system.WriteHomeDirFile(path.Join(".local", "share", "juju", "credentials.yaml"), content)
 	if err != nil {
 		return fmt.Errorf("failed to write credentials.yaml: %w", err)
 	}
@@ -209,16 +209,16 @@ func (j *JujuHandler) bootstrapProvider(provider providers.Provider) error {
 		bootstrapArgs = append(bootstrapArgs, "--bootstrap-constraints", fmt.Sprintf("%s=%s", k, j.bootstrapConstraints[k]))
 	}
 
-	user := j.runner.User().Username
+	user := j.system.User().Username
 
-	cmd := runner.NewCommandAs(user, provider.GroupName(), "juju", bootstrapArgs)
-	_, err = j.runner.RunWithRetries(cmd, (5 * time.Minute))
+	cmd := system.NewCommandAs(user, provider.GroupName(), "juju", bootstrapArgs)
+	_, err = j.system.RunWithRetries(cmd, (5 * time.Minute))
 	if err != nil {
 		return err
 	}
 
-	cmd = runner.NewCommandAs(user, "", "juju", []string{"add-model", "-c", controllerName, "testing"})
-	_, err = j.runner.Run(cmd)
+	cmd = system.NewCommandAs(user, "", "juju", []string{"add-model", "-c", controllerName, "testing"})
+	_, err = j.system.Run(cmd)
 	if err != nil {
 		return err
 	}
@@ -245,8 +245,8 @@ func (j *JujuHandler) killProvider(provider providers.Provider) error {
 
 	killArgs := []string{"kill-controller", "--verbose", "--no-prompt", controllerName}
 
-	cmd := runner.NewCommandAs(j.runner.User().Username, "", "juju", killArgs)
-	_, err = j.runner.Run(cmd)
+	cmd := system.NewCommandAs(j.system.User().Username, "", "juju", killArgs)
+	_, err = j.system.Run(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to destroy controller: '%s': %w", controllerName, err)
 	}
@@ -257,10 +257,10 @@ func (j *JujuHandler) killProvider(provider providers.Provider) error {
 
 // checkBootstrapped checks whether concierge has already been bootstrapped on a given provider.
 func (j *JujuHandler) checkBootstrapped(controllerName string) (bool, error) {
-	user := j.runner.User().Username
-	cmd := runner.NewCommandAs(user, "", "juju", []string{"show-controller", controllerName})
+	user := j.system.User().Username
+	cmd := system.NewCommandAs(user, "", "juju", []string{"show-controller", controllerName})
 
-	result, err := j.runner.Run(cmd)
+	result, err := j.system.Run(cmd)
 	if err != nil && strings.Contains(string(result), "not found") {
 		return false, nil
 	} else if err != nil {

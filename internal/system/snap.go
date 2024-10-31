@@ -1,4 +1,4 @@
-package runner
+package system
 
 import (
 	"context"
@@ -24,39 +24,39 @@ type Snap struct {
 }
 
 // NewSnap returns a new Snap package.
-func (r *Runner) NewSnap(name, channel string) *Snap {
+func (s *System) NewSnap(name, channel string) *Snap {
 	return &Snap{Name: name, Channel: channel}
 }
 
 // NewSnapFromString returns a constructed snap instance, where the snap is
 // specified in shorthand form, i.e. `charmcraft/latest/edge`.
-func (r *Runner) NewSnapFromString(snap string) *Snap {
+func (s *System) NewSnapFromString(snap string) *Snap {
 	before, after, found := strings.Cut(snap, "/")
 	if found {
-		return r.NewSnap(before, after)
+		return s.NewSnap(before, after)
 	} else {
-		return r.NewSnap(before, "")
+		return s.NewSnap(before, "")
 	}
 }
 
 // SnapInfo returns information about a given snap, looking up details in the snap
 // store using the snapd client API where necessary.
-func (r *Runner) SnapInfo(snap string, channel string) (*SnapInfo, error) {
-	classic, err := r.snapIsClassic(snap, channel)
+func (s *System) SnapInfo(snap string, channel string) (*SnapInfo, error) {
+	classic, err := s.snapIsClassic(snap, channel)
 	if err != nil {
 		return nil, err
 	}
 
-	installed := r.snapInstalled(snap)
+	installed := s.snapInstalled(snap)
 
 	slog.Debug("Queried snapd API", "snap", snap, "installed", installed, "classic", classic)
 	return &SnapInfo{Installed: installed, Classic: classic}, nil
 }
 
 // snapInstalled is a helper that reports if the snap is currently Installed.
-func (r *Runner) snapInstalled(name string) bool {
-	s, err := r.withRetry(func(ctx context.Context) (*client.Snap, error) {
-		snap, _, err := r.snapd.Snap(name)
+func (s *System) snapInstalled(name string) bool {
+	snap, err := s.withRetry(func(ctx context.Context) (*client.Snap, error) {
+		snap, _, err := s.snapd.Snap(name)
 		if err != nil && strings.Contains(err.Error(), "snap not installed") {
 			return snap, nil
 		} else if err != nil {
@@ -64,18 +64,18 @@ func (r *Runner) snapInstalled(name string) bool {
 		}
 		return snap, nil
 	})
-	if err != nil || s == nil {
+	if err != nil || snap == nil {
 		return false
 	}
 
-	return s.Status == client.StatusActive
+	return snap.Status == client.StatusActive
 }
 
 // snapIsClassic reports whether or not the snap at the tip of the specified channel uses
 // Classic confinement or not.
-func (r *Runner) snapIsClassic(name, channel string) (bool, error) {
-	snap, err := r.withRetry(func(ctx context.Context) (*client.Snap, error) {
-		snap, _, err := r.snapd.FindOne(name)
+func (s *System) snapIsClassic(name, channel string) (bool, error) {
+	snap, err := s.withRetry(func(ctx context.Context) (*client.Snap, error) {
+		snap, _, err := s.snapd.FindOne(name)
 		if err != nil {
 			return nil, retry.RetryableError(err)
 		}
@@ -93,7 +93,7 @@ func (r *Runner) snapIsClassic(name, channel string) (bool, error) {
 	return snap.Confinement == "classic", nil
 }
 
-func (r *Runner) withRetry(f func(ctx context.Context) (*client.Snap, error)) (*client.Snap, error) {
+func (s *System) withRetry(f func(ctx context.Context) (*client.Snap, error)) (*client.Snap, error) {
 	backoff := retry.NewExponential(1 * time.Second)
 	backoff = retry.WithMaxRetries(10, backoff)
 	ctx := context.Background()

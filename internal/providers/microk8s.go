@@ -12,7 +12,7 @@ import (
 
 	"github.com/jnsgruk/concierge/internal/config"
 	"github.com/jnsgruk/concierge/internal/packages"
-	"github.com/jnsgruk/concierge/internal/runner"
+	"github.com/jnsgruk/concierge/internal/system"
 	snapdClient "github.com/snapcore/snapd/client"
 )
 
@@ -21,7 +21,7 @@ import (
 const defaultMicroK8sChannel = "1.31-strict/stable"
 
 // NewMicroK8s constructs a new MicroK8s provider instance.
-func NewMicroK8s(r runner.CommandRunner, config *config.Config) *MicroK8s {
+func NewMicroK8s(r system.Worker, config *config.Config) *MicroK8s {
 	var channel string
 
 	if config.Overrides.MicroK8sChannel != "" {
@@ -36,8 +36,8 @@ func NewMicroK8s(r runner.CommandRunner, config *config.Config) *MicroK8s {
 		Channel:   channel,
 		Addons:    config.Providers.MicroK8s.Addons,
 		bootstrap: config.Providers.MicroK8s.Bootstrap,
-		runner:    r,
-		snaps: []*runner.Snap{
+		system:    r,
+		snaps: []*system.Snap{
 			{Name: "microk8s", Channel: channel},
 			{Name: "kubectl", Channel: "stable"},
 		},
@@ -50,8 +50,8 @@ type MicroK8s struct {
 	Addons  []string
 
 	bootstrap bool
-	runner    runner.CommandRunner
-	snaps     []*runner.Snap
+	system    system.Worker
+	snaps     []*system.Snap
 }
 
 // Prepare installs and configures MicroK8s such that it can work in testing environments.
@@ -111,14 +111,14 @@ func (m MicroK8s) Credentials() map[string]interface{} { return nil }
 
 // Remove uninstalls MicroK8s and kubectl.
 func (m *MicroK8s) Restore() error {
-	snapHandler := packages.NewSnapHandler(m.runner, m.snaps)
+	snapHandler := packages.NewSnapHandler(m.system, m.snaps)
 
 	err := snapHandler.Restore()
 	if err != nil {
 		return err
 	}
 
-	err = m.runner.RemoveAllHome(".kube")
+	err = m.system.RemoveAllHome(".kube")
 	if err != nil {
 		return fmt.Errorf("failed to remove '.kube' from user's home directory: %w", err)
 	}
@@ -130,7 +130,7 @@ func (m *MicroK8s) Restore() error {
 
 // install ensures that MicroK8s is installed.
 func (m *MicroK8s) install() error {
-	snapHandler := packages.NewSnapHandler(m.runner, m.snaps)
+	snapHandler := packages.NewSnapHandler(m.system, m.snaps)
 
 	err := snapHandler.Prepare()
 	if err != nil {
@@ -142,8 +142,8 @@ func (m *MicroK8s) install() error {
 
 // init ensures that MicroK8s is installed, minimally configured, and ready.
 func (m *MicroK8s) init() error {
-	cmd := runner.NewCommand("microk8s", []string{"status", "--wait-ready"})
-	_, err := m.runner.RunWithRetries(cmd, (5 * time.Minute))
+	cmd := system.NewCommand("microk8s", []string{"status", "--wait-ready"})
+	_, err := m.system.RunWithRetries(cmd, (5 * time.Minute))
 
 	return err
 }
@@ -158,8 +158,8 @@ func (m *MicroK8s) enableAddons() error {
 			enableArg = "metallb:10.64.140.43-10.64.140.49"
 		}
 
-		cmd := runner.NewCommand("microk8s", []string{"enable", enableArg})
-		_, err := m.runner.RunWithRetries(cmd, (5 * time.Minute))
+		cmd := system.NewCommand("microk8s", []string{"enable", enableArg})
+		_, err := m.system.RunWithRetries(cmd, (5 * time.Minute))
 		if err != nil {
 			return fmt.Errorf("failed to enable MicroK8s addon '%s': %w", addon, err)
 		}
@@ -171,11 +171,11 @@ func (m *MicroK8s) enableAddons() error {
 // enableNonRootUserControl ensures the current user is in the correct POSIX group
 // that allows them to interact with MicroK8s.
 func (m *MicroK8s) enableNonRootUserControl() error {
-	username := m.runner.User().Username
+	username := m.system.User().Username
 
-	cmd := runner.NewCommand("usermod", []string{"-a", "-G", m.GroupName(), username})
+	cmd := system.NewCommand("usermod", []string{"-a", "-G", m.GroupName(), username})
 
-	_, err := m.runner.Run(cmd)
+	_, err := m.system.Run(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to add user '%s' to group 'microk8s': %w", username, err)
 	}
@@ -186,13 +186,13 @@ func (m *MicroK8s) enableNonRootUserControl() error {
 // setupKubectl both installs the kubectl snap, and writes the relevant kubeconfig
 // file to the user's home directory such that kubectl works with MicroK8s.
 func (m *MicroK8s) setupKubectl() error {
-	cmd := runner.NewCommand("microk8s", []string{"config"})
-	result, err := m.runner.Run(cmd)
+	cmd := system.NewCommand("microk8s", []string{"config"})
+	result, err := m.system.Run(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to fetch MicroK8s configuration: %w", err)
 	}
 
-	return m.runner.WriteHomeDirFile(path.Join(".kube", "config"), result)
+	return m.system.WriteHomeDirFile(path.Join(".kube", "config"), result)
 }
 
 // Try to compute the "correct" default channel. Concerige prefers that the 'strict'

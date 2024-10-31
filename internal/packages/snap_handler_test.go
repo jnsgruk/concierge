@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/jnsgruk/concierge/internal/runner"
+	"github.com/jnsgruk/concierge/internal/system"
 )
 
 func TestSnapHandlerCommands(t *testing.T) {
@@ -33,10 +33,10 @@ func TestSnapHandlerCommands(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		r := runner.NewMockRunner()
+		r := system.NewMockSystem()
 		r.MockSnapStoreLookup("charmcraft", "latest/stable", true, true)
 
-		snaps := []*runner.Snap{
+		snaps := []*system.Snap{
 			r.NewSnap("charmcraft", "latest/stable"),
 			r.NewSnap("jq", "latest/stable"),
 			r.NewSnap("microk8s", "1.30-strict/stable"),

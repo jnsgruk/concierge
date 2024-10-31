@@ -8,14 +8,14 @@ import (
 
 	"github.com/jnsgruk/concierge/internal/config"
 	"github.com/jnsgruk/concierge/internal/packages"
-	"github.com/jnsgruk/concierge/internal/runner"
+	"github.com/jnsgruk/concierge/internal/system"
 )
 
 // Default channel from which K8s is installed.
 const defaultK8sChannel = "1.31/candidate"
 
 // NewK8s constructs a new K8s provider instance.
-func NewK8s(r runner.CommandRunner, config *config.Config) *K8s {
+func NewK8s(r system.Worker, config *config.Config) *K8s {
 	var channel string
 
 	if config.Overrides.K8sChannel != "" {
@@ -30,8 +30,8 @@ func NewK8s(r runner.CommandRunner, config *config.Config) *K8s {
 		Channel:   channel,
 		Features:  config.Providers.K8s.Features,
 		bootstrap: config.Providers.K8s.Bootstrap,
-		runner:    r,
-		snaps: []*runner.Snap{
+		system:    r,
+		snaps: []*system.Snap{
 			{Name: "k8s", Channel: channel},
 			{Name: "kubectl", Channel: "stable"},
 		},
@@ -44,8 +44,8 @@ type K8s struct {
 	Features map[string]map[string]string
 
 	bootstrap bool
-	runner    runner.CommandRunner
-	snaps     []*runner.Snap
+	system    system.Worker
+	snaps     []*system.Snap
 }
 
 // Prepare installs and configures K8s such that it can work in testing environments.
@@ -94,14 +94,14 @@ func (m K8s) Credentials() map[string]interface{} { return nil }
 
 // Remove uninstalls K8s and kubectl.
 func (k *K8s) Restore() error {
-	snapHandler := packages.NewSnapHandler(k.runner, k.snaps)
+	snapHandler := packages.NewSnapHandler(k.system, k.snaps)
 
 	err := snapHandler.Restore()
 	if err != nil {
 		return err
 	}
 
-	err = k.runner.RemoveAllHome(".kube")
+	err = k.system.RemoveAllHome(".kube")
 	if err != nil {
 		return fmt.Errorf("failed to remove '.kube' from user's home directory: %w", err)
 	}
@@ -113,7 +113,7 @@ func (k *K8s) Restore() error {
 
 // install ensures that K8s is installed.
 func (k *K8s) install() error {
-	snapHandler := packages.NewSnapHandler(k.runner, k.snaps)
+	snapHandler := packages.NewSnapHandler(k.system, k.snaps)
 
 	err := snapHandler.Prepare()
 	if err != nil {
@@ -125,14 +125,14 @@ func (k *K8s) install() error {
 
 // init ensures that K8s is installed, minimally configured, and ready.
 func (k *K8s) init() error {
-	cmd := runner.NewCommand("k8s", []string{"bootstrap"})
-	_, err := k.runner.RunWithRetries(cmd, (5 * time.Minute))
+	cmd := system.NewCommand("k8s", []string{"bootstrap"})
+	_, err := k.system.RunWithRetries(cmd, (5 * time.Minute))
 	if err != nil {
 		return err
 	}
 
-	cmd = runner.NewCommand("k8s", []string{"status", "--wait-ready"})
-	_, err = k.runner.RunWithRetries(cmd, (5 * time.Minute))
+	cmd = system.NewCommand("k8s", []string{"status", "--wait-ready"})
+	_, err = k.system.RunWithRetries(cmd, (5 * time.Minute))
 
 	return err
 }
@@ -143,15 +143,15 @@ func (k *K8s) configureFeatures() error {
 		for key, value := range conf {
 			featureConfig := fmt.Sprintf("%s.%s=%s", featureName, key, value)
 
-			cmd := runner.NewCommand("k8s", []string{"set", featureConfig})
-			_, err := k.runner.Run(cmd)
+			cmd := system.NewCommand("k8s", []string{"set", featureConfig})
+			_, err := k.system.Run(cmd)
 			if err != nil {
 				return fmt.Errorf("failed to set K8s feature config '%s': %w", featureConfig, err)
 			}
 		}
 
-		cmd := runner.NewCommand("k8s", []string{"enable", featureName})
-		_, err := k.runner.RunWithRetries(cmd, (5 * time.Minute))
+		cmd := system.NewCommand("k8s", []string{"enable", featureName})
+		_, err := k.system.RunWithRetries(cmd, (5 * time.Minute))
 		if err != nil {
 			return fmt.Errorf("failed to enable K8s addon '%s': %w", featureName, err)
 		}
@@ -163,11 +163,11 @@ func (k *K8s) configureFeatures() error {
 // setupKubectl both installs the kubectl snap, and writes the relevant kubeconfig
 // file to the user's home directory such that kubectl works with K8s.
 func (k *K8s) setupKubectl() error {
-	cmd := runner.NewCommand("k8s", []string{"kubectl", "config", "view", "--raw"})
-	result, err := k.runner.Run(cmd)
+	cmd := system.NewCommand("k8s", []string{"kubectl", "config", "view", "--raw"})
+	result, err := k.system.Run(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to fetch K8s configuration: %w", err)
 	}
 
-	return k.runner.WriteHomeDirFile(path.Join(".kube", "config"), result)
+	return k.system.WriteHomeDirFile(path.Join(".kube", "config"), result)
 }

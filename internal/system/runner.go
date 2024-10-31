@@ -1,4 +1,4 @@
-package runner
+package system
 
 import (
 	"context"
@@ -20,13 +20,13 @@ import (
 	client "github.com/snapcore/snapd/client"
 )
 
-// NewRunner constructs a new command runner.
-func NewRunner(trace bool) (*Runner, error) {
+// Newsystem constructs a new command system.
+func Newsystem(trace bool) (*System, error) {
 	realUser, err := realUser()
 	if err != nil {
 		return nil, fmt.Errorf("failed to lookup effective user details: %w", err)
 	}
-	return &Runner{
+	return &System{
 		trace:      trace,
 		user:       realUser,
 		cmdMutexes: map[string]*sync.Mutex{},
@@ -34,8 +34,8 @@ func NewRunner(trace bool) (*Runner, error) {
 	}, nil
 }
 
-// Runner represents a struct that can run commands.
-type Runner struct {
+// System represents a struct that can run commands.
+type System struct {
 	trace bool
 	user  *user.User
 	snapd client.Client
@@ -45,10 +45,10 @@ type Runner struct {
 
 // User returns a user struct containing details of the "real" user, which
 // may differ from the current user when concierge is executed with `sudo`.
-func (r *Runner) User() *user.User { return r.user }
+func (s *System) User() *user.User { return s.user }
 
 // Run executes the command, returning the stdout/stderr where appropriate.
-func (r *Runner) Run(c *Command) ([]byte, error) {
+func (s *System) Run(c *Command) ([]byte, error) {
 	logger := slog.Default()
 	if len(c.User) > 0 {
 		logger = slog.With("user", c.User)
@@ -68,7 +68,7 @@ func (r *Runner) Run(c *Command) ([]byte, error) {
 
 	output, err := cmd.CombinedOutput()
 
-	if r.trace {
+	if s.trace {
 		fmt.Print(generateTraceMessage(c.CommandString(), output))
 	}
 
@@ -77,13 +77,13 @@ func (r *Runner) Run(c *Command) ([]byte, error) {
 
 // RunWithRetries executes the command, retrying utilising an exponential backoff pattern,
 // which starts at 1 second. Retries will be attempted up to the specified maximum duration.
-func (r *Runner) RunWithRetries(c *Command, maxDuration time.Duration) ([]byte, error) {
+func (s *System) RunWithRetries(c *Command, maxDuration time.Duration) ([]byte, error) {
 	backoff := retry.NewExponential(1 * time.Second)
 	backoff = retry.WithMaxDuration(maxDuration, backoff)
 	ctx := context.Background()
 
 	return retry.DoValue(ctx, backoff, func(ctx context.Context) ([]byte, error) {
-		output, err := r.Run(c)
+		output, err := s.Run(c)
 		if err != nil {
 			return nil, retry.RetryableError(err)
 		}
@@ -94,9 +94,9 @@ func (r *Runner) RunWithRetries(c *Command, maxDuration time.Duration) ([]byte, 
 
 // RunMany takes a variadic number of Command's, and runs them in a loop, returning
 // and error if any command fails.
-func (r *Runner) RunMany(commands ...*Command) error {
+func (s *System) RunMany(commands ...*Command) error {
 	for _, cmd := range commands {
-		_, err := r.Run(cmd)
+		_, err := s.Run(cmd)
 		if err != nil {
 			return err
 		}
@@ -106,37 +106,37 @@ func (r *Runner) RunMany(commands ...*Command) error {
 
 // RunExclusive is a wrapper around Run that uses a mutex to ensure that only one of that
 // particular command can be run at a time.
-func (r *Runner) RunExclusive(c *Command) ([]byte, error) {
-	mtx, ok := r.cmdMutexes[c.Executable]
+func (s *System) RunExclusive(c *Command) ([]byte, error) {
+	mtx, ok := s.cmdMutexes[c.Executable]
 	if !ok {
 		mtx = &sync.Mutex{}
-		r.cmdMutexes[c.Executable] = mtx
+		s.cmdMutexes[c.Executable] = mtx
 	}
 
 	mtx.Lock()
 	defer mtx.Unlock()
 
-	output, err := r.Run(c)
+	output, err := s.Run(c)
 	return output, err
 }
 
 // WriteHomeDirFile takes a path relative to the real user's home dir, and writes the contents
 // specified to it.
-func (r *Runner) WriteHomeDirFile(filePath string, contents []byte) error {
+func (s *System) WriteHomeDirFile(filePath string, contents []byte) error {
 	dir := path.Dir(filePath)
 
-	err := r.MkHomeSubdirectory(dir)
+	err := s.MkHomeSubdirectory(dir)
 	if err != nil {
 		return err
 	}
 
-	filePath = path.Join(path.Join(r.user.HomeDir, filePath))
+	filePath = path.Join(path.Join(s.user.HomeDir, filePath))
 
 	if err := os.WriteFile(filePath, contents, 0644); err != nil {
 		return fmt.Errorf("failed to write file '%s': %w", filePath, err)
 	}
 
-	err = r.chownRecursively(filePath, r.user)
+	err = s.chownRecursively(filePath, s.user)
 	if err != nil {
 		return fmt.Errorf("failed to change ownership of file '%s': %w", filePath, err)
 	}
@@ -146,12 +146,12 @@ func (r *Runner) WriteHomeDirFile(filePath string, contents []byte) error {
 
 // MkHomeSubdirectory takes a relative folder path and creates it recursively in the real
 // user's home directory.
-func (r *Runner) MkHomeSubdirectory(subdirectory string) error {
+func (s *System) MkHomeSubdirectory(subdirectory string) error {
 	if path.IsAbs(subdirectory) {
 		return fmt.Errorf("only relative paths supported")
 	}
 
-	dir := path.Join(r.user.HomeDir, subdirectory)
+	dir := path.Join(s.user.HomeDir, subdirectory)
 
 	err := os.MkdirAll(dir, os.ModePerm)
 	if err != nil {
@@ -160,10 +160,10 @@ func (r *Runner) MkHomeSubdirectory(subdirectory string) error {
 
 	parts := strings.Split(subdirectory, "/")
 	if len(parts) > 0 {
-		dir = path.Join(r.user.HomeDir, parts[0])
+		dir = path.Join(s.user.HomeDir, parts[0])
 	}
 
-	err = r.chownRecursively(dir, r.user)
+	err = s.chownRecursively(dir, s.user)
 	if err != nil {
 		return fmt.Errorf("failed to change ownership of directory '%s': %w", dir, err)
 	}
@@ -173,13 +173,13 @@ func (r *Runner) MkHomeSubdirectory(subdirectory string) error {
 
 // ReadHomeDirFile takes a path relative to the real user's home dir, and reads the content
 // from the file
-func (r *Runner) ReadHomeDirFile(filePath string) ([]byte, error) {
-	homePath := path.Join(r.user.HomeDir, filePath)
-	return r.ReadFile(homePath)
+func (s *System) ReadHomeDirFile(filePath string) ([]byte, error) {
+	homePath := path.Join(s.user.HomeDir, filePath)
+	return s.ReadFile(homePath)
 }
 
 // ReadFile takes a path and reads the content from the specified file.
-func (r *Runner) ReadFile(filePath string) ([]byte, error) {
+func (s *System) ReadFile(filePath string) ([]byte, error) {
 	if _, err := os.Stat(filePath); errors.Is(err, os.ErrNotExist) {
 		return nil, fmt.Errorf("file '%s' does not exist: %w", filePath, err)
 	}
@@ -187,13 +187,13 @@ func (r *Runner) ReadFile(filePath string) ([]byte, error) {
 }
 
 // RemoveAllHome recursively removes a file path from the user's home directory.
-func (r *Runner) RemoveAllHome(filePath string) error {
-	return os.RemoveAll(path.Join(r.user.HomeDir, filePath))
+func (s *System) RemoveAllHome(filePath string) error {
+	return os.RemoveAll(path.Join(s.user.HomeDir, filePath))
 }
 
 // ChownRecursively recursively changes ownership of a given filepath to the uid/gid of
 // the specified user.
-func (r *Runner) chownRecursively(path string, user *user.User) error {
+func (s *System) chownRecursively(path string, user *user.User) error {
 	uid, err := strconv.Atoi(user.Uid)
 	if err != nil {
 		return fmt.Errorf("failed to convert user id string to int: %w", err)
