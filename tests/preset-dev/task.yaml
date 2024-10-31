@@ -8,7 +8,7 @@ execute: |
   "$SPREAD_PATH"/concierge --trace prepare -p dev
 
   # Check that relevant snaps are installed
-  for s in juju microk8s lxd kubectl jq yq charmcraft rockcraft snapcraft jhack; do
+  for s in juju k8s lxd kubectl jq yq charmcraft rockcraft snapcraft; do
     snap list "$s" | MATCH $s
   done
 
@@ -19,16 +19,15 @@ execute: |
   command -v pip | MATCH /usr/bin/pip
   python3 -m venv -h | head -n1 | grep -q -e "usage: venv"
 
-  # Ensure MicroK8s is configured as expected
-  sudo microk8s status --format yaml | yq '.addons[] | select(.name=="hostpath-storage") | .status'
-  sudo microk8s status --format yaml | yq '.addons[] | select(.name=="dns") | .status'
-  sudo microk8s status --format yaml | yq '.addons[] | select(.name=="metallb") | .status'
+  sudo k8s status --output-format yaml | yq '.dns.enabled' | MATCH true
+  sudo k8s status --output-format yaml | yq '.load-balancer.enabled' | MATCH true
+  sudo k8s status --output-format yaml | yq '.load-balancer.message' | MATCH "enabled, L2 mode"
+  sudo k8s get | yq '.load-balancer.cidrs' | MATCH "10.43.45.0/28"
 
-  # Ensure that kubectl was configured correctly
-  kubectl config current-context | MATCH "microk8s"
+  kubectl config current-context | MATCH "k8s"
 
   # Ensure the juju controllers are bootstrapped and have models
-  for i in concierge-microk8s:admin/testing concierge-lxd:admin/testing; do
+  for i in concierge-k8s:admin/testing concierge-lxd:admin/testing; do
     juju switch $i
     juju model-defaults | grep test-mode | tr -s " " | MATCH "test-mode false true"
     juju model-defaults | grep automatically-retry-hooks | tr -s " " | MATCH "automatically-retry-hooks true false"
