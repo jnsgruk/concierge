@@ -21,7 +21,7 @@ import (
 const defaultMicroK8sChannel = "1.31-strict/stable"
 
 // NewMicroK8s constructs a new MicroK8s provider instance.
-func NewMicroK8s(runner runner.CommandRunner, config *config.Config) *MicroK8s {
+func NewMicroK8s(r runner.CommandRunner, config *config.Config) *MicroK8s {
 	var channel string
 
 	if config.Overrides.MicroK8sChannel != "" {
@@ -36,10 +36,10 @@ func NewMicroK8s(runner runner.CommandRunner, config *config.Config) *MicroK8s {
 		Channel:   channel,
 		Addons:    config.Providers.MicroK8s.Addons,
 		bootstrap: config.Providers.MicroK8s.Bootstrap,
-		runner:    runner,
-		snaps: []packages.SnapPackage{
-			packages.NewSnap("microk8s", channel),
-			packages.NewSnap("kubectl", "stable"),
+		runner:    r,
+		snaps: []*runner.Snap{
+			{Name: "microk8s", Channel: channel},
+			{Name: "kubectl", Channel: "stable"},
 		},
 	}
 }
@@ -51,7 +51,7 @@ type MicroK8s struct {
 
 	bootstrap bool
 	runner    runner.CommandRunner
-	snaps     []packages.SnapPackage
+	snaps     []*runner.Snap
 }
 
 // Prepare installs and configures MicroK8s such that it can work in testing environments.

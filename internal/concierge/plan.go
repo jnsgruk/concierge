@@ -14,7 +14,7 @@ import (
 // Plan represents a set of packages and providers that are to be prepared/restored.
 type Plan struct {
 	Providers []providers.Provider
-	Snaps     []packages.SnapPackage
+	Snaps     []*runner.Snap
 	Debs      []*packages.Deb
 
 	config *config.Config
@@ -26,12 +26,12 @@ func NewPlan(config *config.Config, runner runner.CommandRunner) *Plan {
 	plan := &Plan{config: config, runner: runner}
 
 	for _, s := range append(config.Host.Snaps, config.Overrides.ExtraSnaps...) {
-		snap := packages.NewSnapFromString(s)
+		snap := runner.NewSnapFromString(s)
 
 		// Check if the channel has been overridden by a CLI argument/env var
-		channelOverride := getSnapChannelOverride(config, snap.Name())
+		channelOverride := getSnapChannelOverride(config, snap.Name)
 		if channelOverride != "" {
-			snap.SetChannel(channelOverride)
+			snap.Channel = channelOverride
 		}
 
 		plan.Snaps = append(plan.Snaps, snap)

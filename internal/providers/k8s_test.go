@@ -1,14 +1,12 @@
 package providers
 
 import (
-	"os"
 	"reflect"
 	"slices"
 	"testing"
 
 	"github.com/jnsgruk/concierge/internal/config"
-	"github.com/jnsgruk/concierge/internal/packages"
-	"github.com/jnsgruk/concierge/internal/runnertest"
+	"github.com/jnsgruk/concierge/internal/runner"
 )
 
 var defaultFeatureConfig = map[string]map[string]string{
@@ -34,7 +32,7 @@ func TestNewK8s(t *testing.T) {
 	overrides.Overrides.K8sChannel = "1.32/edge"
 	overrides.Providers.K8s.Features = defaultFeatureConfig
 
-	runner := runnertest.NewMockRunner()
+	runner := runner.NewMockRunner()
 
 	tests := []test{
 		{
@@ -55,8 +53,8 @@ func TestNewK8s(t *testing.T) {
 		ck8s := NewK8s(runner, tc.config)
 
 		// Check the constructed snaps are correct
-		if ck8s.snaps[0].Channel() != tc.expected.Channel {
-			t.Fatalf("expected: %v, got: %v", ck8s.snaps[0].Channel(), tc.expected.Channel)
+		if ck8s.snaps[0].Channel != tc.expected.Channel {
+			t.Fatalf("expected: %v, got: %v", ck8s.snaps[0].Channel, tc.expected.Channel)
 		}
 
 		// Remove the snaps so the rest of the object can be compared
@@ -68,17 +66,13 @@ func TestNewK8s(t *testing.T) {
 }
 
 func TestK8sPrepareCommands(t *testing.T) {
-	// Prevent the path of the test machine interfering with the test results.
-	path := os.Getenv("PATH")
-	defer os.Setenv("PATH", path)
-	os.Setenv("PATH", "")
-
 	config := &config.Config{}
 	config.Providers.K8s.Channel = ""
 	config.Providers.K8s.Features = defaultFeatureConfig
 
 	expectedCommands := []string{
-		"snap install k8s",
+		"snap install k8s --channel 1.31/candidate",
+		"snap install kubectl --channel stable",
 		"k8s bootstrap",
 		"k8s status --wait-ready",
 		"k8s set load-balancer.l2-mode=true",
@@ -92,14 +86,8 @@ func TestK8sPrepareCommands(t *testing.T) {
 		".kube/config": "",
 	}
 
-	runner := runnertest.NewMockRunner()
+	runner := runner.NewMockRunner()
 	ck8s := NewK8s(runner, config)
-
-	// Override the snaps with fake ones that don't call the snapd socket.
-	ck8s.snaps = []packages.SnapPackage{
-		runnertest.NewTestSnap("k8s", "", false, false),
-	}
-
 	ck8s.Prepare()
 
 	slices.Sort(expectedCommands)
@@ -115,16 +103,11 @@ func TestK8sPrepareCommands(t *testing.T) {
 }
 
 func TestK8sRestore(t *testing.T) {
-	// Prevent the path of the test machine interfering with the test results.
-	path := os.Getenv("PATH")
-	defer os.Setenv("PATH", path)
-	os.Setenv("PATH", "")
-
 	config := &config.Config{}
 	config.Providers.K8s.Channel = ""
 	config.Providers.K8s.Features = defaultFeatureConfig
 
-	runner := runnertest.NewMockRunner()
+	runner := runner.NewMockRunner()
 	ck8s := NewK8s(runner, config)
 	ck8s.Restore()
 

@@ -15,7 +15,7 @@ import (
 const defaultK8sChannel = "1.31/candidate"
 
 // NewK8s constructs a new K8s provider instance.
-func NewK8s(runner runner.CommandRunner, config *config.Config) *K8s {
+func NewK8s(r runner.CommandRunner, config *config.Config) *K8s {
 	var channel string
 
 	if config.Overrides.K8sChannel != "" {
@@ -30,10 +30,10 @@ func NewK8s(runner runner.CommandRunner, config *config.Config) *K8s {
 		Channel:   channel,
 		Features:  config.Providers.K8s.Features,
 		bootstrap: config.Providers.K8s.Bootstrap,
-		runner:    runner,
-		snaps: []packages.SnapPackage{
-			packages.NewSnap("k8s", channel),
-			packages.NewSnap("kubectl", "stable"),
+		runner:    r,
+		snaps: []*runner.Snap{
+			{Name: "k8s", Channel: channel},
+			{Name: "kubectl", Channel: "stable"},
 		},
 	}
 }
@@ -45,7 +45,7 @@ type K8s struct {
 
 	bootstrap bool
 	runner    runner.CommandRunner
-	snaps     []packages.SnapPackage
+	snaps     []*runner.Snap
 }
 
 // Prepare installs and configures K8s such that it can work in testing environments.

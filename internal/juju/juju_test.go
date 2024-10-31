@@ -2,14 +2,12 @@ package juju
 
 import (
 	"fmt"
-	"os"
 	"reflect"
 	"testing"
 
 	"github.com/jnsgruk/concierge/internal/config"
-	"github.com/jnsgruk/concierge/internal/packages"
 	"github.com/jnsgruk/concierge/internal/providers"
-	"github.com/jnsgruk/concierge/internal/runnertest"
+	"github.com/jnsgruk/concierge/internal/runner"
 )
 
 var fakeGoogleCreds = []byte(`auth-type: oauth2
@@ -22,12 +20,12 @@ private-key: |
 project-id: concierge
 `)
 
-func setupHandlerWithPreset(preset string) (*runnertest.MockRunner, *JujuHandler, error) {
+func setupHandlerWithPreset(preset string) (*runner.MockRunner, *JujuHandler, error) {
 	var err error
 	var cfg *config.Config
 	var provider providers.Provider
 
-	runner := runnertest.NewMockRunner()
+	runner := runner.NewMockRunner()
 	runner.MockCommandReturn("sudo -u test-user juju show-controller concierge-lxd", []byte("not found"), fmt.Errorf("Test error"))
 	runner.MockCommandReturn("sudo -u test-user juju show-controller concierge-microk8s", []byte("not found"), fmt.Errorf("Test error"))
 	runner.MockCommandReturn("sudo -u test-user juju show-controller concierge-k8s", []byte("not found"), fmt.Errorf("Test error"))
@@ -47,17 +45,17 @@ func setupHandlerWithPreset(preset string) (*runnertest.MockRunner, *JujuHandler
 	}
 
 	handler := NewJujuHandler(cfg, runner, []providers.Provider{provider})
-	handler.snaps = []packages.SnapPackage{runnertest.NewTestSnap("juju", "", false, false)}
+
 	return runner, handler, nil
 }
 
-func setupHandlerWithGoogleProvider() (*runnertest.MockRunner, *JujuHandler, error) {
+func setupHandlerWithGoogleProvider() (*runner.MockRunner, *JujuHandler, error) {
 	cfg := &config.Config{}
 	cfg.Providers.Google.Enable = true
 	cfg.Providers.Google.Bootstrap = true
 	cfg.Providers.Google.CredentialsFile = "google.yaml"
 
-	runner := runnertest.NewMockRunner()
+	runner := runner.NewMockRunner()
 	runner.MockFile("google.yaml", fakeGoogleCreds)
 
 	provider := providers.NewProvider("google", runner, cfg)
@@ -68,15 +66,9 @@ func setupHandlerWithGoogleProvider() (*runnertest.MockRunner, *JujuHandler, err
 	}
 
 	handler := NewJujuHandler(cfg, runner, []providers.Provider{provider})
-	handler.snaps = []packages.SnapPackage{runnertest.NewTestSnap("juju", "", false, false)}
 	return runner, handler, nil
 }
 func TestJujuHandlerCommandsPresets(t *testing.T) {
-	// Prevent the path of the test machine interfering with the test results.
-	path := os.Getenv("PATH")
-	os.Setenv("PATH", "")
-	defer os.Setenv("PATH", path)
-
 	type test struct {
 		preset           string
 		expectedCommands []string
@@ -171,11 +163,6 @@ func TestJujuHandlerWithCredentialedProvider(t *testing.T) {
 }
 
 func TestJujuRestoreNoKillController(t *testing.T) {
-	// Prevent the path of the test machine interfering with the test results.
-	path := os.Getenv("PATH")
-	os.Setenv("PATH", "")
-	defer os.Setenv("PATH", path)
-
 	runner, handler, err := setupHandlerWithPreset("machine")
 	if err != nil {
 		t.Fatal(err.Error())
@@ -196,11 +183,6 @@ func TestJujuRestoreNoKillController(t *testing.T) {
 }
 
 func TestJujuRestoreKillController(t *testing.T) {
-	// Prevent the path of the test machine interfering with the test results.
-	path := os.Getenv("PATH")
-	os.Setenv("PATH", "")
-	defer os.Setenv("PATH", path)
-
 	runner, handler, err := setupHandlerWithGoogleProvider()
 	if err != nil {
 		t.Fatal(err.Error())

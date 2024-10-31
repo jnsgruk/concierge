@@ -7,6 +7,16 @@ import (
 	"github.com/jnsgruk/concierge/internal/runner"
 )
 
+// NewDeb constructs a new Deb instance.
+func NewDeb(name string) *Deb {
+	return &Deb{Name: name}
+}
+
+// Deb is a simple representation of a package installed from the Ubuntu archive.
+type Deb struct {
+	Name string
+}
+
 // NewDebHandler constructs a new instance of a DebHandler.
 func NewDebHandler(runner runner.CommandRunner, debs []*Deb) *DebHandler {
 	return &DebHandler{

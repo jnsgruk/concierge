@@ -1,13 +1,11 @@
 package providers
 
 import (
-	"os"
 	"reflect"
 	"testing"
 
 	"github.com/jnsgruk/concierge/internal/config"
-	"github.com/jnsgruk/concierge/internal/packages"
-	"github.com/jnsgruk/concierge/internal/runnertest"
+	"github.com/jnsgruk/concierge/internal/runner"
 )
 
 func TestNewLXD(t *testing.T) {
@@ -24,7 +22,7 @@ func TestNewLXD(t *testing.T) {
 	overrides := &config.Config{}
 	overrides.Overrides.LXDChannel = "5.20/stable"
 
-	runner := runnertest.NewMockRunner()
+	runner := runner.NewMockRunner()
 
 	tests := []test{
 		{config: noOverrides, expected: &LXD{Channel: "", runner: runner}},
@@ -36,8 +34,8 @@ func TestNewLXD(t *testing.T) {
 		lxd := NewLXD(runner, tc.config)
 
 		// Check the constructed snaps are correct
-		if lxd.snaps[0].Channel() != tc.expected.Channel {
-			t.Fatalf("expected: %v, got: %v", lxd.snaps[0].Channel(), tc.expected.Channel)
+		if lxd.snaps[0].Channel != tc.expected.Channel {
+			t.Fatalf("expected: %v, got: %v", lxd.snaps[0].Channel, tc.expected.Channel)
 		}
 
 		// Remove the snaps so the rest of the object can be compared
@@ -49,15 +47,10 @@ func TestNewLXD(t *testing.T) {
 }
 
 func TestLXDPrepareCommands(t *testing.T) {
-	// Prevent the path of the test machine interfering with the test results.
-	path := os.Getenv("PATH")
-	defer os.Setenv("PATH", path)
-	os.Setenv("PATH", "")
-
 	config := &config.Config{}
 
 	expected := []string{
-		"snap install lxd --channel latest/stable",
+		"snap install lxd",
 		"lxd waitready",
 		"lxd init --minimal",
 		"lxc network set lxdbr0 ipv6.address none",
@@ -67,14 +60,8 @@ func TestLXDPrepareCommands(t *testing.T) {
 		"iptables -P FORWARD ACCEPT",
 	}
 
-	runner := runnertest.NewMockRunner()
+	runner := runner.NewMockRunner()
 	lxd := NewLXD(runner, config)
-
-	// Override the snaps with fake ones that don't call the snapd socket.
-	lxd.snaps = []packages.SnapPackage{
-		runnertest.NewTestSnap("lxd", "latest/stable", false, false),
-	}
-
 	lxd.Prepare()
 
 	if !reflect.DeepEqual(expected, runner.ExecutedCommands) {
@@ -83,14 +70,9 @@ func TestLXDPrepareCommands(t *testing.T) {
 }
 
 func TestLXDRestore(t *testing.T) {
-	// Prevent the path of the test machine interfering with the test results.
-	path := os.Getenv("PATH")
-	defer os.Setenv("PATH", path)
-	os.Setenv("PATH", "")
-
 	config := &config.Config{}
 
-	runner := runnertest.NewMockRunner()
+	runner := runner.NewMockRunner()
 	lxd := NewLXD(runner, config)
 	lxd.Restore()
 

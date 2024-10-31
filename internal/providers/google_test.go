@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/jnsgruk/concierge/internal/config"
-	"github.com/jnsgruk/concierge/internal/runnertest"
+	"github.com/jnsgruk/concierge/internal/runner"
 	"gopkg.in/yaml.v3"
 )
 
@@ -23,7 +23,7 @@ func TestNewGoogle(t *testing.T) {
 	overrides := &config.Config{}
 	overrides.Overrides.GoogleCredentialFile = "/home/ubuntu/alternate-credentials.yaml"
 
-	runner := runnertest.NewMockRunner()
+	runner := runner.NewMockRunner()
 
 	tests := []test{
 		{
@@ -63,7 +63,7 @@ func TestGooglePrepareCommands(t *testing.T) {
 	config := &config.Config{}
 	config.Providers.Google.CredentialsFile = "/home/ubuntu/credentials.yaml"
 
-	runner := runnertest.NewMockRunner()
+	runner := runner.NewMockRunner()
 	uk8s := NewGoogle(runner, config)
 	uk8s.Prepare()
 
@@ -80,7 +80,7 @@ func TestGoogleReadCredentials(t *testing.T) {
 	config := &config.Config{}
 	config.Providers.Google.CredentialsFile = "credentials.yaml"
 
-	runner := runnertest.NewMockRunner()
+	runner := runner.NewMockRunner()
 
 	creds := []byte(`auth-type: oauth2
 client-email: juju-gce-1-sa@concierge.iam.gserviceaccount.com

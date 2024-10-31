@@ -1,13 +1,11 @@
 package providers
 
 import (
-	"os"
 	"reflect"
 	"testing"
 
 	"github.com/jnsgruk/concierge/internal/config"
-	"github.com/jnsgruk/concierge/internal/packages"
-	"github.com/jnsgruk/concierge/internal/runnertest"
+	"github.com/jnsgruk/concierge/internal/runner"
 )
 
 var defaultAddons []string = []string{
@@ -32,7 +30,7 @@ func TestNewMicroK8s(t *testing.T) {
 	overrides.Overrides.MicroK8sChannel = "1.30/edge"
 	overrides.Providers.MicroK8s.Addons = defaultAddons
 
-	runner := runnertest.NewMockRunner()
+	runner := runner.NewMockRunner()
 
 	tests := []test{
 		{
@@ -53,8 +51,8 @@ func TestNewMicroK8s(t *testing.T) {
 		uk8s := NewMicroK8s(runner, tc.config)
 
 		// Check the constructed snaps are correct
-		if uk8s.snaps[0].Channel() != tc.expected.Channel {
-			t.Fatalf("expected: %v, got: %v", uk8s.snaps[0].Channel(), tc.expected.Channel)
+		if uk8s.snaps[0].Channel != tc.expected.Channel {
+			t.Fatalf("expected: %v, got: %v", uk8s.snaps[0].Channel, tc.expected.Channel)
 		}
 
 		// Remove the snaps so the rest of the object can be compared
@@ -79,7 +77,7 @@ func TestMicroK8sGroupName(t *testing.T) {
 	for _, tc := range tests {
 		config := &config.Config{}
 		config.Providers.MicroK8s.Channel = tc.channel
-		uk8s := NewMicroK8s(runnertest.NewMockRunner(), config)
+		uk8s := NewMicroK8s(runner.NewMockRunner(), config)
 
 		if !reflect.DeepEqual(tc.expected, uk8s.GroupName()) {
 			t.Fatalf("expected: %v, got: %v", tc.expected, uk8s.GroupName())
@@ -88,17 +86,13 @@ func TestMicroK8sGroupName(t *testing.T) {
 }
 
 func TestMicroK8sPrepareCommands(t *testing.T) {
-	// Prevent the path of the test machine interfering with the test results.
-	path := os.Getenv("PATH")
-	defer os.Setenv("PATH", path)
-	os.Setenv("PATH", "")
-
 	config := &config.Config{}
 	config.Providers.MicroK8s.Channel = "1.31-strict/stable"
 	config.Providers.MicroK8s.Addons = defaultAddons
 
 	expectedCommands := []string{
 		"snap install microk8s --channel 1.31-strict/stable",
+		"snap install kubectl --channel stable",
 		"microk8s status --wait-ready",
 		"microk8s enable hostpath-storage",
 		"microk8s enable dns",
@@ -112,14 +106,8 @@ func TestMicroK8sPrepareCommands(t *testing.T) {
 		".kube/config": "",
 	}
 
-	runner := runnertest.NewMockRunner()
+	runner := runner.NewMockRunner()
 	uk8s := NewMicroK8s(runner, config)
-
-	// Override the snaps with fake ones that don't call the snapd socket.
-	uk8s.snaps = []packages.SnapPackage{
-		runnertest.NewTestSnap("microk8s", "1.31-strict/stable", false, false),
-	}
-
 	uk8s.Prepare()
 
 	if !reflect.DeepEqual(expectedCommands, runner.ExecutedCommands) {
@@ -132,16 +120,11 @@ func TestMicroK8sPrepareCommands(t *testing.T) {
 }
 
 func TestMicroK8sRestore(t *testing.T) {
-	// Prevent the path of the test machine interfering with the test results.
-	path := os.Getenv("PATH")
-	defer os.Setenv("PATH", path)
-	os.Setenv("PATH", "")
-
 	config := &config.Config{}
 	config.Providers.MicroK8s.Channel = "1.31-strict/stable"
 	config.Providers.MicroK8s.Addons = defaultAddons
 
-	runner := runnertest.NewMockRunner()
+	runner := runner.NewMockRunner()
 	uk8s := NewMicroK8s(runner, config)
 	uk8s.Restore()
 

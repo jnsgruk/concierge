@@ -17,7 +17,7 @@ import (
 )
 
 // NewJujuHandler constructs a new JujuHandler instance.
-func NewJujuHandler(config *config.Config, runner runner.CommandRunner, providers []providers.Provider) *JujuHandler {
+func NewJujuHandler(config *config.Config, r runner.CommandRunner, providers []providers.Provider) *JujuHandler {
 	var channel string
 	if config.Overrides.JujuChannel != "" {
 		channel = config.Overrides.JujuChannel
@@ -30,8 +30,8 @@ func NewJujuHandler(config *config.Config, runner runner.CommandRunner, provider
 		bootstrapConstraints: config.Juju.BootstrapConstraints,
 		modelDefaults:        config.Juju.ModelDefaults,
 		providers:            providers,
-		runner:               runner,
-		snaps:                []packages.SnapPackage{packages.NewSnap("juju", channel)},
+		runner:               r,
+		snaps:                []*runner.Snap{{Name: "juju", Channel: channel}},
 	}
 }
 
@@ -42,7 +42,7 @@ type JujuHandler struct {
 	modelDefaults        map[string]string
 	providers            []providers.Provider
 	runner               runner.CommandRunner
-	snaps                []packages.SnapPackage
+	snaps                []*runner.Snap
 }
 
 // Prepare bootstraps Juju on the configured providers.

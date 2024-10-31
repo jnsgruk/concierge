@@ -1,11 +1,10 @@
 package packages
 
 import (
-	"os"
 	"reflect"
 	"testing"
 
-	"github.com/jnsgruk/concierge/internal/runnertest"
+	"github.com/jnsgruk/concierge/internal/runner"
 )
 
 func TestDebHandlerCommands(t *testing.T) {
@@ -13,11 +12,6 @@ func TestDebHandlerCommands(t *testing.T) {
 		testFunc func(d *DebHandler)
 		expected []string
 	}
-
-	// Prevent the path of the test machine interfering with the test results.
-	path := os.Getenv("PATH")
-	defer os.Setenv("PATH", path)
-	os.Setenv("PATH", "")
 
 	tests := []test{
 		{
@@ -44,7 +38,7 @@ func TestDebHandlerCommands(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		runner := runnertest.NewMockRunner()
+		runner := runner.NewMockRunner()
 		tc.testFunc(NewDebHandler(runner, debs))
 
 		if !reflect.DeepEqual(tc.expected, runner.ExecutedCommands) {

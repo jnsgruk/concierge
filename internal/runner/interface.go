@@ -33,4 +33,12 @@ type CommandRunner interface {
 	ReadHomeDirFile(filepath string) ([]byte, error)
 	// ReadFile reads a file with an arbitrary path from the system.
 	ReadFile(filePath string) ([]byte, error)
+	// SnapInfo returns information about a given snap, looking up details in the snap
+	// store using the snapd client API where necessary.
+	SnapInfo(snap string, channel string) (*SnapInfo, error)
+	// NewSnap returns a new Snap package.
+	NewSnap(snap, channel string) *Snap
+	// NewSnapFromString returns a constructed snap instance, where the snap is
+	// specified in shorthand form, i.e. `charmcraft/latest/edge`.
+	NewSnapFromString(snap string) *Snap
 }

@@ -1,11 +1,10 @@
 package packages
 
 import (
-	"os"
 	"reflect"
 	"testing"
 
-	"github.com/jnsgruk/concierge/internal/runnertest"
+	"github.com/jnsgruk/concierge/internal/runner"
 )
 
 func TestSnapHandlerCommands(t *testing.T) {
@@ -13,12 +12,6 @@ func TestSnapHandlerCommands(t *testing.T) {
 		testFunc func(s *SnapHandler)
 		expected []string
 	}
-
-	// Prevent the path of the test machine interfering with the test results.
-	path := os.Getenv("PATH")
-	defer os.Setenv("PATH", path)
-	os.Setenv("PATH", "")
-	// Reset the PATH variable
 
 	tests := []test{
 		{
@@ -39,18 +32,20 @@ func TestSnapHandlerCommands(t *testing.T) {
 		},
 	}
 
-	snaps := []SnapPackage{
-		runnertest.NewTestSnap("charmcraft", "latest/stable", true, true),
-		runnertest.NewTestSnap("jq", "latest/stable", false, false),
-		runnertest.NewTestSnap("microk8s", "1.30-strict/stable", false, false),
-	}
-
 	for _, tc := range tests {
-		runner := runnertest.NewMockRunner()
-		tc.testFunc(NewSnapHandler(runner, snaps))
+		r := runner.NewMockRunner()
+		r.MockSnapStoreLookup("charmcraft", "latest/stable", true, true)
 
-		if !reflect.DeepEqual(tc.expected, runner.ExecutedCommands) {
-			t.Fatalf("expected: %v, got: %v", tc.expected, runner.ExecutedCommands)
+		snaps := []*runner.Snap{
+			r.NewSnap("charmcraft", "latest/stable"),
+			r.NewSnap("jq", "latest/stable"),
+			r.NewSnap("microk8s", "1.30-strict/stable"),
+		}
+
+		tc.testFunc(NewSnapHandler(r, snaps))
+
+		if !reflect.DeepEqual(tc.expected, r.ExecutedCommands) {
+			t.Fatalf("expected: %v, got: %v", tc.expected, r.ExecutedCommands)
 		}
 	}
 

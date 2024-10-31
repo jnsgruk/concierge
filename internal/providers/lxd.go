@@ -10,7 +10,7 @@ import (
 )
 
 // NewLXD constructs a new LXD provider instance.
-func NewLXD(runner runner.CommandRunner, config *config.Config) *LXD {
+func NewLXD(r runner.CommandRunner, config *config.Config) *LXD {
 	var channel string
 	if config.Overrides.LXDChannel != "" {
 		channel = config.Overrides.LXDChannel
@@ -20,9 +20,9 @@ func NewLXD(runner runner.CommandRunner, config *config.Config) *LXD {
 
 	return &LXD{
 		Channel:   channel,
-		runner:    runner,
+		runner:    r,
 		bootstrap: config.Providers.LXD.Bootstrap,
-		snaps:     []packages.SnapPackage{packages.NewSnap("lxd", channel)},
+		snaps:     []*runner.Snap{{Name: "lxd", Channel: channel}},
 	}
 }
 
@@ -32,7 +32,7 @@ type LXD struct {
 
 	bootstrap bool
 	runner    runner.CommandRunner
-	snaps     []packages.SnapPackage
+	snaps     []*runner.Snap
 }
 
 // Prepare installs and configures LXD such that it can work in testing environments.

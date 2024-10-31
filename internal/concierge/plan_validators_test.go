@@ -4,11 +4,11 @@ import (
 	"testing"
 
 	"github.com/jnsgruk/concierge/internal/config"
-	"github.com/jnsgruk/concierge/internal/runnertest"
+	"github.com/jnsgruk/concierge/internal/runner"
 )
 
 func TestSingleK8sValidator(t *testing.T) {
-	runner := runnertest.NewMockRunner()
+	runner := runner.NewMockRunner()
 
 	twoK8s := &config.Config{}
 	twoK8s.Providers.K8s.Enable = true
