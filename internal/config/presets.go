@@ -35,7 +35,6 @@ var defaultPackages []string = []string{
 // defaultSnaps is the set of snaps installed for all presets.
 var defaultSnaps map[string]SnapConfig = map[string]SnapConfig{
 	"charmcraft": {Channel: "latest/stable"},
-	"jhack":      {Channel: "latest/stable", Connections: []string{"jhack:dot-local-share-juju"}},
 	"jq":         {Channel: "latest/stable"},
 	"yq":         {Channel: "latest/stable"},
 }
@@ -134,6 +133,7 @@ var devPreset *Config = &Config{
 		Snaps: MergeMaps(defaultSnaps, map[string]SnapConfig{
 			"rockcraft": {Channel: "latest/stable"},
 			"snapcraft": {Channel: "latest/stable"},
+			"jhack":     {Channel: "latest/stable", Connections: []string{"jhack:dot-local-share-juju"}},
 		}),
 	},
 }

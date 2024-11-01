@@ -8,12 +8,9 @@ execute: |
   "$SPREAD_PATH"/concierge --trace prepare -p machine
 
   # Check that relevant snaps are installed
-  for s in juju lxd jq yq charmcraft snapcraft jhack; do
+  for s in juju lxd jq yq charmcraft snapcraft; do
     snap list "$s" | MATCH $s
   done
-
-  # Check jhack got it's interface connected
-  snap connections jhack | MATCH "personal-files  jhack:dot-local-share-juju  :personal-files  manual"
 
   # Check the relevant debs are installed
   command -v pip | MATCH /usr/bin/pip
