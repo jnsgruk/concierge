@@ -20,8 +20,8 @@ import (
 	client "github.com/snapcore/snapd/client"
 )
 
-// Newsystem constructs a new command system.
-func Newsystem(trace bool) (*System, error) {
+// NewSystem constructs a new command system.
+func NewSystem(trace bool) (*System, error) {
 	realUser, err := realUser()
 	if err != nil {
 		return nil, fmt.Errorf("failed to lookup effective user details: %w", err)
