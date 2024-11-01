@@ -33,10 +33,10 @@ var defaultPackages []string = []string{
 }
 
 // defaultSnaps is the set of snaps installed for all presets.
-var defaultSnaps []string = []string{
-	"charmcraft/latest/stable",
-	"jq/latest/stable",
-	"yq/latest/stable",
+var defaultSnaps map[string]SnapConfig = map[string]SnapConfig{
+	"charmcraft": {Channel: "latest/stable"},
+	"jq":         {Channel: "latest/stable"},
+	"yq":         {Channel: "latest/stable"},
 }
 
 // defaultLXDConfig is the standard LXD config used throughout presets.
@@ -80,7 +80,9 @@ var machinePreset *Config = &Config{
 	},
 	Host: hostConfig{
 		Packages: defaultPackages,
-		Snaps:    append(defaultSnaps, "snapcraft/latest/stable"),
+		Snaps: MergeMaps(defaultSnaps, map[string]SnapConfig{
+			"snapcraft": {Channel: "latest/stable"},
+		}),
 	},
 }
 
@@ -95,7 +97,9 @@ var k8sPreset *Config = &Config{
 	},
 	Host: hostConfig{
 		Packages: defaultPackages,
-		Snaps:    append(defaultSnaps, "rockcraft/latest/stable"),
+		Snaps: MergeMaps(defaultSnaps, map[string]SnapConfig{
+			"rockcraft": {Channel: "latest/stable"},
+		}),
 	},
 }
 
@@ -110,7 +114,9 @@ var microk8sPreset *Config = &Config{
 	},
 	Host: hostConfig{
 		Packages: defaultPackages,
-		Snaps:    append(defaultSnaps, "rockcraft/latest/stable"),
+		Snaps: MergeMaps(defaultSnaps, map[string]SnapConfig{
+			"rockcraft": {Channel: "latest/stable"},
+		}),
 	},
 }
 
@@ -124,6 +130,9 @@ var devPreset *Config = &Config{
 	},
 	Host: hostConfig{
 		Packages: defaultPackages,
-		Snaps:    append(defaultSnaps, "rockcraft/latest/stable", "snapcraft/latest/stable"),
+		Snaps: MergeMaps(defaultSnaps, map[string]SnapConfig{
+			"rockcraft": {Channel: "latest/stable"},
+			"snapcraft": {Channel: "latest/stable"},
+		}),
 	},
 }

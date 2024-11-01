@@ -19,13 +19,14 @@ type SnapInfo struct {
 
 // Snap represents a given snap on a given channel.
 type Snap struct {
-	Name    string
-	Channel string
+	Name        string
+	Channel     string
+	Connections []string
 }
 
 // NewSnap returns a new Snap package.
-func NewSnap(name, channel string) *Snap {
-	return &Snap{Name: name, Channel: channel}
+func NewSnap(name, channel string, connections []string) *Snap {
+	return &Snap{Name: name, Channel: channel, Connections: connections}
 }
 
 // NewSnapFromString returns a constructed snap instance, where the snap is
@@ -33,9 +34,9 @@ func NewSnap(name, channel string) *Snap {
 func NewSnapFromString(snap string) *Snap {
 	before, after, found := strings.Cut(snap, "/")
 	if found {
-		return NewSnap(before, after)
+		return NewSnap(before, after, []string{})
 	} else {
-		return NewSnap(before, "")
+		return NewSnap(before, "", []string{})
 	}
 }
 

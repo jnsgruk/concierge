@@ -217,9 +217,15 @@ host:
   # (Optional) List of apt packages to install on the host.
   packages:
     - <package name>
-  # (Optional) List of snap packages to install on the host.
+  # (Optional) Map of snap packages to install on the host.
   snaps:
-    - <snap name/channel>
+    <snap name>:
+      # (Required) Channel from which to install the snap.
+      channel: <channel>
+      # (Optional) List of snap connections to form.
+      connections:
+        - <snap>:<plug-interface>
+        - <snap>:<plug-interface> <snap>:<plug-interface>
 ```
 
 #### Providing Credentials Files
@@ -326,9 +332,14 @@ host:
     - python3-pip
     - python3-venv
   snaps:
-    - charmcraft/latest/stable
-    - rockcraft/latest/stable
-    - snapcraft/latest/stable
+    astral-uv:
+      channel: latest/stable
+    charmcraft:
+      channel: latest/stable
+    jhack:
+      channel: latest/edge
+      connections:
+        - jhack:dot-local-share-juju
 ```
 
 ## Development / HACKING

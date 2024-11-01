@@ -68,12 +68,19 @@ type k8sConfig struct {
 	BootstrapConstraints map[string]string            `mapstructure:"bootstrap-constraints"`
 }
 
+// SnapConfig represents the configuration for a specific snap to be installed.
+type SnapConfig struct {
+	// Channel is the channel from which to install the snap.
+	Channel string `mapstructure:"channel"`
+	// Connections is a list of snap connections to form.
+	Connections []string `mapstructure:"connections"`
+}
+
 // hostConfig is a top-level field containing addition configuration for the host being
 // configured.
 type hostConfig struct {
-	// List of apt packages to be installed from the archive
+	// Packages is a of apt packages to be installed from the archive
 	Packages []string `mapstructure:"packages"`
-	// List of snaps to be installed. Can be just a name, or an expanded
-	// form which specifies channel, such as 'charmcraft/latest/edge'
-	Snaps []string `mapstructure:"snaps"`
+	// Snaps is a map of snaps to be installed.
+	Snaps map[string]SnapConfig `mapstructure:"snaps"`
 }
