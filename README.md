@@ -135,10 +135,10 @@ working directory.
 juju:
   # (Optional): Channel from which to install Juju.
   channel: <channel>
-  # (Optional): A map of model-defaults to set when bootstrapping Juju controllers.
+  # (Optional): A map of model-defaults to set when bootstrapping *all* Juju controllers.
   model-defaults:
     <model-default>: <value>
-  # (Optional): A map of bootstrap-constraints to set when bootstrapping Juju controllers.
+  # (Optional): A map of bootstrap-constraints to set when bootstrapping *all* Juju controllers.
   bootstrap-constraints:
     <bootstrap-constraint>: <value>
 
@@ -150,6 +150,12 @@ providers:
     enable: true | false
     # (Optional) Whether or not to bootstrap a controller onto MicroK8s.
     bootstrap: true | false
+    # (Optional): A map of model-defaults to set when bootstrapping the Juju controller.
+    model-defaults:
+      <model-default>: <value>
+    # (Optional): A map of bootstrap-constraints to set when bootstrapping the Juju controller.
+    bootstrap-constraints:
+      <bootstrap-constraint>: <value>
     # (Optional): Channel from which to install MicroK8s.
     channel: <channel>
     # (Optional): MicroK8s addons to enable.
@@ -164,6 +170,12 @@ providers:
     bootstrap: true | false
     # (Optional): Channel from which to install K8s.
     channel: <channel>
+    # (Optional): A map of model-defaults to set when bootstrapping the Juju controller.
+    model-defaults:
+      <model-default>: <value>
+    # (Optional): A map of bootstrap-constraints to set when bootstrapping the Juju controller.
+    bootstrap-constraints:
+      <bootstrap-constraint>: <value>
     # (Optional): K8s features to configure.
     features:
       <feature>:
@@ -177,6 +189,12 @@ providers:
     bootstrap: true | false
     # (Optional): Channel from which to install LXD.
     channel: <channel>
+    # (Optional): A map of model-defaults to set when bootstrapping the Juju controller.
+    model-defaults:
+      <model-default>: <value>
+    # (Optional): A map of bootstrap-constraints to set when bootstrapping the Juju controller.
+    bootstrap-constraints:
+      <bootstrap-constraint>: <value>
 
   # (Optional) Google provider configuration.
   google:
@@ -187,6 +205,12 @@ providers:
     # (Optional): File containing credentials for Google cloud.
     # See below note on the credentials file format.
     credentials-file: <path>
+    # (Optional): A map of model-defaults to set when bootstrapping the Juju controller.
+    model-defaults:
+      <model-default>: <value>
+    # (Optional): A map of bootstrap-constraints to set when bootstrapping the Juju controller.
+    bootstrap-constraints:
+      <bootstrap-constraint>: <value>
 
 # (Optional) Additional host configuration.
 host:
@@ -262,7 +286,7 @@ juju:
     test-mode: "true"
     automatically-retry-hooks: "false"
   bootstrap-constraints:
-    root-size: 2G
+    arch: amd64
 
 providers:
   microk8s:
@@ -284,6 +308,8 @@ providers:
       load-balancer:
         l2-mode: true
         cidrs: 10.64.140.43/32
+    bootstrap-constraints:
+      root-disk: 2G
 
   lxd:
     enable: true

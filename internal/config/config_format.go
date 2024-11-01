@@ -32,32 +32,40 @@ type providerConfig struct {
 
 // lxdConfig represents how LXD should be configured on the host.
 type lxdConfig struct {
-	Enable    bool   `mapstructure:"enable"`
-	Bootstrap bool   `mapstructure:"bootstrap"`
-	Channel   string `mapstructure:"channel"`
+	Enable               bool              `mapstructure:"enable"`
+	Bootstrap            bool              `mapstructure:"bootstrap"`
+	Channel              string            `mapstructure:"channel"`
+	ModelDefaults        map[string]string `mapstructure:"model-defaults"`
+	BootstrapConstraints map[string]string `mapstructure:"bootstrap-constraints"`
 }
 
 // googleConfig represents how Juju should be configured for Google Cloud use.
 type googleConfig struct {
-	Enable          bool   `mapstructure:"enable"`
-	Bootstrap       bool   `mapstructure:"bootstrap"`
-	CredentialsFile string `mapstructure:"credentials-file"`
+	Enable               bool              `mapstructure:"enable"`
+	Bootstrap            bool              `mapstructure:"bootstrap"`
+	CredentialsFile      string            `mapstructure:"credentials-file"`
+	ModelDefaults        map[string]string `mapstructure:"model-defaults"`
+	BootstrapConstraints map[string]string `mapstructure:"bootstrap-constraints"`
 }
 
 // microk8sConfig represents how MicroK8s should be configured on the host.
 type microk8sConfig struct {
-	Enable    bool     `mapstructure:"enable"`
-	Bootstrap bool     `mapstructure:"bootstrap"`
-	Channel   string   `mapstructure:"channel"`
-	Addons    []string `mapstructure:"addons"`
+	Enable               bool              `mapstructure:"enable"`
+	Bootstrap            bool              `mapstructure:"bootstrap"`
+	Channel              string            `mapstructure:"channel"`
+	Addons               []string          `mapstructure:"addons"`
+	ModelDefaults        map[string]string `mapstructure:"model-defaults"`
+	BootstrapConstraints map[string]string `mapstructure:"bootstrap-constraints"`
 }
 
 // k8sConfig represents how MicroK8s should be configured on the host.
 type k8sConfig struct {
-	Enable    bool                         `mapstructure:"enable"`
-	Bootstrap bool                         `mapstructure:"bootstrap"`
-	Channel   string                       `mapstructure:"channel"`
-	Features  map[string]map[string]string `mapstructure:"features"`
+	Enable               bool                         `mapstructure:"enable"`
+	Bootstrap            bool                         `mapstructure:"bootstrap"`
+	Channel              string                       `mapstructure:"channel"`
+	Features             map[string]map[string]string `mapstructure:"features"`
+	ModelDefaults        map[string]string            `mapstructure:"model-defaults"`
+	BootstrapConstraints map[string]string            `mapstructure:"bootstrap-constraints"`
 }
 
 // hostConfig is a top-level field containing addition configuration for the host being

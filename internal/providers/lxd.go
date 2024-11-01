@@ -19,10 +19,12 @@ func NewLXD(r system.Worker, config *config.Config) *LXD {
 	}
 
 	return &LXD{
-		Channel:   channel,
-		system:    r,
-		bootstrap: config.Providers.LXD.Bootstrap,
-		snaps:     []*system.Snap{{Name: "lxd", Channel: channel}},
+		Channel:              channel,
+		system:               r,
+		bootstrap:            config.Providers.LXD.Bootstrap,
+		modelDefaults:        config.Providers.LXD.ModelDefaults,
+		bootstrapConstraints: config.Providers.LXD.BootstrapConstraints,
+		snaps:                []*system.Snap{{Name: "lxd", Channel: channel}},
 	}
 }
 
@@ -30,9 +32,12 @@ func NewLXD(r system.Worker, config *config.Config) *LXD {
 type LXD struct {
 	Channel string
 
-	bootstrap bool
-	system    system.Worker
-	snaps     []*system.Snap
+	bootstrap            bool
+	modelDefaults        map[string]string
+	bootstrapConstraints map[string]string
+
+	system system.Worker
+	snaps  []*system.Snap
 }
 
 // Prepare installs and configures LXD such that it can work in testing environments.
@@ -77,6 +82,12 @@ func (l *LXD) GroupName() string { return "lxd" }
 
 // Credentials reports the section of Juju's credentials.yaml for the provider
 func (l *LXD) Credentials() map[string]interface{} { return nil }
+
+// ModelDefaults reports the Juju model-defaults specific to the provider.
+func (l *LXD) ModelDefaults() map[string]string { return l.modelDefaults }
+
+// BootstrapConstraints reports the Juju bootstrap-constraints specific to the provider.
+func (l *LXD) BootstrapConstraints() map[string]string { return l.bootstrapConstraints }
 
 // Remove uninstalls LXD.
 func (l *LXD) Restore() error {

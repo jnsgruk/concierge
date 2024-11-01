@@ -27,10 +27,12 @@ func NewK8s(r system.Worker, config *config.Config) *K8s {
 	}
 
 	return &K8s{
-		Channel:   channel,
-		Features:  config.Providers.K8s.Features,
-		bootstrap: config.Providers.K8s.Bootstrap,
-		system:    r,
+		Channel:              channel,
+		Features:             config.Providers.K8s.Features,
+		bootstrap:            config.Providers.K8s.Bootstrap,
+		modelDefaults:        config.Providers.K8s.ModelDefaults,
+		bootstrapConstraints: config.Providers.K8s.BootstrapConstraints,
+		system:               r,
 		snaps: []*system.Snap{
 			{Name: "k8s", Channel: channel},
 			{Name: "kubectl", Channel: "stable"},
@@ -43,9 +45,12 @@ type K8s struct {
 	Channel  string
 	Features map[string]map[string]string
 
-	bootstrap bool
-	system    system.Worker
-	snaps     []*system.Snap
+	bootstrap            bool
+	modelDefaults        map[string]string
+	bootstrapConstraints map[string]string
+
+	system system.Worker
+	snaps  []*system.Snap
 }
 
 // Prepare installs and configures K8s such that it can work in testing environments.
@@ -91,6 +96,12 @@ func (k *K8s) GroupName() string { return "" }
 
 // Credentials reports the section of Juju's credentials.yaml for the provider
 func (m K8s) Credentials() map[string]interface{} { return nil }
+
+// ModelDefaults reports the Juju model-defaults specific to the provider.
+func (m *K8s) ModelDefaults() map[string]string { return m.modelDefaults }
+
+// BootstrapConstraints reports the Juju bootstrap-constraints specific to the provider.
+func (m *K8s) BootstrapConstraints() map[string]string { return m.bootstrapConstraints }
 
 // Remove uninstalls K8s and kubectl.
 func (k *K8s) Restore() error {

@@ -59,8 +59,9 @@ var defaultMicroK8sConfig microk8sConfig = microk8sConfig{
 
 // defaultK8sConfig is the standard K8s config used throughout presets.
 var defaultK8sConfig k8sConfig = k8sConfig{
-	Enable:    true,
-	Bootstrap: true,
+	Enable:               true,
+	Bootstrap:            true,
+	BootstrapConstraints: map[string]string{"root-disk": "2G"},
 	Features: map[string]map[string]string{
 		"load-balancer": {
 			"l2-mode": "true",
@@ -86,15 +87,7 @@ var machinePreset *Config = &Config{
 // k8sPreset is a configuration preset designed to be used when testing
 // k8s charms.
 var k8sPreset *Config = &Config{
-	Juju: jujuConfig{
-		ModelDefaults: map[string]string{
-			"test-mode":                 "true",
-			"automatically-retry-hooks": "false",
-		},
-		BootstrapConstraints: map[string]string{
-			"root-disk": "2G",
-		},
-	},
+	Juju: defaultJujuConfig,
 	Providers: providerConfig{
 		// Enable LXD so charms can be built, but don't bootstrap onto it.
 		LXD: lxdConfig{Enable: true},

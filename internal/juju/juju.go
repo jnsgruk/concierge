@@ -199,14 +199,18 @@ func (j *JujuHandler) bootstrapProvider(provider providers.Provider) error {
 		"--verbose",
 	}
 
+	// Combine the global and provider-local model-defaults and bootstrap-constraints.
+	modelDefaults := mergeMaps(j.modelDefaults, provider.ModelDefaults())
+	bootstrapConstraints := mergeMaps(j.bootstrapConstraints, provider.BootstrapConstraints())
+
 	// Iterate over the model-defaults and append them to the bootstrapArgs
-	for _, k := range sortedKeys(j.modelDefaults) {
-		bootstrapArgs = append(bootstrapArgs, "--model-default", fmt.Sprintf("%s=%s", k, j.modelDefaults[k]))
+	for _, k := range sortedKeys(modelDefaults) {
+		bootstrapArgs = append(bootstrapArgs, "--model-default", fmt.Sprintf("%s=%s", k, modelDefaults[k]))
 	}
 
 	// Iterate over the bootstrap-constraints and append them to the bootstrapArgs
-	for _, k := range sortedKeys(j.bootstrapConstraints) {
-		bootstrapArgs = append(bootstrapArgs, "--bootstrap-constraints", fmt.Sprintf("%s=%s", k, j.bootstrapConstraints[k]))
+	for _, k := range sortedKeys(bootstrapConstraints) {
+		bootstrapArgs = append(bootstrapArgs, "--bootstrap-constraints", fmt.Sprintf("%s=%s", k, bootstrapConstraints[k]))
 	}
 
 	user := j.system.User().Username
@@ -278,4 +282,17 @@ func sortedKeys(m map[string]string) []string {
 	}
 	slices.Sort(keys)
 	return keys
+}
+
+// mergeMaps takes two maps and returns a combined map, where KV pairs in the second map arg
+// take precedence over the first.
+func mergeMaps(m1 map[string]string, m2 map[string]string) map[string]string {
+	combinedMap := map[string]string{}
+	for k := range m1 {
+		combinedMap[k] = m1[k]
+	}
+	for k := range m2 {
+		combinedMap[k] = m2[k]
+	}
+	return combinedMap
 }

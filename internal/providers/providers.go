@@ -29,8 +29,12 @@ type Provider interface {
 	// GroupName reports the name of a POSIX user group that can be used
 	// to allow non-root users to interact with the provider (where applicable).
 	GroupName() string
-	// Credentials reports the section of Juju's credentials.yaml for the provider
+	// Credentials reports the section of Juju's credentials.yaml for the provider.
 	Credentials() map[string]interface{}
+	// ModelDefaults reports the Juju model-defaults specific to the provider.
+	ModelDefaults() map[string]string
+	// BootstrapConstraints reports the Juju bootstrap-constraints specific to the provider.
+	BootstrapConstraints() map[string]string
 }
 
 // NewProvider returns a newly constructed provider based on a stringified name of the provider.

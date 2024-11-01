@@ -33,10 +33,12 @@ func NewMicroK8s(r system.Worker, config *config.Config) *MicroK8s {
 	}
 
 	return &MicroK8s{
-		Channel:   channel,
-		Addons:    config.Providers.MicroK8s.Addons,
-		bootstrap: config.Providers.MicroK8s.Bootstrap,
-		system:    r,
+		Channel:              channel,
+		Addons:               config.Providers.MicroK8s.Addons,
+		bootstrap:            config.Providers.MicroK8s.Bootstrap,
+		modelDefaults:        config.Providers.Google.ModelDefaults,
+		bootstrapConstraints: config.Providers.Google.BootstrapConstraints,
+		system:               r,
 		snaps: []*system.Snap{
 			{Name: "microk8s", Channel: channel},
 			{Name: "kubectl", Channel: "stable"},
@@ -49,9 +51,12 @@ type MicroK8s struct {
 	Channel string
 	Addons  []string
 
-	bootstrap bool
-	system    system.Worker
-	snaps     []*system.Snap
+	bootstrap            bool
+	modelDefaults        map[string]string
+	bootstrapConstraints map[string]string
+
+	system system.Worker
+	snaps  []*system.Snap
 }
 
 // Prepare installs and configures MicroK8s such that it can work in testing environments.
@@ -108,6 +113,12 @@ func (m *MicroK8s) GroupName() string {
 
 // Credentials reports the section of Juju's credentials.yaml for the provider
 func (m MicroK8s) Credentials() map[string]interface{} { return nil }
+
+// ModelDefaults reports the Juju model-defaults specific to the provider.
+func (m *MicroK8s) ModelDefaults() map[string]string { return m.modelDefaults }
+
+// BootstrapConstraints reports the Juju bootstrap-constraints specific to the provider.
+func (m *MicroK8s) BootstrapConstraints() map[string]string { return m.bootstrapConstraints }
 
 // Remove uninstalls MicroK8s and kubectl.
 func (m *MicroK8s) Restore() error {

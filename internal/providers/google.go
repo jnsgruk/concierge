@@ -17,19 +17,23 @@ func NewGoogle(system system.Worker, config *config.Config) *Google {
 	}
 
 	return &Google{
-		system:          system,
-		bootstrap:       config.Providers.Google.Bootstrap,
-		credentialsFile: credentialsFile,
-		credentials:     map[string]interface{}{},
+		system:               system,
+		bootstrap:            config.Providers.Google.Bootstrap,
+		credentialsFile:      credentialsFile,
+		credentials:          map[string]interface{}{},
+		modelDefaults:        config.Providers.Google.ModelDefaults,
+		bootstrapConstraints: config.Providers.Google.BootstrapConstraints,
 	}
 }
 
 // Google represents a Google cloud to bootstrap.
 type Google struct {
-	bootstrap       bool
-	system          system.Worker
-	credentialsFile string
-	credentials     map[string]interface{}
+	bootstrap            bool
+	system               system.Worker
+	credentialsFile      string
+	credentials          map[string]interface{}
+	modelDefaults        map[string]string
+	bootstrapConstraints map[string]string
 }
 
 // Prepare installs and configures Google such that it can work in testing environments.
@@ -66,10 +70,14 @@ func (l *Google) CloudName() string { return "google" }
 // GroupName reports the name of the POSIX group with permissions over the Google socket.
 func (l *Google) GroupName() string { return "" }
 
-// Credentials reports the section of Juju's credentials.yaml for the provider
-func (l *Google) Credentials() map[string]interface{} {
-	return l.credentials
-}
+// Credentials reports the section of Juju's credentials.yaml for the provider.
+func (l *Google) Credentials() map[string]interface{} { return l.credentials }
+
+// ModelDefaults reports the Juju model-defaults specific to the provider.
+func (l *Google) ModelDefaults() map[string]string { return l.modelDefaults }
+
+// BootstrapConstraints reports the Juju bootstrap-constraints specific to the provider.
+func (l *Google) BootstrapConstraints() map[string]string { return l.bootstrapConstraints }
 
 // Remove Google provider.
 func (l *Google) Restore() error {
