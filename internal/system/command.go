@@ -1,7 +1,6 @@
 package system
 
 import (
-	"bytes"
 	"log/slog"
 	"os/exec"
 
@@ -15,12 +14,6 @@ type Command struct {
 	Args       []string
 	User       string
 	Group      string
-}
-
-// CommandResult carries the output from an executed command.
-type CommandResult struct {
-	Stdout bytes.Buffer
-	Stderr bytes.Buffer
 }
 
 // NewCommand constructs a command to be run as the current user/group.
