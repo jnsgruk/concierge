@@ -16,7 +16,7 @@ execute: |
 
   # Check that relevant snaps are removed
   list="$(snap list)"
-  for s in juju microk8s lxd kubectl jq yq charmcraft rockcraft snapcraft; do
+  for s in juju microk8s lxd kubectl jq yq charmcraft rockcraft snapcraft jhack; do
     echo "$list" | NOMATCH "$s"
   done
 

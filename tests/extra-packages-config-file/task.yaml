@@ -13,6 +13,10 @@ execute: |
   list="$(snap list)"
   echo $list | MATCH charmcraft
   echo $list | MATCH jq
+  echo $list | MATCH jhack
+
+  # Check jhack got it's interface connected
+  snap connections jhack | MATCH "personal-files  jhack:dot-local-share-juju  :personal-files  manual"
 
 restore: |
   if [[ -z "${CI:-}" ]]; then
