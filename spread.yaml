@@ -15,16 +15,21 @@ backends:
       CPU="${CPU:-4}"
       MEM="${MEM:-8}"
 
+      cloud_config="$(mktemp)"
+      sed "s|SPREAD_PASSWORD|$SPREAD_PASSWORD|g" tests/cloud-config.yaml > "$cloud_config"
+
       lxc launch --vm \
         "ubuntu:${BASE}" \
         "${VM_NAME}" \
-        -c user.user-data="$(cat tests/cloud-config.yaml)" \
+        -c user.user-data="$(cat "$cloud_config")" \
         -c limits.cpu="${CPU}" \
         -c limits.memory="${MEM}GiB" \
         -d root,size="${DISK}GiB"
 
       # Wait for the spread user
       while ! lxc exec "${VM_NAME}" -- id -u spread &>/dev/null; do sleep 0.5; done
+
+      rm "$cloud_config"
 
       # Set the instance address for spread
       ADDRESS "$(lxc ls -f csv | grep "${VM_NAME}" | cut -d"," -f3 | cut -d" " -f1)"
@@ -35,7 +40,6 @@ backends:
     systems:
       - ubuntu-24.04:
           username: spread
-          password: spread
           workers: 1
 
   github-ci:
@@ -49,7 +53,7 @@ backends:
       sudo systemctl restart ssh
 
       sudo useradd spread -s /bin/bash -m || true
-      echo "spread:spread" | sudo chpasswd || true
+      echo "spread:$SPREAD_PASSWORD" | sudo chpasswd || true
       echo 'spread ALL=(ALL) NOPASSWD:ALL ' | sudo tee /etc/sudoers.d/99-spread-user || true
 
       ADDRESS "127.0.0.1"
@@ -60,7 +64,6 @@ backends:
     systems:
       - ubuntu-24.04:
           username: spread
-          password: spread
           workers: 1
 
 suites:
