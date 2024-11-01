@@ -6,5 +6,5 @@ providers:
 
 host:
   snaps:
-    - yq
-    - jq
+    yq:
+    jq:

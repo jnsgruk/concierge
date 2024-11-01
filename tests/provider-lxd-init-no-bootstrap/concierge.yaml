@@ -6,4 +6,5 @@ providers:
 
 host:
   snaps:
-    - charmcraft/latest/stable
+    charmcraft:
+      channel: latest/stable

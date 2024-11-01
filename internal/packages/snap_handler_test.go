@@ -20,6 +20,8 @@ func TestSnapHandlerCommands(t *testing.T) {
 				"snap refresh charmcraft --channel latest/stable --classic",
 				"snap install jq --channel latest/stable",
 				"snap install microk8s --channel 1.30-strict/stable",
+				"snap install jhack --channel latest/edge",
+				"snap connect jhack:dot-local-share-juju",
 			},
 		},
 		{
@@ -28,6 +30,7 @@ func TestSnapHandlerCommands(t *testing.T) {
 				"snap remove charmcraft --purge",
 				"snap remove jq --purge",
 				"snap remove microk8s --purge",
+				"snap remove jhack --purge",
 			},
 		},
 	}
@@ -37,9 +40,10 @@ func TestSnapHandlerCommands(t *testing.T) {
 		r.MockSnapStoreLookup("charmcraft", "latest/stable", true, true)
 
 		snaps := []*system.Snap{
-			system.NewSnap("charmcraft", "latest/stable"),
-			system.NewSnap("jq", "latest/stable"),
-			system.NewSnap("microk8s", "1.30-strict/stable"),
+			system.NewSnap("charmcraft", "latest/stable", []string{}),
+			system.NewSnap("jq", "latest/stable", []string{}),
+			system.NewSnapFromString("microk8s/1.30-strict/stable"),
+			system.NewSnap("jhack", "latest/edge", []string{"jhack:dot-local-share-juju"}),
 		}
 
 		tc.testFunc(NewSnapHandler(r, snaps))

@@ -3,6 +3,7 @@ package packages
 import (
 	"fmt"
 	"log/slog"
+	"strings"
 
 	"github.com/jnsgruk/concierge/internal/system"
 )
@@ -27,6 +28,11 @@ func (h *SnapHandler) Prepare() error {
 		err := h.installSnap(snap)
 		if err != nil {
 			return fmt.Errorf("failed to install snap: %w", err)
+		}
+
+		err = h.connectSnap(snap)
+		if err != nil {
+			return fmt.Errorf("failed to create snap connections: %w", err)
 		}
 	}
 	return nil
@@ -82,7 +88,26 @@ func (h *SnapHandler) installSnap(s *system.Snap) error {
 	return nil
 }
 
-// Remove uninstalls the specified snap from the system, optionally purging its data.
+// connectSnap ensures that the specified snap interfaces are connected.
+func (h *SnapHandler) connectSnap(s *system.Snap) error {
+	for _, connection := range s.Connections {
+		parts := strings.Split(connection, " ")
+		if len(parts) > 2 {
+			return fmt.Errorf("too many arguments in snap connection string '%s'", connection)
+		}
+
+		args := append([]string{"connect"}, parts...)
+
+		cmd := system.NewCommand("snap", args)
+		_, err := h.system.RunExclusive(cmd)
+		if err != nil {
+			return fmt.Errorf("command failed: %w", err)
+		}
+	}
+	return nil
+}
+
+// removeSnap uninstalls the specified snap from the system, optionally purging its data.
 func (h *SnapHandler) removeSnap(s *system.Snap) error {
 	slog.Debug("Removing snap", "snap", s.Name)
 	args := []string{"remove", s.Name, "--purge"}

@@ -22,27 +22,36 @@ type Plan struct {
 }
 
 // NewPlan constructs a new plan consisting of snaps/debs/providers & juju.
-func NewPlan(config *config.Config, worker system.Worker) *Plan {
-	plan := &Plan{config: config, system: worker}
+func NewPlan(cfg *config.Config, worker system.Worker) *Plan {
+	plan := &Plan{config: cfg, system: worker}
 
-	for _, s := range append(config.Host.Snaps, config.Overrides.ExtraSnaps...) {
-		snap := system.NewSnapFromString(s)
-
+	for name, snapConfig := range cfg.Host.Snaps {
+		snap := system.NewSnap(name, snapConfig.Channel, snapConfig.Connections)
 		// Check if the channel has been overridden by a CLI argument/env var
-		channelOverride := getSnapChannelOverride(config, snap.Name)
+		channelOverride := getSnapChannelOverride(cfg, snap.Name)
 		if channelOverride != "" {
 			snap.Channel = channelOverride
 		}
-
 		plan.Snaps = append(plan.Snaps, snap)
 	}
 
-	for _, p := range append(config.Host.Packages, config.Overrides.ExtraDebs...) {
+	// Add the ExtraSnaps specified in the overrides
+	for _, s := range cfg.Overrides.ExtraSnaps {
+		snap := system.NewSnapFromString(s)
+		// Check if the channel has been overridden by a CLI argument/env var
+		channelOverride := getSnapChannelOverride(cfg, snap.Name)
+		if channelOverride != "" {
+			snap.Channel = channelOverride
+		}
+		plan.Snaps = append(plan.Snaps, snap)
+	}
+
+	for _, p := range append(cfg.Host.Packages, cfg.Overrides.ExtraDebs...) {
 		plan.Debs = append(plan.Debs, packages.NewDeb(p))
 	}
 
 	for _, providerName := range providers.SupportedProviders {
-		if p := providers.NewProvider(providerName, worker, config); p != nil {
+		if p := providers.NewProvider(providerName, worker, cfg); p != nil {
 			plan.Providers = append(plan.Providers, p)
 		}
 	}
