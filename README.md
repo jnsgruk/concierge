@@ -156,6 +156,19 @@ providers:
     addons:
       - <addon>[:<params>]
 
+  # (Optional) K8s provider configuration.
+  k8s:
+    # (Optional) Enable or disable K8s.
+    enable: true | false
+    # (Optional) Whether or not to bootstrap a controller onto K8s.
+    bootstrap: true | false
+    # (Optional): Channel from which to install K8s.
+    channel: <channel>
+    # (Optional): K8s features to configure.
+    features:
+      <feature>:
+        <key>: <value>
+
   # (Optional) LXD provider configuration.
   lxd:
     # (Optional) Enable or disable LXD.
@@ -261,6 +274,16 @@ providers:
       - dns
       - rbac
       - metallb:10.64.140.43-10.64.140.49
+
+  k8s:
+    enable: true
+    bootstrap: true
+    channel: 1.31/candidate
+    features:
+      local-storage:
+      load-balancer:
+        l2-mode: true
+        cidrs: 10.64.140.43/32
 
   lxd:
     enable: true
