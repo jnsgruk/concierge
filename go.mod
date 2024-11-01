@@ -4,7 +4,7 @@ go 1.22.7
 
 require (
 	github.com/canonical/x-go v0.0.0-20230522092633-7947a7587f5b
-	github.com/fatih/color v1.17.0
+	github.com/fatih/color v1.18.0
 	github.com/sethvargo/go-retry v0.3.0
 	github.com/snapcore/snapd v0.0.0-20240925090801-8bae53ad3248
 	github.com/spf13/cobra v1.8.1
@@ -43,7 +43,7 @@ require (
 	golang.org/x/crypto v0.21.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
 	golang.org/x/net v0.23.0 // indirect
-	golang.org/x/sys v0.18.0 // indirect
+	golang.org/x/sys v0.25.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
