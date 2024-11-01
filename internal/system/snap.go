@@ -24,18 +24,18 @@ type Snap struct {
 }
 
 // NewSnap returns a new Snap package.
-func (s *System) NewSnap(name, channel string) *Snap {
+func NewSnap(name, channel string) *Snap {
 	return &Snap{Name: name, Channel: channel}
 }
 
 // NewSnapFromString returns a constructed snap instance, where the snap is
 // specified in shorthand form, i.e. `charmcraft/latest/edge`.
-func (s *System) NewSnapFromString(snap string) *Snap {
+func NewSnapFromString(snap string) *Snap {
 	before, after, found := strings.Cut(snap, "/")
 	if found {
-		return s.NewSnap(before, after)
+		return NewSnap(before, after)
 	} else {
-		return s.NewSnap(before, "")
+		return NewSnap(before, "")
 	}
 }
 

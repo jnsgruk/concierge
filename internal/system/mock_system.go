@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/user"
-	"strings"
 	"time"
 )
 
@@ -159,20 +158,4 @@ func (r *MockSystem) SnapInfo(snap string, channel string) (*SnapInfo, error) {
 		Installed: false,
 		Classic:   false,
 	}, nil
-}
-
-// NewSnap returns a Snap object with details populated from the snap store and local system.
-func (r *MockSystem) NewSnap(name, channel string) *Snap {
-	return &Snap{Name: name, Channel: channel}
-}
-
-// NewSnapFromString returns a constructed snap instance, where the snap is
-// specified in shorthand form, i.e. `charmcraft/latest/edge`.
-func (r *MockSystem) NewSnapFromString(snap string) *Snap {
-	before, after, found := strings.Cut(snap, "/")
-	if found {
-		return r.NewSnap(before, after)
-	} else {
-		return r.NewSnap(before, "")
-	}
 }

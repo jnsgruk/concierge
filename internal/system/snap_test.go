@@ -17,8 +17,7 @@ func TestNewSnapFromString(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		system := NewMockSystem()
-		snap := system.NewSnapFromString(tc.input)
+		snap := NewSnapFromString(tc.input)
 
 		if tc.expected.Channel != snap.Channel {
 			t.Fatalf("incorrect snap channel; expected: %v, got: %v", tc.expected, snap)

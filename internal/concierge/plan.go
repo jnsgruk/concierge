@@ -22,8 +22,8 @@ type Plan struct {
 }
 
 // NewPlan constructs a new plan consisting of snaps/debs/providers & juju.
-func NewPlan(config *config.Config, system system.Worker) *Plan {
-	plan := &Plan{config: config, system: system}
+func NewPlan(config *config.Config, worker system.Worker) *Plan {
+	plan := &Plan{config: config, system: worker}
 
 	for _, s := range append(config.Host.Snaps, config.Overrides.ExtraSnaps...) {
 		snap := system.NewSnapFromString(s)
@@ -42,7 +42,7 @@ func NewPlan(config *config.Config, system system.Worker) *Plan {
 	}
 
 	for _, providerName := range providers.SupportedProviders {
-		if p := providers.NewProvider(providerName, system, config); p != nil {
+		if p := providers.NewProvider(providerName, worker, config); p != nil {
 			plan.Providers = append(plan.Providers, p)
 		}
 	}

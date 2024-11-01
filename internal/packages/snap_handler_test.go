@@ -37,9 +37,9 @@ func TestSnapHandlerCommands(t *testing.T) {
 		r.MockSnapStoreLookup("charmcraft", "latest/stable", true, true)
 
 		snaps := []*system.Snap{
-			r.NewSnap("charmcraft", "latest/stable"),
-			r.NewSnap("jq", "latest/stable"),
-			r.NewSnap("microk8s", "1.30-strict/stable"),
+			system.NewSnap("charmcraft", "latest/stable"),
+			system.NewSnap("jq", "latest/stable"),
+			system.NewSnap("microk8s", "1.30-strict/stable"),
 		}
 
 		tc.testFunc(NewSnapHandler(r, snaps))
