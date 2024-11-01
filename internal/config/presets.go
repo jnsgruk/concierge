@@ -35,6 +35,7 @@ var defaultPackages []string = []string{
 // defaultSnaps is the set of snaps installed for all presets.
 var defaultSnaps map[string]SnapConfig = map[string]SnapConfig{
 	"charmcraft": {Channel: "latest/stable"},
+	"jhack":      {Channel: "latest/stable", Connections: []string{"jhack:dot-local-share-juju"}},
 	"jq":         {Channel: "latest/stable"},
 	"yq":         {Channel: "latest/stable"},
 }

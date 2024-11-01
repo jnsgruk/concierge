@@ -6,3 +6,8 @@ host:
     charmcraft:
       channel: latest/stable
     jq:
+      channel: latest/stable
+    jhack:
+      channel: latest/edge
+      connections:
+        - jhack:dot-local-share-juju
