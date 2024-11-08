@@ -308,7 +308,7 @@ providers:
   k8s:
     enable: true
     bootstrap: true
-    channel: 1.31/candidate
+    channel: 1.31-classic/candidate
     features:
       local-storage:
       load-balancer:
