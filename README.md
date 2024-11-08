@@ -110,12 +110,12 @@ sudo concierge prepare -p dev
 
 `concierge` comes with a number of presets that are likely to serve most charm development needs:
 
-| Preset Name | Included                                                         |
-| :---------: | :--------------------------------------------------------------- |
-|    `dev`    | `juju`, `microk8s`, `lxd` `snapcraft`, `charmcraft`, `rockcraft` |
-|    `k8s`    | `juju`, `k8s`, `lxd`, `rockcraft`, `charmcraft`                  |
-| `microk8s`  | `juju`, `microk8s`, `lxd`, `rockcraft`, `charmcraft`             |
-|  `machine`  | `juju`, `lxd`, `snapcraft`, `charmcraft`                         |
+| Preset Name | Included                                                                  |
+| :---------: | :------------------------------------------------------------------------ |
+|    `dev`    | `juju`, `microk8s`, `lxd` `snapcraft`, `charmcraft`, `rockcraft`, `jhack` |
+|    `k8s`    | `juju`, `k8s`, `lxd`, `rockcraft`, `charmcraft`                           |
+| `microk8s`  | `juju`, `microk8s`, `lxd`, `rockcraft`, `charmcraft`                      |
+|  `machine`  | `juju`, `lxd`, `snapcraft`, `charmcraft`                                  |
 
 Note that in the `microk8s`/`k8s` presets, while `lxd` is installed, it is not bootstrapped. It is
 installed and initialised with enough config such that `charmcraft` can use it as a build backend.
