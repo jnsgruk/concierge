@@ -9,7 +9,7 @@ execute: |
 
   list="$(snap list k8s)"
   echo $list | MATCH k8s
-  echo $list | MATCH 1.31/candidate
+  echo $list | MATCH 1.31-classic/candidate
 
   list="$(snap list)"
   echo $list | MATCH juju

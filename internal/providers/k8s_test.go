@@ -37,7 +37,7 @@ func TestNewK8s(t *testing.T) {
 	tests := []test{
 		{
 			config:   noOverrides,
-			expected: &K8s{Channel: "1.31/candidate", system: system},
+			expected: &K8s{Channel: "1.31-classic/candidate", system: system},
 		},
 		{
 			config:   channelInConfig,
@@ -71,7 +71,7 @@ func TestK8sPrepareCommands(t *testing.T) {
 	config.Providers.K8s.Features = defaultFeatureConfig
 
 	expectedCommands := []string{
-		"snap install k8s --channel 1.31/candidate",
+		"snap install k8s --channel 1.31-classic/candidate",
 		"snap install kubectl --channel stable",
 		"k8s bootstrap",
 		"k8s status --wait-ready",
