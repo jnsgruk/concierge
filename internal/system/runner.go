@@ -68,7 +68,7 @@ func (s *System) Run(c *Command) ([]byte, error) {
 
 	output, err := cmd.CombinedOutput()
 
-	if s.trace {
+	if s.trace || err != nil {
 		fmt.Print(generateTraceMessage(c.CommandString(), output))
 	}
 
