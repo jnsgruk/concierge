@@ -1,6 +1,7 @@
 package providers
 
 import (
+	"fmt"
 	"reflect"
 	"slices"
 	"testing"
@@ -76,6 +77,46 @@ func TestK8sPrepareCommands(t *testing.T) {
 		"k8s bootstrap",
 		"k8s status --wait-ready",
 		"k8s set load-balancer.l2-mode=true",
+		"k8s status",
+		"k8s set load-balancer.cidrs=10.43.45.1/32",
+		"k8s enable load-balancer",
+		"k8s enable local-storage",
+		"k8s kubectl config view --raw",
+	}
+
+	expectedFiles := map[string]string{
+		".kube/config": "",
+	}
+
+	system := system.NewMockSystem()
+	system.MockCommandReturn("k8s status", []byte("Error: The node is not part of a Kubernetes cluster."), fmt.Errorf("command error"))
+
+	ck8s := NewK8s(system, config)
+	ck8s.Prepare()
+
+	slices.Sort(expectedCommands)
+	slices.Sort(system.ExecutedCommands)
+
+	if !reflect.DeepEqual(expectedCommands, system.ExecutedCommands) {
+		t.Fatalf("expected: %v, got: %v", expectedCommands, system.ExecutedCommands)
+	}
+
+	if !reflect.DeepEqual(expectedFiles, system.CreatedFiles) {
+		t.Fatalf("expected: %v, got: %v", expectedFiles, system.CreatedFiles)
+	}
+}
+
+func TestK8sPrepareCommandsAlreadyBootstrapped(t *testing.T) {
+	config := &config.Config{}
+	config.Providers.K8s.Channel = ""
+	config.Providers.K8s.Features = defaultFeatureConfig
+
+	expectedCommands := []string{
+		"snap install k8s --channel 1.31-classic/candidate",
+		"snap install kubectl --channel stable",
+		"k8s status --wait-ready",
+		"k8s set load-balancer.l2-mode=true",
+		"k8s status",
 		"k8s set load-balancer.cidrs=10.43.45.1/32",
 		"k8s enable load-balancer",
 		"k8s enable local-storage",
