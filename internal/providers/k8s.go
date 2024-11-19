@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/jnsgruk/concierge/internal/config"
@@ -136,14 +137,16 @@ func (k *K8s) install() error {
 
 // init ensures that K8s is installed, minimally configured, and ready.
 func (k *K8s) init() error {
-	cmd := system.NewCommand("k8s", []string{"bootstrap"})
-	_, err := k.system.RunWithRetries(cmd, (5 * time.Minute))
-	if err != nil {
-		return err
+	if k.needsBootstrap() {
+		cmd := system.NewCommand("k8s", []string{"bootstrap"})
+		_, err := k.system.RunWithRetries(cmd, (5 * time.Minute))
+		if err != nil {
+			return err
+		}
 	}
 
-	cmd = system.NewCommand("k8s", []string{"status", "--wait-ready"})
-	_, err = k.system.RunWithRetries(cmd, (5 * time.Minute))
+	cmd := system.NewCommand("k8s", []string{"status", "--wait-ready"})
+	_, err := k.system.RunWithRetries(cmd, (5 * time.Minute))
 
 	return err
 }
@@ -181,4 +184,15 @@ func (k *K8s) setupKubectl() error {
 	}
 
 	return k.system.WriteHomeDirFile(path.Join(".kube", "config"), result)
+}
+
+func (k *K8s) needsBootstrap() bool {
+	cmd := system.NewCommand("k8s", []string{"status"})
+	output, err := k.system.Run(cmd)
+
+	if err != nil && strings.Contains(string(output), "Error: The node is not part of a Kubernetes cluster.") {
+		return true
+	}
+
+	return false
 }
