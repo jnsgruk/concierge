@@ -75,6 +75,7 @@ func TestLXDPrepareCommandsLXDAlreadyInstalled(t *testing.T) {
 	expected := []string{
 		"snap stop lxd",
 		"snap refresh lxd",
+		"snap start lxd",
 		"lxd waitready",
 		"lxd init --minimal",
 		"lxc network set lxdbr0 ipv6.address none",
