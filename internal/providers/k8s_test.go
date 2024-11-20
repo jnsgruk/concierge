@@ -16,6 +16,7 @@ var defaultFeatureConfig = map[string]map[string]string{
 		"cidrs":   "10.43.45.1/32",
 	},
 	"local-storage": {},
+	"network":       {},
 }
 
 func TestNewK8s(t *testing.T) {
@@ -81,6 +82,7 @@ func TestK8sPrepareCommands(t *testing.T) {
 		"k8s set load-balancer.cidrs=10.43.45.1/32",
 		"k8s enable load-balancer",
 		"k8s enable local-storage",
+		"k8s enable network",
 		"k8s kubectl config view --raw",
 	}
 
@@ -120,6 +122,7 @@ func TestK8sPrepareCommandsAlreadyBootstrapped(t *testing.T) {
 		"k8s set load-balancer.cidrs=10.43.45.1/32",
 		"k8s enable load-balancer",
 		"k8s enable local-storage",
+		"k8s enable network",
 		"k8s kubectl config view --raw",
 	}
 

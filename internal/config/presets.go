@@ -68,6 +68,7 @@ var defaultK8sConfig k8sConfig = k8sConfig{
 			"cidrs":   "10.43.45.0/28",
 		},
 		"local-storage": {},
+		"network":       {},
 	},
 }
 
