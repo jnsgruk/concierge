@@ -69,6 +69,32 @@ func TestLXDPrepareCommands(t *testing.T) {
 	}
 }
 
+func TestLXDPrepareCommandsLXDAlreadyInstalled(t *testing.T) {
+	config := &config.Config{}
+
+	expected := []string{
+		"snap stop lxd",
+		"snap refresh lxd",
+		"lxd waitready",
+		"lxd init --minimal",
+		"lxc network set lxdbr0 ipv6.address none",
+		"chmod a+wr /var/snap/lxd/common/lxd/unix.socket",
+		"usermod -a -G lxd test-user",
+		"iptables -F FORWARD",
+		"iptables -P FORWARD ACCEPT",
+	}
+
+	system := system.NewMockSystem()
+	system.MockSnapStoreLookup("lxd", "", false, true)
+
+	lxd := NewLXD(system, config)
+	lxd.Prepare()
+
+	if !reflect.DeepEqual(expected, system.ExecutedCommands) {
+		t.Fatalf("expected: %v, got: %v", expected, system.ExecutedCommands)
+	}
+}
+
 func TestLXDRestore(t *testing.T) {
 	config := &config.Config{}
 
