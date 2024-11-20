@@ -104,9 +104,14 @@ func (l *LXD) Restore() error {
 
 // install ensures that LXD is installed.
 func (l *LXD) install() error {
+	err := l.workaroundRefresh()
+	if err != nil {
+		return err
+	}
+
 	snapHandler := packages.NewSnapHandler(l.system, l.snaps)
 
-	err := snapHandler.Prepare()
+	err = snapHandler.Prepare()
 	if err != nil {
 		return err
 	}
@@ -141,4 +146,25 @@ func (l *LXD) deconflictFirewall() error {
 		system.NewCommand("iptables", []string{"-F", "FORWARD"}),
 		system.NewCommand("iptables", []string{"-P", "FORWARD", "ACCEPT"}),
 	)
+}
+
+// workaroundRefresh checks if LXD will be refreshed and stops it first.
+// This is a workaround for an issue in the LXD snap sometimes failing
+// on refresh because of a missing snap socket file.
+func (l *LXD) workaroundRefresh() error {
+	snapInfo, err := l.system.SnapInfo(l.Name(), l.Channel)
+	if err != nil {
+		return fmt.Errorf("failed to lookup snap details: %w", err)
+	}
+
+	if snapInfo.Installed {
+		args := []string{"stop", l.Name()}
+		cmd := system.NewCommand("snap", args)
+		_, err = l.system.RunExclusive(cmd)
+		if err != nil {
+			return fmt.Errorf("command failed: %w", err)
+		}
+	}
+
+	return nil
 }
