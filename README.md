@@ -14,8 +14,15 @@ Its role is to ensure that a given machine has the relevant "craft" tools and pr
 then bootstrap a Juju controller onto each of the providers. Additionally, it can install selected
 tools from the [snap store](https://snapcraft.io) or the Ubuntu archive.
 
-`concierge` also provides the facility to "restore" a machine to its pre-provisioned state if the
-tool has previously been run on the machine.
+`concierge` also provides the facility to "restore" a machine, performing the opposite to "prepare"
+meaning that, for example, any snaps that would have been installed by `concierge`, would then be
+removed.
+
+> [!IMPORTANT]
+> Take care with `concierge restore`. If the machine already had a given snap or configuration
+> prior to running `concierge prepare`, this will not be taken into account during `restore`.
+> Running `concierge restore` is the literal opposite of `concierge prepare`, so any packages,
+> files or configuration that would normally be created during `prepare` will be removed.
 
 ## Installation
 
@@ -59,7 +66,7 @@ Available Commands:
   completion  Generate the autocompletion script for the specified shell
   help        Help about any command
   prepare     Provision the machine according to the configuration.
-  restore     Restore the machine to it's pre-provisioned state.
+  restore     Run the reverse of `concierge prepare`.
 
 Flags:
   -h, --help      help for concierge

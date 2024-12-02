@@ -11,9 +11,15 @@ import (
 // restoreCmd constructs the `restore` subcommand
 func restoreCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:           "restore",
-		Short:         "Restore the machine to it's pre-provisioned state.",
-		Long:          "Restore the machine to it's pre-provisioned state.",
+		Use:   "restore",
+		Short: "Run the reverse of `concierge prepare`.",
+		Long: `Run the reverse of 'concierge prepare'.
+
+If the machine already had a given snap or configuration
+prior to running 'prepare', this will not be taken into account during 'restore'.
+Running 'restore' is the literal opposite of 'prepare', so any packages,
+files or configuration that would normally be created during 'prepare' will be removed.
+		`,
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
