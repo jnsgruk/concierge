@@ -126,8 +126,8 @@ var microk8sPreset *Config = &Config{
 var devPreset *Config = &Config{
 	Juju: defaultJujuConfig,
 	Providers: providerConfig{
-		LXD:      defaultLXDConfig,
-		MicroK8s: defaultMicroK8sConfig,
+		LXD: defaultLXDConfig,
+		K8s: defaultK8sConfig,
 	},
 	Host: hostConfig{
 		Packages: defaultPackages,

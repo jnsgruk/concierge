@@ -6,7 +6,7 @@ execute: |
   pushd "${SPREAD_PATH}/${SPREAD_TASK}"
 
   # First, prepare the machine
-  "$SPREAD_PATH"/concierge --trace prepare -p dev
+  "$SPREAD_PATH"/concierge --trace prepare -p k8s
 
   # Ensure that the runtime configuration was dumped into the user's cache dir
   ls ~/.cache/concierge/concierge.yaml
@@ -16,7 +16,7 @@ execute: |
 
   # Check that relevant snaps are removed
   list="$(snap list)"
-  for s in juju microk8s lxd kubectl jq yq charmcraft rockcraft snapcraft jhack; do
+  for s in juju k8s lxd kubectl jq yq charmcraft rockcraft; do
     echo "$list" | NOMATCH "$s"
   done
 
