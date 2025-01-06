@@ -35,7 +35,7 @@ func TestNewMicroK8s(t *testing.T) {
 	tests := []test{
 		{
 			config:   noOverrides,
-			expected: &MicroK8s{Channel: "1.31-strict/stable", system: system},
+			expected: &MicroK8s{Channel: defaultMicroK8sChannel, system: system},
 		},
 		{
 			config:   channelInConfig,

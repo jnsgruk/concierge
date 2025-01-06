@@ -30,9 +30,10 @@ type MockSystem struct {
 	CreatedDirectories []string
 	Deleted            []string
 
-	mockFiles    map[string][]byte
-	mockReturns  map[string]MockCommandReturn
-	mockSnapInfo map[string]*SnapInfo
+	mockFiles        map[string][]byte
+	mockReturns      map[string]MockCommandReturn
+	mockSnapInfo     map[string]*SnapInfo
+	mockSnapChannels map[string][]string
 }
 
 // MockCommandReturn sets a static return value representing command combined output,
@@ -53,6 +54,11 @@ func (r *MockSystem) MockSnapStoreLookup(name, channel string, classic, installe
 		Classic:   classic,
 	}
 	return &Snap{Name: name, Channel: channel}
+}
+
+// MockSnapChannels mocks the set of available channels for a snap in the store.
+func (r *MockSystem) MockSnapChannels(snap string, channels []string) {
+	r.mockSnapChannels[snap] = channels
 }
 
 // User returns the user the system executes commands on behalf of.
@@ -158,4 +164,14 @@ func (r *MockSystem) SnapInfo(snap string, channel string) (*SnapInfo, error) {
 		Installed: false,
 		Classic:   false,
 	}, nil
+}
+
+// SnapChannels returns the list of channels available for a given snap.
+func (r *MockSystem) SnapChannels(snap string) ([]string, error) {
+	val, ok := r.mockSnapChannels[snap]
+	if ok {
+		return val, nil
+	}
+
+	return nil, fmt.Errorf("channels for snap '%s' not found", snap)
 }

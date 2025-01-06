@@ -36,4 +36,6 @@ type Worker interface {
 	// SnapInfo returns information about a given snap, looking up details in the snap
 	// store using the snapd client API where necessary.
 	SnapInfo(snap string, channel string) (*SnapInfo, error)
+	// SnapChannels returns the list of channels available for a given snap.
+	SnapChannels(snap string) ([]string, error)
 }

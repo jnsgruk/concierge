@@ -2,8 +2,11 @@ package system
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
+	"os"
+	"slices"
 	"strings"
 	"time"
 
@@ -52,6 +55,32 @@ func (s *System) SnapInfo(snap string, channel string) (*SnapInfo, error) {
 
 	slog.Debug("Queried snapd API", "snap", snap, "installed", installed, "classic", classic)
 	return &SnapInfo{Installed: installed, Classic: classic}, nil
+}
+
+// SnapChannels returns the list of channels available for a given snap.
+func (s *System) SnapChannels(snap string) ([]string, error) {
+	// Fetch the channels from
+	if _, err := os.Stat("/run/snapd.socket"); errors.Is(err, os.ErrNotExist) {
+		return nil, err
+	}
+
+	storeSnap, _, err := s.snapd.FindOne("microk8s")
+	if err != nil {
+		return nil, err
+	}
+
+	channels := make([]string, len(storeSnap.Channels))
+
+	i := 0
+	for k := range storeSnap.Channels {
+		channels[i] = k
+		i++
+	}
+
+	slices.Sort(channels)
+	slices.Reverse(channels)
+
+	return channels, nil
 }
 
 // snapInstalled is a helper that reports if the snap is currently Installed.

@@ -1,24 +1,20 @@
 package providers
 
 import (
-	"errors"
 	"fmt"
 	"log/slog"
-	"os"
 	"path"
-	"slices"
 	"strings"
 	"time"
 
 	"github.com/jnsgruk/concierge/internal/config"
 	"github.com/jnsgruk/concierge/internal/packages"
 	"github.com/jnsgruk/concierge/internal/system"
-	snapdClient "github.com/snapcore/snapd/client"
 )
 
 // Default channel from which MicroK8s is installed when the latest strict
 // version cannot be determined.
-const defaultMicroK8sChannel = "1.31-strict/stable"
+const defaultMicroK8sChannel = "1.32-strict/stable"
 
 // NewMicroK8s constructs a new MicroK8s provider instance.
 func NewMicroK8s(r system.Worker, config *config.Config) *MicroK8s {
@@ -27,7 +23,7 @@ func NewMicroK8s(r system.Worker, config *config.Config) *MicroK8s {
 	if config.Overrides.MicroK8sChannel != "" {
 		channel = config.Overrides.MicroK8sChannel
 	} else if config.Providers.MicroK8s.Channel == "" {
-		channel = computeDefaultChannel()
+		channel = computeDefaultChannel(r)
 	} else {
 		channel = config.Providers.MicroK8s.Channel
 	}
@@ -206,29 +202,20 @@ func (m *MicroK8s) setupKubectl() error {
 	return m.system.WriteHomeDirFile(path.Join(".kube", "config"), result)
 }
 
-// Try to compute the "correct" default channel. Concerige prefers that the 'strict'
+// Try to compute the "correct" default channel. Concierge prefers that the 'strict'
 // variants are installed, so we filter available channels and sort descending by
 // version. If the list cannot be retrieved, default to a know good version.
-func computeDefaultChannel() string {
-	// If the snapd socket doesn't exist on the system, return a default value
-	if _, err := os.Stat("/run/snapd.socket"); errors.Is(err, os.ErrNotExist) {
-		return defaultMicroK8sChannel
-	}
-
-	snap, _, err := snapdClient.New(nil).FindOne("microk8s")
+func computeDefaultChannel(s system.Worker) string {
+	channels, err := s.SnapChannels("microk8s")
 	if err != nil {
 		return defaultMicroK8sChannel
 	}
 
-	keys := []string{}
-	for k := range snap.Channels {
-		if strings.Contains(k, "strict") && strings.Contains(k, "stable") {
-			keys = append(keys, k)
+	for _, c := range channels {
+		if strings.Contains(c, "strict") && strings.Contains(c, "stable") {
+			return c
 		}
 	}
 
-	slices.Sort(keys)
-	slices.Reverse(keys)
-
-	return keys[0]
+	return defaultMicroK8sChannel
 }
