@@ -39,7 +39,7 @@ func TestNewK8s(t *testing.T) {
 	tests := []test{
 		{
 			config:   noOverrides,
-			expected: &K8s{Channel: "1.31-classic/candidate", system: system},
+			expected: &K8s{Channel: defaultK8sChannel, system: system},
 		},
 		{
 			config:   channelInConfig,
@@ -73,7 +73,7 @@ func TestK8sPrepareCommands(t *testing.T) {
 	config.Providers.K8s.Features = defaultFeatureConfig
 
 	expectedCommands := []string{
-		"snap install k8s --channel 1.31-classic/candidate",
+		fmt.Sprintf("snap install k8s --channel %s", defaultK8sChannel),
 		"snap install kubectl --channel stable",
 		"k8s bootstrap",
 		"k8s status --wait-ready",
@@ -114,7 +114,7 @@ func TestK8sPrepareCommandsAlreadyBootstrapped(t *testing.T) {
 	config.Providers.K8s.Features = defaultFeatureConfig
 
 	expectedCommands := []string{
-		"snap install k8s --channel 1.31-classic/candidate",
+		fmt.Sprintf("snap install k8s --channel %s", defaultK8sChannel),
 		"snap install kubectl --channel stable",
 		"k8s status --wait-ready",
 		"k8s set load-balancer.l2-mode=true",

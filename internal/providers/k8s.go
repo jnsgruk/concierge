@@ -13,7 +13,7 @@ import (
 )
 
 // Default channel from which K8s is installed.
-const defaultK8sChannel = "1.31-classic/candidate"
+const defaultK8sChannel = "1.32-classic/stable"
 
 // NewK8s constructs a new K8s provider instance.
 func NewK8s(r system.Worker, config *config.Config) *K8s {
