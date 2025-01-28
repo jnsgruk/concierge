@@ -132,13 +132,29 @@ func (s *System) WriteHomeDirFile(filePath string, contents []byte) error {
 
 	filePath = path.Join(path.Join(s.user.HomeDir, filePath))
 
-	if err := os.WriteFile(filePath, contents, 0644); err != nil {
+	if err := os.WriteFile(filePath, contents, 0o644); err != nil {
 		return fmt.Errorf("failed to write file '%s': %w", filePath, err)
 	}
 
 	err = s.chownRecursively(filePath, s.user)
 	if err != nil {
 		return fmt.Errorf("failed to change ownership of file '%s': %w", filePath, err)
+	}
+
+	return nil
+}
+
+// WriteFile takes an absolute file path, and writes the contents specified to it.
+func (s *System) WriteFile(filepath string, contents []byte) error {
+	dir := path.Dir(filepath)
+
+	err := os.MkdirAll(dir, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("failed to create directory '%s': %w", dir, err)
+	}
+
+	if err := os.WriteFile(filepath, contents, 0o644); err != nil {
+		return fmt.Errorf("failed to write file '%s': %w", filepath, err)
 	}
 
 	return nil

@@ -120,6 +120,12 @@ func (r *MockSystem) WriteHomeDirFile(filepath string, contents []byte) error {
 	return nil
 }
 
+// WriteFile takes an absolute file path, and writes the contents specified to it.
+func (r *MockSystem) WriteFile(filepath string, contents []byte) error {
+	r.CreatedFiles[filepath] = string(contents)
+	return nil
+}
+
 // MkHomeSubdirectory takes a relative folder path and creates it recursively in the real
 // user's home directory.
 func (r *MockSystem) MkHomeSubdirectory(subdirectory string) error {

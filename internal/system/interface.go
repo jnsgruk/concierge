@@ -24,6 +24,8 @@ type Worker interface {
 	// WriteHomeDirFile takes a path relative to the real user's home dir, and writes the contents
 	// specified to it.
 	WriteHomeDirFile(filepath string, contents []byte) error
+	// WriteFile takes an absolute file path, and writes the contents specified to it.
+	WriteFile(filepath string, contents []byte) error
 	// MkHomeSubdirectory takes a relative folder path and creates it recursively in the real
 	// user's home directory.
 	MkHomeSubdirectory(subdirectory string) error

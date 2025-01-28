@@ -88,6 +88,7 @@ func TestK8sPrepareCommands(t *testing.T) {
 
 	expectedFiles := map[string]string{
 		".kube/config": "",
+		"/var/snap/k8s/common/lock/.containerd-base-dir": "/run/concierge/k8s-containerd",
 	}
 
 	system := system.NewMockSystem()

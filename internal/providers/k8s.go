@@ -140,8 +140,15 @@ func (k *K8s) install() error {
 // init ensures that K8s is installed, minimally configured, and ready.
 func (k *K8s) init() error {
 	if k.needsBootstrap() {
+		// Configure the K8s snap to use an alternate path for the containerd socket, to avoid
+		// conflicts with other instances of containterd, such as those present on Github runners.
+		err := k.system.WriteFile("/var/snap/k8s/common/lock/.containerd-base-dir", []byte("/run/concierge/k8s-containerd"))
+		if err != nil {
+			return fmt.Errorf("failed to configure containerd base directory: %w", err)
+		}
+
 		cmd := system.NewCommand("k8s", []string{"bootstrap"})
-		_, err := k.system.RunWithRetries(cmd, (5 * time.Minute))
+		_, err = k.system.RunWithRetries(cmd, (5 * time.Minute))
 		if err != nil {
 			return err
 		}
