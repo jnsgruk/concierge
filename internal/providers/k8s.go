@@ -3,7 +3,9 @@ package providers
 import (
 	"fmt"
 	"log/slog"
+	"maps"
 	"path"
+	"slices"
 	"strings"
 	"time"
 
@@ -153,7 +155,17 @@ func (k *K8s) init() error {
 
 // configureFeatures iterates over the specified features, enabling and configuring them.
 func (k *K8s) configureFeatures() error {
-	for featureName, conf := range k.Features {
+	// Ensure the network feature is always enabled firsti if specified, as others depend on it.
+	keys := slices.Sorted(maps.Keys(k.Features))
+	// If the network feature is specified, ensure it's at the front of the list of features
+	// that we iterate over so it's enabled first
+	if slices.Contains(keys, "network") {
+		remaining := slices.DeleteFunc(keys, func(v string) bool { return v == "network" })
+		keys = slices.Insert(remaining, 0, "network")
+	}
+
+	for _, featureName := range keys {
+		conf := k.Features[featureName]
 		for key, value := range conf {
 			featureConfig := fmt.Sprintf("%s.%s=%s", featureName, key, value)
 

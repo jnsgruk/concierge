@@ -1,6 +1,6 @@
 module github.com/jnsgruk/concierge
 
-go 1.22.7
+go 1.23
 
 require (
 	github.com/canonical/x-go v0.0.0-20230522092633-7947a7587f5b
