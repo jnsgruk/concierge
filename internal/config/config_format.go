@@ -8,8 +8,23 @@ type Config struct {
 
 	// The following are added at runtime according to CLI flags
 	Overrides ConfigOverrides `mapstructure:"overrides"`
+	Status    Status          `mapstructure:"status"`
 	Verbose   bool            `mapstructure:"verbose"`
 	Trace     bool            `mapstructure:"trace"`
+}
+
+// Status represents the status of concierge on a given machine.
+type Status int
+
+const (
+	Provisioning Status = iota
+	Succeeded
+	Failed
+)
+
+// String returns a string representation of a given concierge status.
+func (s Status) String() string {
+	return [...]string{"provisioning", "succeeded", "failed"}[s]
 }
 
 // jujuConfig represents the configuration for juju, including the desired version,

@@ -20,7 +20,7 @@ func Execute() {
 
 	err := cmd.Execute()
 	if err != nil {
-		slog.Error("Failed to configure machine", "error", err.Error())
+		slog.Error("concierge failed", "error", err.Error())
 		os.Exit(1)
 	}
 }

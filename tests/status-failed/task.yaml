@@ -1,0 +1,15 @@
+summary: Ensure failed status is reported correctly
+systems:
+  - ubuntu-24.04
+
+execute: |
+  pushd "${SPREAD_PATH}/${SPREAD_TASK}"
+
+  "$SPREAD_PATH"/concierge --trace prepare --extra-snaps="foobarbazquzquxfail" || true
+
+  "$SPREAD_PATH"/concierge status | MATCH failed
+
+restore: |
+  if [[ -z "${CI:-}" ]]; then
+    "$SPREAD_PATH"/concierge --trace restore
+  fi
