@@ -33,7 +33,22 @@ type Manager struct {
 // Prepare runs the steps required for provisioning the machine according to
 // the config.
 func (m *Manager) Prepare() error {
-	return m.execute(PrepareAction)
+	err := m.execute(PrepareAction)
+
+	// Record the status of the provisioning process in the cached plan.
+	var recordErr error
+	if err != nil {
+		recordErr = m.recordRuntimeConfig(config.Failed)
+	} else {
+		recordErr = m.recordRuntimeConfig(config.Succeeded)
+	}
+
+	// If the recording of the status failed, log the error and move on.
+	if recordErr != nil {
+		slog.Error("failed to record concierge status", "error", recordErr.Error())
+	}
+
+	return err
 }
 
 // Restore reverses the provisioning process, returning the machine to its.
@@ -45,7 +60,7 @@ func (m *Manager) Restore() error {
 func (m *Manager) execute(action string) error {
 	switch action {
 	case PrepareAction:
-		err := m.recordRuntimeConfig()
+		err := m.recordRuntimeConfig(config.Provisioning)
 		if err != nil {
 			return fmt.Errorf("failed to record config file: %w", err)
 		}
@@ -65,7 +80,8 @@ func (m *Manager) execute(action string) error {
 
 // recordRuntimeConfig dumps the current manager config into a file in the user's home
 // directory, such that it can be read later and used to restore the machine.
-func (m *Manager) recordRuntimeConfig() error {
+func (m *Manager) recordRuntimeConfig(status config.Status) error {
+	m.config.Status = status
 	configYaml, err := yaml.Marshal(m.config)
 	if err != nil {
 		return fmt.Errorf("failed to marshal config file as yaml: %w", err)
@@ -102,4 +118,22 @@ func (m *Manager) loadRuntimeConfig() error {
 	slog.Debug("Loaded previous runtime configuration", "path", recordPath)
 
 	return nil
+}
+
+// Status reads the concierge status on the machine.
+func (m *Manager) Status() (config.Status, error) {
+	recordPath := path.Join(".cache", "concierge", "concierge.yaml")
+
+	contents, err := m.system.ReadHomeDirFile(recordPath)
+	if err != nil {
+		return 0, fmt.Errorf("concierge has not prepared this machine and cannot report its status")
+	}
+
+	var config config.Config
+	err = yaml.Unmarshal(contents, &config)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse file: %w", err)
+	}
+
+	return config.Status, nil
 }
