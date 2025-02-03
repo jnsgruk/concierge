@@ -46,6 +46,12 @@ func NewSnapFromString(snap string) *Snap {
 // SnapInfo returns information about a given snap, looking up details in the snap
 // store using the snapd client API where necessary.
 func (s *System) SnapInfo(snap string, channel string) (*SnapInfo, error) {
+	// Simple check to see if the snap actually exists in the store.
+	_, _, err := s.snapd.FindOne(snap)
+	if err != nil {
+		return nil, fmt.Errorf("unable to find snap '%s' in store: %w", snap, err)
+	}
+
 	classic, err := s.snapIsClassic(snap, channel)
 	if err != nil {
 		return nil, err
