@@ -5,7 +5,7 @@ systems:
 execute: |
   pushd "${SPREAD_PATH}/${SPREAD_TASK}"
 
-  "$SPREAD_PATH"/concierge --trace prepare --extra-snaps="foobarbazquzquxfail" || true
+  "$SPREAD_PATH"/concierge --trace prepare --extra-debs="foobarbazquzquxfail" || true
 
   "$SPREAD_PATH"/concierge status | MATCH failed
 
