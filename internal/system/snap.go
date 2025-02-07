@@ -64,7 +64,17 @@ func (s *System) SnapChannels(snap string) ([]string, error) {
 		return nil, err
 	}
 
-	storeSnap, _, err := s.snapd.FindOne(snap)
+	storeSnap, err := s.withRetry(func(ctx context.Context) (*client.Snap, error) {
+		snap, _, err := s.snapd.FindOne(snap)
+		if err != nil {
+			if strings.Contains(err.Error(), "snap not found") {
+				return nil, err
+			}
+			return nil, retry.RetryableError(err)
+
+		}
+		return snap, nil
+	})
 	if err != nil {
 		return nil, err
 	}
