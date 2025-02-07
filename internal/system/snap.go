@@ -64,7 +64,7 @@ func (s *System) SnapChannels(snap string) ([]string, error) {
 		return nil, err
 	}
 
-	storeSnap, _, err := s.snapd.FindOne("microk8s")
+	storeSnap, _, err := s.snapd.FindOne(snap)
 	if err != nil {
 		return nil, err
 	}
