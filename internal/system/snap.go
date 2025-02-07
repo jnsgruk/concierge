@@ -107,6 +107,9 @@ func (s *System) snapIsClassic(name, channel string) (bool, error) {
 	snap, err := s.withRetry(func(ctx context.Context) (*client.Snap, error) {
 		snap, _, err := s.snapd.FindOne(name)
 		if err != nil {
+			if strings.Contains(err.Error(), "snap not found") {
+				return nil, err
+			}
 			return nil, retry.RetryableError(err)
 		}
 		return snap, nil
