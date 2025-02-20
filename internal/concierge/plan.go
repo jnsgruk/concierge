@@ -57,7 +57,7 @@ func NewPlan(cfg *config.Config, worker system.Worker) *Plan {
 
 			// Warn if the configuration specifies to bootstrap the provider, but the config or
 			// overrides disable Juju.
-			if plan.config.Juju.Disable && p.Bootstrap() {
+			if cfg.Overrides.DisableJuju && p.Bootstrap() {
 				slog.Warn("provider will not be bootstrapped because juju is disabled", "provider", providerName)
 			}
 		}
