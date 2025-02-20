@@ -143,6 +143,8 @@ working directory.
 ```yaml
 # (Optional): Target Juju configuration.
 juju:
+  # (Optional): Disable installation of Juju (and therefore all bootstrapping).
+  disable: true | false
   # (Optional): Channel from which to install Juju.
   channel: <channel>
   # (Optional): A map of model-defaults to set when bootstrapping *all* Juju controllers.
