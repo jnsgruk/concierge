@@ -1,0 +1,18 @@
+summary: Run concierge with the machine preset, but disable juju with a flag
+systems:
+  - ubuntu-24.04
+
+execute: |
+  pushd "${SPREAD_PATH}/${SPREAD_TASK}"
+
+  "$SPREAD_PATH"/concierge --trace prepare --preset machine --disable-juju
+
+  list="$(snap list lxd)"
+  echo $list | MATCH lxd
+
+  snap list | NOMATCH juju
+
+restore: |
+  if [[ -z "${CI:-}" ]]; then
+    "$SPREAD_PATH"/concierge --trace restore
+  fi
