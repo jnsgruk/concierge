@@ -83,6 +83,7 @@ the environment variable version will always take precedent. The equivalents are
 
 |            Flag            |              Env Var               |
 | :------------------------: | :--------------------------------: |
+|      `--disable-juju`      |      `CONCIERGE_DISABLE_JUJU`      |
 |      `--juju-channel`      |      `CONCIERGE_JUJU_CHANNEL`      |
 |      `--k8s-channel`       |      `CONCIERGE_K8S_CHANNEL`       |
 |    `--microk8s-channel`    |    `CONCIERGE_MICROK8S_CHANNEL`    |
