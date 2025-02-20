@@ -2,6 +2,7 @@ package concierge
 
 import (
 	"fmt"
+	"log/slog"
 
 	"github.com/jnsgruk/concierge/internal/config"
 	"github.com/jnsgruk/concierge/internal/juju"
@@ -53,7 +54,17 @@ func NewPlan(cfg *config.Config, worker system.Worker) *Plan {
 	for _, providerName := range providers.SupportedProviders {
 		if p := providers.NewProvider(providerName, worker, cfg); p != nil {
 			plan.Providers = append(plan.Providers, p)
+
+			// Warn if the configuration specifies to bootstrap the provider, but the config or
+			// overrides disable Juju.
+			if plan.config.Juju.Disable && p.Bootstrap() {
+				slog.Warn("provider will not be bootstrapped because juju is disabled", "provider", providerName)
+			}
 		}
+	}
+
+	if cfg.Overrides.DisableJuju {
+		plan.config.Juju.Disable = true
 	}
 
 	return plan
@@ -70,7 +81,6 @@ func (p *Plan) Execute(action string) error {
 
 	snapHandler := packages.NewSnapHandler(p.system, p.Snaps)
 	debHandler := packages.NewDebHandler(p.system, p.Debs)
-	jujuHandler := juju.NewJujuHandler(p.config, p.system, p.Providers)
 
 	// Prepare/restore package handlers concurrently
 	eg.Go(func() error { return DoAction(snapHandler, action) })
@@ -87,7 +97,13 @@ func (p *Plan) Execute(action string) error {
 		return err
 	}
 
+	// Skip Juju handler if Juju is disabled in the config
+	if p.config.Juju.Disable {
+		return nil
+	}
+
 	// Prepare/Restore juju controllers
+	jujuHandler := juju.NewJujuHandler(p.config, p.system, p.Providers)
 	err = DoAction(jujuHandler, action)
 	if err != nil {
 		return fmt.Errorf("failed to prepare Juju: %w", err)

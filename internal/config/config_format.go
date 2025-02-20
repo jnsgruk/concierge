@@ -30,6 +30,9 @@ func (s Status) String() string {
 // jujuConfig represents the configuration for juju, including the desired version,
 // and defaults/constraints for the bootstrap process.
 type jujuConfig struct {
+	// Optionally disable the installation of Juju
+	Disable bool `mapstructure:"disable"`
+	// The Snap Store channel from which to install Juju
 	Channel string `mapstructure:"channel"`
 	// The set of model-defaults to be passed to Juju during bootstrap
 	ModelDefaults map[string]string `mapstructure:"model-defaults"`

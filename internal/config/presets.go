@@ -20,6 +20,7 @@ func Preset(preset string) (*Config, error) {
 
 // defaultJujuConfig is the default Juju config for all presets.
 var defaultJujuConfig jujuConfig = jujuConfig{
+	Disable: false,
 	ModelDefaults: map[string]string{
 		"test-mode":                 "true",
 		"automatically-retry-hooks": "false",

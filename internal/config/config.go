@@ -105,6 +105,7 @@ func parseConfig(configFile string) (*Config, error) {
 // ConfigOverrides struct.
 func getOverrides(flags *pflag.FlagSet) ConfigOverrides {
 	return ConfigOverrides{
+		DisableJuju:       envOrFlagBool(flags, "disable-juju"),
 		JujuChannel:       envOrFlagString(flags, "juju-channel"),
 		K8sChannel:        envOrFlagString(flags, "k8s-channel"),
 		MicroK8sChannel:   envOrFlagString(flags, "microk8s-channel"),
@@ -118,6 +119,15 @@ func getOverrides(flags *pflag.FlagSet) ConfigOverrides {
 		ExtraSnaps: envOrFlagSlice(flags, "extra-snaps"),
 		ExtraDebs:  envOrFlagSlice(flags, "extra-debs"),
 	}
+}
+
+// envOrFlagBool returns a boolean config value set from env var or flag, priority on env var.
+func envOrFlagBool(flags *pflag.FlagSet, key string) bool {
+	value, _ := flags.GetBool(key)
+	if v := viper.GetBool(key); v {
+		value = v
+	}
+	return value
 }
 
 // envOrFlagString returns a string config value set from env var or flag, priority on env var.
