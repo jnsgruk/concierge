@@ -13,6 +13,8 @@ func Preset(preset string) (*Config, error) {
 		return machinePreset, nil
 	case "dev":
 		return devPreset, nil
+	case "crafts":
+		return craftsPreset, nil
 	default:
 		return nil, fmt.Errorf("unknown preset '%s'", preset)
 	}
@@ -136,6 +138,24 @@ var devPreset *Config = &Config{
 			"rockcraft": {Channel: "latest/stable"},
 			"snapcraft": {Channel: "latest/stable"},
 			"jhack":     {Channel: "latest/stable", Connections: []string{"jhack:dot-local-share-juju"}},
+		}),
+	},
+}
+
+// craftsPreset installs each of the crafts, and configures LXD, but disables Juju.
+// Useful for workflows where only artifacts need to be built.
+var craftsPreset *Config = &Config{
+	Juju: jujuConfig{
+		Disable: true,
+	},
+	Providers: providerConfig{
+		LXD: defaultLXDConfig,
+	},
+	Host: hostConfig{
+		Packages: defaultPackages,
+		Snaps: MergeMaps(defaultSnaps, map[string]SnapConfig{
+			"rockcraft": {Channel: "latest/stable"},
+			"snapcraft": {Channel: "latest/stable"},
 		}),
 	},
 }

@@ -1,0 +1,20 @@
+summary: Run concierge with the crafts preset
+systems:
+  - ubuntu-24.04
+
+execute: |
+  pushd "${SPREAD_PATH}/${SPREAD_TASK}"
+
+  "$SPREAD_PATH"/concierge --trace prepare -p crafts
+
+  # Check that relevant snaps are installed
+  for s in lxd jq yq charmcraft rockcraft snapcraft; do
+    snap list "$s" | MATCH $s
+  done
+
+  snap list | NOMATCH juju
+
+restore: |
+  if [[ -z "${CI:-}" ]]; then
+    "$SPREAD_PATH"/concierge --trace restore
+  fi
