@@ -1,6 +1,7 @@
 package juju
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"path"
@@ -12,6 +13,7 @@ import (
 	"github.com/jnsgruk/concierge/internal/packages"
 	"github.com/jnsgruk/concierge/internal/providers"
 	"github.com/jnsgruk/concierge/internal/system"
+	"github.com/sethvargo/go-retry"
 	"golang.org/x/sync/errgroup"
 	"gopkg.in/yaml.v3"
 )
@@ -264,14 +266,27 @@ func (j *JujuHandler) checkBootstrapped(controllerName string) (bool, error) {
 	user := j.system.User().Username
 	cmd := system.NewCommandAs(user, "", "juju", []string{"show-controller", controllerName})
 
-	result, err := j.system.Run(cmd)
-	if err != nil && strings.Contains(string(result), "not found") {
-		return false, nil
-	} else if err != nil {
-		return false, err
-	}
+	// Configure a back-off for retrying the assessment of controller status.
+	backoff := retry.WithMaxRetries(10, retry.NewExponential(1*time.Second))
 
-	return true, nil
+	// Run a function, with retries/backoff, to assess whether the controller exists.
+	// This retry works around an issue where a given controller may not respond, causing the
+	// tool to conclude that the controller doesn't exist, rather than the controller simply
+	// not responding.
+	return retry.DoValue(context.Background(), backoff, func(ctx context.Context) (bool, error) {
+		output, err := j.system.Run(cmd)
+		if err != nil {
+			// If the error message on checking contains "not found" then the controller
+			// is not actually there, so don't retry the check.
+			if strings.Contains(string(output), "not found") {
+				return false, nil
+			}
+			// Otherwise, retry the check for a bootstrapped controller.
+			return false, retry.RetryableError(err)
+		}
+
+		return true, nil
+	})
 }
 
 // sortedKeys gets an alphabetically sorted list of keys from a map.
