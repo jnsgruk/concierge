@@ -121,8 +121,8 @@ sudo concierge prepare -p dev
 
 | Preset Name | Included                                                                  |
 | :---------: | :------------------------------------------------------------------------ |
-|  `crafts`   | `lxd` `snapcraft`, `charmcraft`, `rockcraft`                              |
-|    `dev`    | `juju`, `microk8s`, `lxd` `snapcraft`, `charmcraft`, `rockcraft`, `jhack` |
+|  `crafts`   | `lxd`, `snapcraft`, `charmcraft`, `rockcraft`                             |
+|    `dev`    | `juju`, `k8s`, `lxd`, `snapcraft`, `charmcraft`, `rockcraft`, `jhack`     |
 |    `k8s`    | `juju`, `k8s`, `lxd`, `rockcraft`, `charmcraft`                           |
 | `microk8s`  | `juju`, `microk8s`, `lxd`, `rockcraft`, `charmcraft`                      |
 |  `machine`  | `juju`, `lxd`, `snapcraft`, `charmcraft`                                  |
