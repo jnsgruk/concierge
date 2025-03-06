@@ -43,7 +43,7 @@ Or you can clone, build and run like so:
 ```shell
 git clone https://github.com/jnsgruk/concierge
 cd concierge
-go build -o concierge main.go
+go build
 sudo ./concierge -h
 ```
 
@@ -367,7 +367,7 @@ git clone https://github.com/jnsgruk/concierge
 cd concierge
 
 # Build/run with Go
-go run main.go
+go run .
 
 # Run the unit tests
 go test ./...
