@@ -6,3 +6,4 @@
 /concierge
 dist/
 .spread-reuse*.yaml
+/.idea
