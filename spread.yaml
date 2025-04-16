@@ -10,7 +10,7 @@ backends:
     type: adhoc
     allocate: |
       BASE="${BASE:-noble}"
-      VM_NAME="${VM_NAME:-ubuntu-${BASE}-${RANDOM}}"
+      VM_NAME="${VM_NAME:-concierge-ubuntu-${BASE}-${RANDOM}}"
       DISK="${DISK:-20}"
       CPU="${CPU:-4}"
       MEM="${MEM:-8}"
@@ -34,7 +34,7 @@ backends:
       # Set the instance address for spread
       ADDRESS "$(lxc ls -f csv | grep "${VM_NAME}" | cut -d"," -f3 | cut -d" " -f1)"
     discard: |
-      instance_name="$(lxc ls -f csv | grep $SPREAD_SYSTEM_ADDRESS | cut -f1 -d",")"
+      instance_name="$(lxc ls -f csv | grep concierge | grep $SPREAD_SYSTEM_ADDRESS | cut -f1 -d",")"
       lxc delete -f $instance_name
 
     systems:
